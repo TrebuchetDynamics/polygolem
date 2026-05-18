@@ -1,5 +1,7 @@
 package types
 
+import "encoding/json"
+
 // Comment is a Gamma API comment.
 type Comment struct {
 	ID        string         `json:"id"`
@@ -11,11 +13,59 @@ type Comment struct {
 	Replies   []Comment      `json:"replies,omitempty"`
 }
 
+func (c *Comment) UnmarshalJSON(data []byte) error {
+	type commentAlias Comment
+	var wire struct {
+		commentAlias
+		Profile        *CommentUser `json:"profile"`
+		UserAddress    string       `json:"userAddress"`
+		ParentEntityID *int         `json:"parentEntityID"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	*c = Comment(wire.commentAlias)
+	if isEmptyCommentUser(c.User) && wire.Profile != nil {
+		c.User = *wire.Profile
+	}
+	if c.User.Address == "" {
+		c.User.Address = wire.UserAddress
+	}
+	if c.ParentID == nil && wire.ParentEntityID != nil {
+		c.ParentID = wire.ParentEntityID
+	}
+	return nil
+}
+
 // CommentUser is the public comment author payload.
 type CommentUser struct {
 	Address      string `json:"address"`
 	Pseudonym    string `json:"pseudonym"`
 	ProfileImage string `json:"profileImage"`
+}
+
+func (u *CommentUser) UnmarshalJSON(data []byte) error {
+	type userAlias CommentUser
+	var wire struct {
+		userAlias
+		BaseAddress string `json:"baseAddress"`
+		Name        string `json:"name"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	*u = CommentUser(wire.userAlias)
+	if u.Address == "" {
+		u.Address = wire.BaseAddress
+	}
+	if u.Pseudonym == "" {
+		u.Pseudonym = wire.Name
+	}
+	return nil
+}
+
+func isEmptyCommentUser(user CommentUser) bool {
+	return user.Address == "" && user.Pseudonym == "" && user.ProfileImage == ""
 }
 
 // CommentQuery is the public query shape for listing comments.
