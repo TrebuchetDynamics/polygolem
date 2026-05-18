@@ -410,6 +410,18 @@ func (c *Client) Trades(ctx context.Context, user string, limit int) ([]Trade, e
 	return result, nil
 }
 
+func (c *Client) MarketTrades(ctx context.Context, market string, limit int) ([]Trade, error) {
+	path := buildPath("/trades", map[string]string{
+		"market": market,
+		"limit":  strconv.Itoa(limit),
+	})
+	var result []Trade
+	if err := c.transport.Get(ctx, path, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (c *Client) Activity(ctx context.Context, user string, limit int) ([]Activity, error) {
 	path := buildPath("/activity", map[string]string{
 		"user":  user,

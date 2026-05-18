@@ -68,3 +68,35 @@ func TestClientLiveVolumeReturnsPublicTypes(t *testing.T) {
 		t.Fatalf("volume=%+v", publicVolume)
 	}
 }
+
+func TestClientMarketTradesReturnsPublicTypes(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/trades" {
+			t.Fatalf("path=%s want /trades", r.URL.Path)
+		}
+		if r.URL.Query().Get("market") != "0xmarket" || r.URL.Query().Get("limit") != "10" {
+			t.Fatalf("query=%s", r.URL.RawQuery)
+		}
+		_ = json.NewEncoder(w).Encode([]map[string]any{{
+			"conditionId":     "0xmarket",
+			"asset":           "yes-token",
+			"price":           0.98,
+			"size":            3.5,
+			"side":            "BUY",
+			"outcome":         "Yes",
+			"timestamp":       1778314880,
+			"transactionHash": "0xtx",
+		}})
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL})
+	rows, err := client.MarketTrades(context.Background(), "0xmarket", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var publicRows []types.Trade = rows
+	if len(publicRows) != 1 || publicRows[0].Market != "0xmarket" || publicRows[0].AssetID != "yes-token" {
+		t.Fatalf("rows=%+v", publicRows)
+	}
+}

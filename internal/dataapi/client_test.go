@@ -178,6 +178,40 @@ func TestTradesDecodeCurrentDataAPIShape(t *testing.T) {
 	}
 }
 
+func TestMarketTradesUsesMarketFilter(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/trades" {
+			t.Fatalf("path=%s want /trades", r.URL.Path)
+		}
+		if r.URL.Query().Get("market") != "0xmarket" || r.URL.Query().Get("limit") != "25" {
+			t.Fatalf("query=%s", r.URL.RawQuery)
+		}
+		if r.URL.Query().Get("user") != "" {
+			t.Fatalf("market trades must not send user query: %s", r.URL.RawQuery)
+		}
+		_, _ = w.Write([]byte(`[{
+			"side":"BUY",
+			"asset":"yes-token",
+			"conditionId":"0xmarket",
+			"size":4.5,
+			"price":0.98,
+			"timestamp":1778314880,
+			"outcome":"Yes",
+			"transactionHash":"0xtx"
+		}]`))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, transport.New(server.Client(), transport.DefaultConfig(server.URL)))
+	rows, err := client.MarketTrades(context.Background(), "0xmarket", 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].Market != "0xmarket" || rows[0].AssetID != "yes-token" {
+		t.Fatalf("rows=%+v", rows)
+	}
+}
+
 func TestOpenInterestUsesCurrentOIEndpoint(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/oi" {

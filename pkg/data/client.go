@@ -75,6 +75,15 @@ func (c *Client) Trades(ctx context.Context, user string, limit int) ([]types.Tr
 	return tradesFromInternal(rows), nil
 }
 
+// MarketTrades returns public trades for a market condition ID.
+func (c *Client) MarketTrades(ctx context.Context, market string, limit int) ([]types.Trade, error) {
+	rows, err := c.inner.MarketTrades(ctx, market, limit)
+	if err != nil {
+		return nil, err
+	}
+	return tradesFromInternal(rows), nil
+}
+
 // Activity returns public activity for a user.
 func (c *Client) Activity(ctx context.Context, user string, limit int) ([]types.Activity, error) {
 	rows, err := c.inner.Activity(ctx, user, limit)

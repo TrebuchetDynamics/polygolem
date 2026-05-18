@@ -138,6 +138,32 @@ func TestCurrentPositionsWithLimitRoutes(t *testing.T) {
 	}
 }
 
+func TestMarketTradesRoutes(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/trades" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if r.URL.Query().Get("market") != "0xmarket" || r.URL.Query().Get("limit") != "7" {
+			t.Errorf("unexpected query: %s", r.URL.RawQuery)
+		}
+		json.NewEncoder(w).Encode([]map[string]string{{
+			"conditionId": "0xmarket",
+			"asset":       "yes-token",
+			"side":        "BUY",
+		}})
+	}))
+	defer srv.Close()
+
+	c := NewClient(Config{DataBaseURL: srv.URL})
+	rows, err := c.MarketTrades(context.Background(), "0xmarket", 7)
+	if err != nil {
+		t.Fatalf("MarketTrades error: %v", err)
+	}
+	if len(rows) != 1 || rows[0].Market != "0xmarket" || rows[0].AssetID != "yes-token" {
+		t.Errorf("unexpected rows: %+v", rows)
+	}
+}
+
 func TestHealthCheckPartial(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

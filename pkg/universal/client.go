@@ -554,6 +554,11 @@ func (c *Client) Trades(ctx context.Context, user string, limit int) ([]types.Tr
 	return c.data.Trades(ctx, user, limit)
 }
 
+// MarketTrades returns public trades for a market condition ID.
+func (c *Client) MarketTrades(ctx context.Context, market string, limit int) ([]types.Trade, error) {
+	return c.data.MarketTrades(ctx, market, limit)
+}
+
 // Activity returns recent activity for a user.
 func (c *Client) Activity(ctx context.Context, user string, limit int) ([]types.Activity, error) {
 	return c.data.Activity(ctx, user, limit)
