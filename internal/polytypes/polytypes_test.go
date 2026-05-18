@@ -31,8 +31,9 @@ func TestNormalizedTimeDateOnly(t *testing.T) {
 	if err := json.Unmarshal([]byte(`"2024-06-15"`), &nt); err != nil {
 		t.Fatal(err)
 	}
-	if nt.IsZero() {
-		t.Fatal("expected non-zero time")
+	want := time.Date(2024, 6, 15, 0, 0, 0, 0, time.UTC)
+	if !nt.Time().Equal(want) {
+		t.Fatalf("date-only time should be UTC midnight: got %s want %s", nt.Time(), want)
 	}
 }
 
