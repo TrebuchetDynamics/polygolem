@@ -55,6 +55,32 @@ func TestActiveEventsAllCollectsPagesAndDedupes(t *testing.T) {
 	}
 }
 
+func TestFilterEventsByCategoryKeepsTechSeparateFromScience(t *testing.T) {
+	events := []types.Event{
+		{ID: "science", Slug: "science-event", Category: "Science"},
+		{ID: "technology", Slug: "technology-event", Category: "Technology"},
+	}
+
+	tech := FilterEventsByCategory(events, "Tech")
+
+	if len(tech) != 1 || tech[0].ID != "technology" {
+		t.Fatalf("Tech filter = %#v", tech)
+	}
+}
+
+func TestFilterEventsByCategoryKeepsWorldSeparateFromPolitics(t *testing.T) {
+	events := []types.Event{
+		{ID: "politics", Slug: "politics-event", Category: "Politics"},
+		{ID: "world", Slug: "world-event", Category: "World"},
+	}
+
+	world := FilterEventsByCategory(events, "World")
+
+	if len(world) != 1 || world[0].ID != "world" {
+		t.Fatalf("World filter = %#v", world)
+	}
+}
+
 func TestFilterEventsByCategoryKeepsWeatherSeparateFromScience(t *testing.T) {
 	events := []types.Event{
 		{ID: "science", Slug: "science-event", Category: "Science"},
@@ -71,7 +97,7 @@ func TestFilterEventsByCategoryKeepsWeatherSeparateFromScience(t *testing.T) {
 func TestFilterEventsByCategoryAliases(t *testing.T) {
 	events := []types.Event{
 		{ID: "business", Slug: "business-event", Category: "Business"},
-		{ID: "science", Slug: "science-event", Category: "Science"},
+		{ID: "technology", Slug: "technology-event", Category: "Technology"},
 		{ID: "politics", Slug: "politics-event", Category: "Politics"},
 	}
 
@@ -82,7 +108,7 @@ func TestFilterEventsByCategoryAliases(t *testing.T) {
 	if len(finance) != 1 || finance[0].ID != "business" {
 		t.Fatalf("Finance filter = %#v", finance)
 	}
-	if len(tech) != 1 || tech[0].ID != "science" {
+	if len(tech) != 1 || tech[0].ID != "technology" {
 		t.Fatalf("Tech filter = %#v", tech)
 	}
 	if len(elections) != 1 || elections[0].ID != "politics" {

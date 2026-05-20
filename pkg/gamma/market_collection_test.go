@@ -61,7 +61,7 @@ func TestActiveMarketsAllCollectsPagesAndDedupes(t *testing.T) {
 func TestFilterMarketsByCategoryAliases(t *testing.T) {
 	markets := []types.Market{
 		{ConditionID: "business", Category: "Business"},
-		{ConditionID: "science", Category: "Science"},
+		{ConditionID: "technology", Category: "Technology"},
 		{ConditionID: "politics", Category: "Politics"},
 	}
 
@@ -72,11 +72,37 @@ func TestFilterMarketsByCategoryAliases(t *testing.T) {
 	if len(finance) != 1 || finance[0].ConditionID != "business" {
 		t.Fatalf("Finance filter = %#v", finance)
 	}
-	if len(tech) != 1 || tech[0].ConditionID != "science" {
+	if len(tech) != 1 || tech[0].ConditionID != "technology" {
 		t.Fatalf("Tech filter = %#v", tech)
 	}
 	if len(elections) != 1 || elections[0].ConditionID != "politics" {
 		t.Fatalf("Elections filter = %#v", elections)
+	}
+}
+
+func TestFilterMarketsByCategoryKeepsTechSeparateFromScience(t *testing.T) {
+	markets := []types.Market{
+		{ConditionID: "science", Category: "Science"},
+		{ConditionID: "technology", Category: "Technology"},
+	}
+
+	tech := FilterMarketsByCategory(markets, "Tech")
+
+	if len(tech) != 1 || tech[0].ConditionID != "technology" {
+		t.Fatalf("Tech filter = %#v", tech)
+	}
+}
+
+func TestFilterMarketsByCategoryKeepsWorldSeparateFromPolitics(t *testing.T) {
+	markets := []types.Market{
+		{ConditionID: "politics", Category: "Politics"},
+		{ConditionID: "world", Category: "World"},
+	}
+
+	world := FilterMarketsByCategory(markets, "World")
+
+	if len(world) != 1 || world[0].ConditionID != "world" {
+		t.Fatalf("World filter = %#v", world)
 	}
 }
 

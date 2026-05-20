@@ -108,13 +108,13 @@ func categoryAliases(category string) []string {
 	case "finance", "economy":
 		return []string{"finance", "business", "economy", "markets"}
 	case "technology", "tech":
-		return []string{"technology", "tech", "science", "ai"}
+		return []string{"technology", "tech", "ai"}
 	case "entertainment", "culture", "pop culture":
 		return []string{"entertainment", "culture", "pop culture", "movies"}
 	case "elections":
 		return []string{"elections", "election", "politics"}
 	case "world":
-		return []string{"world", "global", "geopolitics", "politics"}
+		return []string{"world", "global", "geopolitics"}
 	case "weather":
 		return []string{"weather", "climate"}
 	default:
