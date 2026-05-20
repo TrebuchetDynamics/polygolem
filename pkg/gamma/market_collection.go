@@ -68,7 +68,7 @@ func FilterMarketsByCategory(markets []types.Market, category string) []types.Ma
 	}
 	out := make([]types.Market, 0, len(markets))
 	for _, market := range markets {
-		if MarketMatchesCategory(market.Category, selected) {
+		if MarketMatchesCategory(market.Category, selected) || marketTagsMatchCategory(market.Tags, selected) {
 			out = append(out, market)
 		}
 	}
@@ -88,6 +88,15 @@ func MarketMatchesCategory(marketCategory, selectedCategory string) bool {
 	}
 	for _, alias := range categoryAliases(selected) {
 		if strings.Contains(market, alias) {
+			return true
+		}
+	}
+	return false
+}
+
+func marketTagsMatchCategory(tags []types.Tag, selected string) bool {
+	for _, tag := range tags {
+		if MarketMatchesCategory(tag.Label, selected) || MarketMatchesCategory(tag.Slug, selected) {
 			return true
 		}
 	}

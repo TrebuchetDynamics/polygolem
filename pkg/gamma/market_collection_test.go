@@ -79,3 +79,21 @@ func TestFilterMarketsByCategoryAliases(t *testing.T) {
 		t.Fatalf("Elections filter = %#v", elections)
 	}
 }
+
+func TestFilterMarketsByCategoryMatchesTags(t *testing.T) {
+	markets := []types.Market{
+		{ConditionID: "fed", Category: "", Tags: []types.Tag{{Label: "Fed", Slug: "fed"}}},
+		{ConditionID: "sports", Category: "Sports", Tags: []types.Tag{{Label: "NBA", Slug: "nba"}}},
+		{ConditionID: "crypto", Category: "Crypto", Tags: []types.Tag{{Label: "Bitcoin", Slug: "bitcoin"}}},
+	}
+
+	fed := FilterMarketsByCategory(markets, "Fed")
+	bitcoin := FilterMarketsByCategory(markets, "bitcoin")
+
+	if len(fed) != 1 || fed[0].ConditionID != "fed" {
+		t.Fatalf("Fed filter = %#v", fed)
+	}
+	if len(bitcoin) != 1 || bitcoin[0].ConditionID != "crypto" {
+		t.Fatalf("bitcoin filter = %#v", bitcoin)
+	}
+}
