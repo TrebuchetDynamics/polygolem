@@ -116,7 +116,7 @@ func categoryAliases(category string) []string {
 	case "world":
 		return []string{"world", "global", "geopolitics", "politics"}
 	case "weather":
-		return []string{"weather", "climate", "science"}
+		return []string{"weather", "climate"}
 	default:
 		return []string{category}
 	}

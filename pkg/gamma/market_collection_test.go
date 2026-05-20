@@ -80,6 +80,19 @@ func TestFilterMarketsByCategoryAliases(t *testing.T) {
 	}
 }
 
+func TestFilterMarketsByCategoryKeepsWeatherSeparateFromScience(t *testing.T) {
+	markets := []types.Market{
+		{ConditionID: "science", Category: "Science"},
+		{ConditionID: "weather", Category: "Weather"},
+	}
+
+	weather := FilterMarketsByCategory(markets, "Weather")
+
+	if len(weather) != 1 || weather[0].ConditionID != "weather" {
+		t.Fatalf("Weather filter = %#v", weather)
+	}
+}
+
 func TestFilterMarketsByCategoryMatchesTags(t *testing.T) {
 	markets := []types.Market{
 		{ConditionID: "fed", Category: "", Tags: []types.Tag{{Label: "Fed", Slug: "fed"}}},

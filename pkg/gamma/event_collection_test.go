@@ -55,6 +55,19 @@ func TestActiveEventsAllCollectsPagesAndDedupes(t *testing.T) {
 	}
 }
 
+func TestFilterEventsByCategoryKeepsWeatherSeparateFromScience(t *testing.T) {
+	events := []types.Event{
+		{ID: "science", Slug: "science-event", Category: "Science"},
+		{ID: "weather", Slug: "weather-event", Category: "Weather"},
+	}
+
+	weather := FilterEventsByCategory(events, "Weather")
+
+	if len(weather) != 1 || weather[0].ID != "weather" {
+		t.Fatalf("Weather filter = %#v", weather)
+	}
+}
+
 func TestFilterEventsByCategoryAliases(t *testing.T) {
 	events := []types.Event{
 		{ID: "business", Slug: "business-event", Category: "Business"},
