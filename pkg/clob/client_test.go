@@ -62,22 +62,27 @@ func TestClientOrderBookReturnsPublicDTO(t *testing.T) {
 
 func TestClientMarketReturnsPublicDTO(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/clob-markets/condition-1" {
+		if r.URL.Path != "/markets/condition-1" {
 			t.Fatalf("unexpected request path: %s", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
-			"gst":"2026-01-01T00:00:00Z",
-			"t":[{"t":"token-yes","o":"Yes"}],
-			"mos":5,
-			"mts":0.01,
-			"mbf":0,
-			"tbf":0,
-			"rfqe":true,
-			"itode":true,
-			"ibce":true,
-			"fd":{"r":0.02,"e":2,"to":true},
-			"oas":123
+			"condition_id":"condition-1",
+			"game_start_time":"2026-01-01T00:00:00Z",
+			"tokens":[
+				{"token_id":"token-yes","outcome":"Yes","price":1,"winner":true},
+				{"token_id":"token-no","outcome":"No","price":0,"winner":false}
+			],
+			"order_min_size":5,
+			"order_price_min_tick_size":0.01,
+			"maker_base_fee":0,
+			"taker_base_fee":0,
+			"closed":true,
+			"rfq_enabled":true,
+			"taker_order_delay":true,
+			"blockaid_check_enabled":true,
+			"fee_details":{"rate":0.02,"exponent":2,"taker_only":true},
+			"minimum_order_age":123
 		}`))
 	}))
 	defer server.Close()
@@ -89,11 +94,14 @@ func TestClientMarketReturnsPublicDTO(t *testing.T) {
 	}
 
 	var publicMarket *types.CLOBMarket = market
-	if publicMarket.ConditionID != "condition-1" || len(publicMarket.Tokens) != 1 {
+	if publicMarket.ConditionID != "condition-1" || len(publicMarket.Tokens) != 2 {
 		t.Fatalf("unexpected market: %+v", publicMarket)
 	}
-	if got := publicMarket.Tokens[0]; got.TokenID != "token-yes" || got.Outcome != "Yes" {
+	if got := publicMarket.Tokens[0]; got.TokenID != "token-yes" || got.Outcome != "Yes" || !got.Winner {
 		t.Fatalf("unexpected token conversion: %+v", got)
+	}
+	if !publicMarket.Closed {
+		t.Fatalf("closed market status not preserved: %+v", publicMarket)
 	}
 	if publicMarket.OrderMinSize != 5 || publicMarket.OrderPriceMinTickSize != 0.01 {
 		t.Fatalf("unexpected market order constraints: %+v", publicMarket)

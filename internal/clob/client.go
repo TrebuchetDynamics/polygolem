@@ -473,7 +473,7 @@ func (c *Client) Markets(ctx context.Context, nextCursor string) (*polytypes.CLO
 // Market returns a single CLOB market by condition ID.
 func (c *Client) Market(ctx context.Context, conditionID string) (*polytypes.CLOBMarket, error) {
 	var result polytypes.CLOBMarket
-	if err := c.transport.Get(ctx, "/clob-markets/"+url.PathEscape(conditionID), &result); err != nil {
+	if err := c.transport.Get(ctx, "/markets/"+url.PathEscape(conditionID), &result); err != nil {
 		return nil, err
 	}
 	if result.ConditionID == "" {

@@ -643,7 +643,7 @@ func TestPolygolemPublicSDKE2EAgainstLocalPolymarket(t *testing.T) {
 		t.Fatalf("configured CLOB credential flow called derive api key %d times", deriveCalls)
 	}
 	for _, route := range []string{
-		"GET /markets", "GET /public-search", "GET /comments", "GET /clob-markets/condition-1",
+		"GET /markets", "GET /public-search", "GET /comments", "GET /markets/condition-1",
 		"GET /book", "POST /books", "POST /prices", "GET /data/orders", "GET /data/trades",
 		"GET /balance-allowance", "DELETE /order", "DELETE /orders", "POST /order",
 		"GET /positions", "GET /live-volume", "GET /deployed", "GET /nonce",
@@ -1024,7 +1024,7 @@ func newE2ECLOBServer(t *testing.T, rec *e2eRecorder) *httptest.Server {
 			respondJSON(t, w, map[string]string{"timestamp": "1710000000", "iso": "2026-05-08T00:00:00Z"})
 		case "/markets", "/simplified-markets", "/sampling-markets", "/sampling-simplified-markets":
 			respondJSON(t, w, marketList)
-		case "/clob-markets/condition-1":
+		case "/markets/condition-1":
 			respondJSON(t, w, map[string]interface{}{
 				"gst":   "2026-05-08T00:00:00Z",
 				"t":     []map[string]string{{"t": "12345", "o": "Yes"}, {"t": "67890", "o": "No"}},
