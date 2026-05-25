@@ -29,6 +29,36 @@ func validBuilderConfig() BuilderConfig {
 	}
 }
 
+func TestDeployedResponseDecodesStringBooleanAndNumericAddress(t *testing.T) {
+	var resp DeployedResponse
+	if err := json.Unmarshal([]byte(`{"deployed":"true","address":123}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if !resp.Deployed || resp.Address != "123" {
+		t.Fatalf("unexpected deployed response: %+v", resp)
+	}
+}
+
+func TestRelayerTransactionDecodesLowerCamelIDAlias(t *testing.T) {
+	var tx RelayerTransaction
+	if err := json.Unmarshal([]byte(`{"transactionId":"tx-lower-camel","transactionHash":"0xabc","state":"STATE_MINED","type":"WALLET"}`), &tx); err != nil {
+		t.Fatal(err)
+	}
+	if tx.TransactionID != "tx-lower-camel" || tx.TransactionHash != "0xabc" {
+		t.Fatalf("unexpected decoded transaction: %+v", tx)
+	}
+}
+
+func TestRelayerErrorDecodesNumericStringCode(t *testing.T) {
+	var row RelayerError
+	if err := json.Unmarshal([]byte(`{"error":"invalid authorization","code":"401"}`), &row); err != nil {
+		t.Fatal(err)
+	}
+	if row.Error != "invalid authorization" || row.Code != 401 {
+		t.Fatalf("unexpected relayer error: %+v", row)
+	}
+}
+
 func TestNewRequiresBuilderConfig(t *testing.T) {
 	if _, err := New("", BuilderConfig{}, 137); err == nil {
 		t.Fatal("expected error for empty BuilderConfig")
@@ -139,6 +169,13 @@ func TestClientGetNonceAndDeployedRoundTrip(t *testing.T) {
 	}
 	if nonce != "7" {
 		t.Errorf("expected nonce 7, got %q", nonce)
+	}
+	deployedInfo, err := c.Deployed(context.Background(), "0xb72dbe5d44c1b549351bef276ba48a1cca5df662")
+	if err != nil {
+		t.Fatalf("Deployed error: %v", err)
+	}
+	if !deployedInfo.Deployed || deployedInfo.Address != "0xfeed" {
+		t.Fatalf("unexpected deployed response: %+v", deployedInfo)
 	}
 	deployed, err := c.IsDeployed(context.Background(), "0xb72dbe5d44c1b549351bef276ba48a1cca5df662")
 	if err != nil {

@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -30,6 +31,51 @@ func TestRelayerTransactionState_IsTerminal(t *testing.T) {
 		if got := tt.state.IsSuccess(); got != tt.success {
 			t.Errorf("%s.IsSuccess() = %v, want %v", tt.state, got, tt.success)
 		}
+	}
+}
+
+func TestDeployedResponseDecodesStringBooleanAndNumericAddress(t *testing.T) {
+	var resp DeployedResponse
+	if err := json.Unmarshal([]byte(`{"deployed":"true","address":123}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if !resp.Deployed || resp.Address != "123" {
+		t.Fatalf("unexpected deployed response: %+v", resp)
+	}
+}
+
+func TestNonceResponseDecodesNumericNonce(t *testing.T) {
+	var resp NonceResponse
+	if err := json.Unmarshal([]byte(`{"nonce":7}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.Nonce != "7" {
+		t.Fatalf("Nonce=%q", resp.Nonce)
+	}
+}
+
+func TestRelayerTransactionDecodesSnakeCaseAliases(t *testing.T) {
+	var tx RelayerTransaction
+	raw := `{"transaction_id":"tx-1","transaction_hash":"0xabc","proxy_address":"0xwallet","nonce":7,"value":0,"state":"STATE_MINED","type":"WALLET","created_at":"2026-05-24T00:00:00Z","updated_at":"2026-05-24T00:01:00Z"}`
+	if err := json.Unmarshal([]byte(raw), &tx); err != nil {
+		t.Fatal(err)
+	}
+	if tx.TransactionID != "tx-1" || tx.TransactionHash != "0xabc" || tx.ProxyAddress != "0xwallet" {
+		t.Fatalf("unexpected decoded transaction: %+v", tx)
+	}
+	if tx.Nonce != "7" || tx.Value != "0" || tx.CreatedAt == "" || tx.UpdatedAt == "" {
+		t.Fatalf("unexpected scalar fields: %+v", tx)
+	}
+}
+
+func TestRelayerTransactionDecodesLowerCamelIDAlias(t *testing.T) {
+	var tx RelayerTransaction
+	raw := `{"transactionId":"tx-lower-camel","transactionHash":"0xabc","state":"STATE_MINED","type":"WALLET"}`
+	if err := json.Unmarshal([]byte(raw), &tx); err != nil {
+		t.Fatal(err)
+	}
+	if tx.TransactionID != "tx-lower-camel" || tx.TransactionHash != "0xabc" {
+		t.Fatalf("unexpected decoded transaction: %+v", tx)
 	}
 }
 

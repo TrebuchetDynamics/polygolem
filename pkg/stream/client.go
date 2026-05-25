@@ -1,9 +1,9 @@
-// Package stream exposes the public, read-only Polymarket CLOB WebSocket SDK.
+// Package stream exposes Polymarket CLOB WebSocket SDK clients.
 //
-// Use stream when you need market-channel updates for CLOB token IDs:
-// order-book snapshots, price changes, and last-trade events. This package is
-// public market data only. It does not implement authenticated user streams or
-// request L2 WebSocket credentials.
+// Use MarketClient when you need public market-channel updates for CLOB token
+// IDs: order-book snapshots, price changes, and last-trade events. Use
+// UserClient with CLOB L2 credentials for authenticated user order/trade
+// events.
 package stream
 
 import (

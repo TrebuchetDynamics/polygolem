@@ -31,6 +31,8 @@ func NewClient(baseURL string, tc *transport.Client) *Client {
 type Position struct {
 	TokenID         string  `json:"asset"`
 	ConditionID     string  `json:"conditionId"`
+	MarketID        string  `json:"market"`
+	Side            string  `json:"side"`
 	EventID         string  `json:"eventId"`
 	ProxyWallet     string  `json:"proxyWallet"`
 	Size            float64 `json:"size"`
@@ -38,6 +40,7 @@ type Position struct {
 	InitialValue    float64 `json:"initialValue"`
 	CurrentValue    float64 `json:"currentValue"`
 	CurrentPrice    float64 `json:"curPrice"`
+	UnrealizedPnl   float64 `json:"unrealizedPnl"`
 	CashPnl         float64 `json:"cashPnl"`
 	PercentPnl      float64 `json:"percentPnl"`
 	TotalBought     float64 `json:"totalBought"`
@@ -56,6 +59,106 @@ type Position struct {
 	Slug            string `json:"slug"`
 	EventSlug       string `json:"eventSlug"`
 	Icon            string `json:"icon"`
+}
+
+func (p *Position) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		TokenID            string          `json:"asset"`
+		TokenIDSnake       string          `json:"token_id"`
+		ConditionID        string          `json:"conditionId"`
+		ConditionIDSnake   string          `json:"condition_id"`
+		MarketID           string          `json:"market"`
+		MarketIDSnake      string          `json:"market_id"`
+		Side               string          `json:"side"`
+		EventID            string          `json:"eventId"`
+		ProxyWallet        string          `json:"proxyWallet"`
+		Size               json.RawMessage `json:"size"`
+		AvgPrice           json.RawMessage `json:"avgPrice"`
+		AvgPriceSnake      json.RawMessage `json:"avg_price"`
+		InitialValue       json.RawMessage `json:"initialValue"`
+		CurrentValue       json.RawMessage `json:"currentValue"`
+		CurrentPrice       json.RawMessage `json:"curPrice"`
+		CurrentPriceSnake  json.RawMessage `json:"current_price"`
+		UnrealizedPnl      json.RawMessage `json:"unrealizedPnl"`
+		UnrealizedPnlSnake json.RawMessage `json:"unrealized_pnl"`
+		CashPnl            json.RawMessage `json:"cashPnl"`
+		PercentPnl         json.RawMessage `json:"percentPnl"`
+		TotalBought        json.RawMessage `json:"totalBought"`
+		RealizedPnl        json.RawMessage `json:"realizedPnl"`
+		PercentRealized    json.RawMessage `json:"percentRealizedPnl"`
+		Redeemable         json.RawMessage `json:"redeemable"`
+		Mergeable          json.RawMessage `json:"mergeable"`
+		NegativeRisk       json.RawMessage `json:"negativeRisk"`
+		Outcome            string          `json:"outcome"`
+		OutcomeIndex       json.RawMessage `json:"outcomeIndex"`
+		OppositeOutcome    string          `json:"oppositeOutcome"`
+		OppositeAsset      string          `json:"oppositeAsset"`
+		EndDate            string          `json:"endDate"`
+		Title              string          `json:"title"`
+		Slug               string          `json:"slug"`
+		EventSlug          string          `json:"eventSlug"`
+		Icon               string          `json:"icon"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	var err error
+	*p = Position{
+		TokenID:         firstNonEmpty(aux.TokenID, aux.TokenIDSnake),
+		ConditionID:     firstNonEmpty(aux.ConditionID, aux.ConditionIDSnake),
+		MarketID:        firstNonEmpty(aux.MarketID, aux.MarketIDSnake),
+		Side:            aux.Side,
+		EventID:         aux.EventID,
+		ProxyWallet:     aux.ProxyWallet,
+		Redeemable:      jsonBoolOrFalse(aux.Redeemable),
+		Mergeable:       jsonBoolOrFalse(aux.Mergeable),
+		NegativeRisk:    jsonBoolOrFalse(aux.NegativeRisk),
+		Outcome:         aux.Outcome,
+		OppositeOutcome: aux.OppositeOutcome,
+		OppositeAsset:   aux.OppositeAsset,
+		EndDate:         aux.EndDate,
+		Title:           aux.Title,
+		Slug:            aux.Slug,
+		EventSlug:       aux.EventSlug,
+		Icon:            aux.Icon,
+	}
+	if p.Size, err = jsonFloatOrZero(aux.Size); err != nil {
+		return fmt.Errorf("decode position size: %w", err)
+	}
+	if p.AvgPrice, err = jsonFloatOrZero(firstRaw(aux.AvgPrice, aux.AvgPriceSnake)); err != nil {
+		return fmt.Errorf("decode position avgPrice: %w", err)
+	}
+	if p.InitialValue, err = jsonFloatOrZero(aux.InitialValue); err != nil {
+		return fmt.Errorf("decode position initialValue: %w", err)
+	}
+	if p.CurrentValue, err = jsonFloatOrZero(aux.CurrentValue); err != nil {
+		return fmt.Errorf("decode position currentValue: %w", err)
+	}
+	if p.CurrentPrice, err = jsonFloatOrZero(firstRaw(aux.CurrentPrice, aux.CurrentPriceSnake)); err != nil {
+		return fmt.Errorf("decode position curPrice: %w", err)
+	}
+	if p.UnrealizedPnl, err = jsonFloatOrZero(firstRaw(aux.UnrealizedPnl, aux.UnrealizedPnlSnake)); err != nil {
+		return fmt.Errorf("decode position unrealizedPnl: %w", err)
+	}
+	if p.CashPnl, err = jsonFloatOrZero(aux.CashPnl); err != nil {
+		return fmt.Errorf("decode position cashPnl: %w", err)
+	}
+	if p.PercentPnl, err = jsonFloatOrZero(aux.PercentPnl); err != nil {
+		return fmt.Errorf("decode position percentPnl: %w", err)
+	}
+	if p.TotalBought, err = jsonFloatOrZero(aux.TotalBought); err != nil {
+		return fmt.Errorf("decode position totalBought: %w", err)
+	}
+	if p.RealizedPnl, err = jsonFloatOrZero(aux.RealizedPnl); err != nil {
+		return fmt.Errorf("decode position realizedPnl: %w", err)
+	}
+	if p.PercentRealized, err = jsonFloatOrZero(aux.PercentRealized); err != nil {
+		return fmt.Errorf("decode position percentRealizedPnl: %w", err)
+	}
+	if p.OutcomeIndex, err = jsonIntOrZero(aux.OutcomeIndex); err != nil {
+		return fmt.Errorf("decode position outcomeIndex: %w", err)
+	}
+	return nil
 }
 
 type ClosedPosition struct {
@@ -128,7 +231,7 @@ func (p *ClosedPosition) UnmarshalJSON(data []byte) error {
 		Icon             string          `json:"icon"`
 		EventSlug        string          `json:"eventSlug"`
 		Outcome          string          `json:"outcome"`
-		OutcomeIndex     int             `json:"outcomeIndex"`
+		OutcomeIndex     json.RawMessage `json:"outcomeIndex"`
 		OppositeOutcome  string          `json:"oppositeOutcome"`
 		OppositeAsset    string          `json:"oppositeAsset"`
 		EndDate          string          `json:"endDate"`
@@ -164,6 +267,10 @@ func (p *ClosedPosition) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("decode closed position curPrice: %w", err)
 	}
+	outcomeIndex, err := jsonIntOrZero(aux.OutcomeIndex)
+	if err != nil {
+		return fmt.Errorf("decode closed position outcomeIndex: %w", err)
+	}
 	if avgPrice == 0 {
 		avgPrice = avgPriceBuy
 	}
@@ -189,7 +296,7 @@ func (p *ClosedPosition) UnmarshalJSON(data []byte) error {
 		Icon:            aux.Icon,
 		EventSlug:       aux.EventSlug,
 		Outcome:         aux.Outcome,
-		OutcomeIndex:    aux.OutcomeIndex,
+		OutcomeIndex:    outcomeIndex,
 		OppositeOutcome: aux.OppositeOutcome,
 		OppositeAsset:   aux.OppositeAsset,
 		EndDate:         aux.EndDate,
@@ -212,7 +319,7 @@ func (t *Trade) UnmarshalJSON(data []byte) error {
 		FeeRateBps           json.RawMessage `json:"fee_rate_bps"`
 		FeeRateBpsCamel      json.RawMessage `json:"feeRateBps"`
 		Outcome              string          `json:"outcome"`
-		OutcomeIndex         int             `json:"outcomeIndex"`
+		OutcomeIndex         json.RawMessage `json:"outcomeIndex"`
 		Title                string          `json:"title"`
 		Slug                 string          `json:"slug"`
 		EventSlug            string          `json:"eventSlug"`
@@ -243,6 +350,10 @@ func (t *Trade) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("decode trade fee_rate_bps: %w", err)
 	}
+	outcomeIndex, err := jsonIntOrZero(aux.OutcomeIndex)
+	if err != nil {
+		return fmt.Errorf("decode trade outcomeIndex: %w", err)
+	}
 	*t = Trade{
 		ID:              aux.ID,
 		Market:          firstNonEmpty(aux.Market, aux.ConditionID),
@@ -253,7 +364,7 @@ func (t *Trade) UnmarshalJSON(data []byte) error {
 		Size:            size,
 		FeeRateBps:      feeRateBps,
 		Outcome:         aux.Outcome,
-		OutcomeIndex:    aux.OutcomeIndex,
+		OutcomeIndex:    outcomeIndex,
 		Title:           aux.Title,
 		Slug:            aux.Slug,
 		EventSlug:       aux.EventSlug,
@@ -279,20 +390,21 @@ type Activity struct {
 
 func (a *Activity) UnmarshalJSON(data []byte) error {
 	var aux struct {
-		Type      string          `json:"type"`
-		Market    string          `json:"market"`
-		AssetID   string          `json:"asset_id"`
-		Side      string          `json:"side"`
-		Price     json.RawMessage `json:"price"`
-		Size      json.RawMessage `json:"size"`
-		Timestamp json.RawMessage `json:"timestamp"`
+		Type         string          `json:"type"`
+		Market       string          `json:"market"`
+		AssetID      string          `json:"asset_id"`
+		AssetIDCamel string          `json:"assetId"`
+		Side         string          `json:"side"`
+		Price        json.RawMessage `json:"price"`
+		Size         json.RawMessage `json:"size"`
+		Timestamp    json.RawMessage `json:"timestamp"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 	a.Type = aux.Type
 	a.Market = aux.Market
-	a.AssetID = aux.AssetID
+	a.AssetID = firstNonEmpty(aux.AssetID, aux.AssetIDCamel)
 	a.Side = aux.Side
 	a.Price = jsonStringOrNumber(aux.Price)
 	a.Size = jsonStringOrNumber(aux.Size)
@@ -309,6 +421,36 @@ type MetaHolder struct {
 	Volume      float64 `json:"volume"`
 }
 
+func (h *MetaHolder) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		Address     string          `json:"address"`
+		ProxyWallet string          `json:"proxyWallet"`
+		Shares      json.RawMessage `json:"shares"`
+		Amount      json.RawMessage `json:"amount"`
+		Pnl         json.RawMessage `json:"pnl"`
+		Volume      json.RawMessage `json:"volume"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	var err error
+	h.Address = firstNonEmpty(aux.Address, aux.ProxyWallet)
+	h.ProxyWallet = firstNonEmpty(aux.ProxyWallet, aux.Address)
+	if h.Shares, err = jsonFloatOrZero(firstRaw(aux.Shares, aux.Amount)); err != nil {
+		return fmt.Errorf("decode holder shares: %w", err)
+	}
+	if h.Amount, err = jsonFloatOrZero(firstRaw(aux.Amount, aux.Shares)); err != nil {
+		return fmt.Errorf("decode holder amount: %w", err)
+	}
+	if h.Pnl, err = jsonFloatOrZero(aux.Pnl); err != nil {
+		return fmt.Errorf("decode holder pnl: %w", err)
+	}
+	if h.Volume, err = jsonFloatOrZero(aux.Volume); err != nil {
+		return fmt.Errorf("decode holder volume: %w", err)
+	}
+	return nil
+}
+
 type holdersByToken struct {
 	Token   string       `json:"token"`
 	Holders []MetaHolder `json:"holders"`
@@ -320,16 +462,78 @@ type TotalValue struct {
 	Timestamp string  `json:"timestamp"`
 }
 
+func (t *TotalValue) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		User      string          `json:"user"`
+		Value     json.RawMessage `json:"value"`
+		Timestamp json.RawMessage `json:"timestamp"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	value, err := jsonFloatOrZero(aux.Value)
+	if err != nil {
+		return fmt.Errorf("decode total value: %w", err)
+	}
+	t.User = aux.User
+	t.Value = value
+	t.Timestamp = jsonStringOrNumber(aux.Timestamp)
+	return nil
+}
+
 type TotalMarketsTraded struct {
 	User          string `json:"user"`
 	MarketsTraded int    `json:"markets_traded"`
 	Traded        int    `json:"traded,omitempty"`
 }
 
+func (t *TotalMarketsTraded) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		User          string          `json:"user"`
+		MarketsTraded json.RawMessage `json:"markets_traded"`
+		Traded        json.RawMessage `json:"traded"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	marketsTraded, err := jsonIntOrZero(aux.MarketsTraded)
+	if err != nil {
+		return fmt.Errorf("decode markets_traded: %w", err)
+	}
+	traded, err := jsonIntOrZero(aux.Traded)
+	if err != nil {
+		return fmt.Errorf("decode traded: %w", err)
+	}
+	t.User = aux.User
+	t.MarketsTraded = marketsTraded
+	t.Traded = traded
+	return nil
+}
+
 type OpenInterest struct {
 	Market    string  `json:"market"`
 	AssetID   string  `json:"asset_id,omitempty"`
 	OpenValue float64 `json:"value"`
+}
+
+func (o *OpenInterest) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		Market         string          `json:"market"`
+		AssetID        string          `json:"asset_id"`
+		OpenValue      json.RawMessage `json:"value"`
+		OpenValueSnake json.RawMessage `json:"open_value"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	openValue, err := jsonFloatOrZero(firstRaw(aux.OpenValue, aux.OpenValueSnake))
+	if err != nil {
+		return fmt.Errorf("decode open interest value: %w", err)
+	}
+	o.Market = aux.Market
+	o.AssetID = aux.AssetID
+	o.OpenValue = openValue
+	return nil
 }
 
 type TraderLeaderboardEntry struct {
@@ -347,15 +551,72 @@ type LiveVolumeEntry struct {
 	Volume    float64 `json:"volume"`
 }
 
+func (l *LiveVolumeEntry) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		EventID   string          `json:"event_id"`
+		EventSlug string          `json:"event_slug"`
+		Title     string          `json:"title"`
+		Volume    json.RawMessage `json:"volume"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	volume, err := jsonFloatOrZero(aux.Volume)
+	if err != nil {
+		return fmt.Errorf("decode live volume event volume: %w", err)
+	}
+	l.EventID = aux.EventID
+	l.EventSlug = aux.EventSlug
+	l.Title = aux.Title
+	l.Volume = volume
+	return nil
+}
+
 type LiveVolumeMarket struct {
 	Market string  `json:"market"`
 	Value  float64 `json:"value"`
+}
+
+func (l *LiveVolumeMarket) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		Market string          `json:"market"`
+		Value  json.RawMessage `json:"value"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	value, err := jsonFloatOrZero(aux.Value)
+	if err != nil {
+		return fmt.Errorf("decode live volume market value: %w", err)
+	}
+	l.Market = aux.Market
+	l.Value = value
+	return nil
 }
 
 type LiveVolumeResponse struct {
 	Total   float64            `json:"total"`
 	Markets []LiveVolumeMarket `json:"markets,omitempty"`
 	Events  []LiveVolumeEntry  `json:"events,omitempty"`
+}
+
+func (l *LiveVolumeResponse) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		Total   json.RawMessage    `json:"total"`
+		Markets []LiveVolumeMarket `json:"markets"`
+		Events  []LiveVolumeEntry  `json:"events"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	total, err := jsonFloatOrZero(aux.Total)
+	if err != nil {
+		return fmt.Errorf("decode live volume total: %w", err)
+	}
+	l.Total = total
+	l.Markets = aux.Markets
+	l.Events = aux.Events
+	return nil
 }
 
 // --- Methods ---
@@ -466,6 +727,9 @@ func (c *Client) TotalValue(ctx context.Context, user string) (*TotalValue, erro
 	}
 	var result TotalValue
 	if err := json.Unmarshal(raw, &result); err == nil {
+		if result.User == "" {
+			result.User = user
+		}
 		return &result, nil
 	}
 	var rows []TotalValue
@@ -476,6 +740,9 @@ func (c *Client) TotalValue(ctx context.Context, user string) (*TotalValue, erro
 		return &TotalValue{User: user}, nil
 	}
 	result = rows[0]
+	if result.User == "" {
+		result.User = user
+	}
 	return &result, nil
 }
 
@@ -519,16 +786,24 @@ func (c *Client) TraderLeaderboard(ctx context.Context, limit int) ([]TraderLead
 		if err != nil {
 			return nil, err
 		}
-		volume := row.Volume
-		if volume == 0 {
-			volume = row.Vol
+		volume, err := jsonFloatOrZero(firstRaw(row.Volume, row.Vol))
+		if err != nil {
+			return nil, fmt.Errorf("decode leaderboard volume: %w", err)
+		}
+		pnl, err := jsonFloatOrZero(row.Pnl)
+		if err != nil {
+			return nil, fmt.Errorf("decode leaderboard pnl: %w", err)
+		}
+		roi, err := jsonFloatOrZero(row.ROI)
+		if err != nil {
+			return nil, fmt.Errorf("decode leaderboard roi: %w", err)
 		}
 		out[i] = TraderLeaderboardEntry{
 			Rank:   rank,
 			User:   firstNonEmpty(row.User, row.ProxyWallet, row.UserName),
 			Volume: volume,
-			Pnl:    row.Pnl,
-			ROI:    row.ROI,
+			Pnl:    pnl,
+			ROI:    roi,
 		}
 	}
 	return out, nil
@@ -539,10 +814,10 @@ type leaderboardWire struct {
 	User        string          `json:"user"`
 	ProxyWallet string          `json:"proxyWallet"`
 	UserName    string          `json:"userName"`
-	Volume      float64         `json:"volume"`
-	Vol         float64         `json:"vol"`
-	Pnl         float64         `json:"pnl"`
-	ROI         float64         `json:"roi"`
+	Volume      json.RawMessage `json:"volume"`
+	Vol         json.RawMessage `json:"vol"`
+	Pnl         json.RawMessage `json:"pnl"`
+	ROI         json.RawMessage `json:"roi"`
 }
 
 func parseLeaderboardRank(raw json.RawMessage) (int, error) {
@@ -611,6 +886,15 @@ func jsonIntOrZero(raw json.RawMessage) (int, error) {
 		return 0, err
 	}
 	return n, nil
+}
+
+func jsonBoolOrFalse(raw json.RawMessage) bool {
+	switch strings.ToLower(jsonStringOrNumber(raw)) {
+	case "true", "1":
+		return true
+	default:
+		return false
+	}
 }
 
 func jsonStringOrNumber(raw json.RawMessage) string {

@@ -53,6 +53,8 @@ polygolem - Safe Polymarket SDK and CLI for Go
   bridge - Polymarket Bridge API
     assets - List supported bridge assets
     deposit - Create deposit addresses
+    quote - Quote a bridge deposit move
+    status - Get bridge deposit status
   builder - Manage builder credentials
     auto - Mint CLOB L2 creds via ClobAuth signature
     onboard - Capture builder credentials and persist locally
@@ -144,9 +146,12 @@ polygolem - Safe Polymarket SDK and CLI for Go
     sell - Simulate a sell order (paper trading)
     trade - Paper trade the current crypto window in one command
   preflight - Inspect local CLI readiness
+  relayer - Inspect Polymarket relayer state
+    transaction - Get relayer transaction state
   stream - Polymarket WebSocket streams
     crypto - Stream live crypto market events
     market - Stream public CLOB market events
+    user - Stream authenticated CLOB user order/trade events
   version - Print version
 ```
 
@@ -180,6 +185,7 @@ polygolem [flags]
 | `polygolem orderbook` | Read CLOB order book data |
 | `polygolem paper` | Paper trading simulation for crypto markets |
 | `polygolem preflight` | Inspect local CLI readiness |
+| `polygolem relayer` | Inspect Polymarket relayer state |
 | `polygolem stream` | Polymarket WebSocket streams |
 | `polygolem version` | Print version |
 
@@ -391,6 +397,8 @@ polygolem bridge [flags]
 |---|---|
 | `polygolem bridge assets` | List supported bridge assets |
 | `polygolem bridge deposit` | Create deposit addresses |
+| `polygolem bridge quote` | Quote a bridge deposit move |
+| `polygolem bridge status` | Get bridge deposit status |
 
 **Flags:**
 
@@ -431,6 +439,46 @@ polygolem bridge deposit <address> [flags]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `-h, --help` | `bool` | `false` | help for deposit |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem bridge quote
+
+Quote a bridge deposit move
+
+**Usage:**
+
+```bash
+polygolem bridge quote [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--from-amount-base-unit` | `string` | `""` | source amount in base units |
+| `--from-chain-id` | `string` | `""` | source chain ID |
+| `--from-token-address` | `string` | `""` | source token address |
+| `-h, --help` | `bool` | `false` | help for quote |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--recipient-address` | `string` | `""` | recipient Polymarket address |
+| `--to-chain-id` | `string` | `""` | destination chain ID |
+| `--to-token-address` | `string` | `""` | destination token address |
+
+### polygolem bridge status
+
+Get bridge deposit status
+
+**Usage:**
+
+```bash
+polygolem bridge status <deposit-address> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for status |
 | `--json` | `bool` | `false` | emit JSON output |
 
 ### polygolem builder
@@ -2507,6 +2555,46 @@ polygolem preflight [flags]
 | `-h, --help` | `bool` | `false` | help for preflight |
 | `--json` | `bool` | `false` | emit JSON output |
 
+### polygolem relayer
+
+Inspect Polymarket relayer state
+
+**Usage:**
+
+```bash
+polygolem relayer [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem relayer transaction` | Get relayer transaction state |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for relayer |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem relayer transaction
+
+Get relayer transaction state
+
+**Usage:**
+
+```bash
+polygolem relayer transaction <tx-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for transaction |
+| `--json` | `bool` | `false` | emit JSON output |
+
 ### polygolem stream
 
 Polymarket WebSocket streams
@@ -2523,6 +2611,7 @@ polygolem stream [flags]
 |---|---|
 | `polygolem stream crypto` | Stream live crypto market events |
 | `polygolem stream market` | Stream public CLOB market events |
+| `polygolem stream user` | Stream authenticated CLOB user order/trade events |
 
 **Flags:**
 
@@ -2583,6 +2672,32 @@ polygolem stream market [flags]
 | `--level` | `int` | `0` | optional Polymarket market-stream subscription level |
 | `--max-messages` | `int` | `0` | stop after this many messages; 0 streams until interrupted |
 | `--url` | `string` | `wss://ws-subscriptions-clob.polymarket.com/ws/market` | WebSocket URL |
+
+### polygolem stream user
+
+Stream authenticated CLOB user order/trade events
+
+Stream authenticated user-channel events from Polymarket CLOB.
+
+Requires CLOB L2 credentials from POLYMARKET_CLOB_API_KEY,
+POLYMARKET_CLOB_SECRET, and POLYMARKET_CLOB_PASSPHRASE (short CLOB_*
+aliases are also accepted). Emits typed order and trade events as JSON.
+
+**Usage:**
+
+```bash
+polygolem stream user [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for user |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--markets` | `string` | `""` | optional comma-separated market condition IDs |
+| `--max-messages` | `int` | `0` | stop after this many messages; 0 streams until interrupted |
+| `--url` | `string` | `wss://ws-subscriptions-clob.polymarket.com/ws/user` | WebSocket URL |
 
 ### polygolem version
 

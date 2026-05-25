@@ -2,12 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"strings"
-	"time"
 
-	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
-	"github.com/TrebuchetDynamics/polygolem/pkg/marketdata"
-	sdkstream "github.com/TrebuchetDynamics/polygolem/pkg/stream"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/marketdatacrypto"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/marketdatalive"
 	"github.com/spf13/cobra"
 )
 
@@ -22,63 +19,18 @@ func marketDataCmd(jsonOut bool) *cobra.Command {
 	var level int
 	liveCmd := &cobra.Command{Use: "live", Short: "Stream enriched CLOB market-data snapshots", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			assetIDs := splitCSV(assetsRaw)
-			if len(assetIDs) == 0 {
-				return fmt.Errorf("--asset-ids required")
-			}
-			cfg := sdkstream.DefaultConfig(url)
-			cfg.PingInterval = 10 * time.Second
-			cfg.CustomFeatureEnabled = customFeatures
-			cfg.Level = level
-			client := sdkstream.NewMarketClient(cfg)
-			tracker := marketdata.NewTracker()
-			done := make(chan struct{})
-			count := 0
-			emit := func(v interface{}) {
-				if maxMessages > 0 && count >= maxMessages {
-					return
-				}
-				count++
-				_ = w.printJSON(cmd, v)
-				if maxMessages > 0 && count >= maxMessages {
-					close(done)
-				}
-			}
-			client.OnBook = func(msg sdkstream.BookMessage) {
-				emit(tracker.ApplyBook(msg))
-			}
-			client.OnPriceChange = func(msg sdkstream.PriceChangeMessage) {
-				for _, snapshot := range tracker.ApplyPriceChange(msg) {
-					emit(snapshot)
-				}
-			}
-			client.OnLastTrade = func(msg sdkstream.LastTradeMessage) {
-				emit(tracker.ApplyLastTrade(msg))
-			}
-			client.OnBestBidAsk = func(msg sdkstream.BestBidAskMessage) {
-				emit(tracker.ApplyBestBidAsk(msg))
-			}
-			client.OnTickSizeChange = func(msg sdkstream.TickSizeChangeMessage) {
-				emit(tracker.ApplyTickSizeChange(msg))
-			}
-			client.OnError = func(err error) {
-				if maxMessages == 0 {
-					_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "marketdata stream error: %v\n", err)
-				}
-			}
-			if err := client.Connect(cmd.Context()); err != nil {
-				return err
-			}
-			defer client.Close()
-			if err := client.SubscribeAssets(cmd.Context(), assetIDs); err != nil {
-				return err
-			}
-			select {
-			case <-cmd.Context().Done():
-				return cmd.Context().Err()
-			case <-done:
-				return nil
-			}
+			return marketdatalive.New(marketdatalive.NewSDKStreamer).Run(
+				cmd.Context(),
+				marketdatalive.Request{
+					AssetIDsRaw:    assetsRaw,
+					URL:            url,
+					MaxMessages:    maxMessages,
+					CustomFeatures: customFeatures,
+					Level:          level,
+				},
+				func(v interface{}) { _ = w.printJSON(cmd, v) },
+				func(err error) { _, _ = fmt.Fprintf(cmd.ErrOrStderr(), "marketdata stream error: %v\n", err) },
+			)
 		},
 	}
 	liveCmd.Flags().StringVar(&assetsRaw, "asset-ids", "", "comma-separated CLOB token IDs")
@@ -102,111 +54,15 @@ Examples:
   polygolem marketdata crypto --asset ETH --limit 10       # ETH market snapshots`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			searchQuery := cryptoAsset
-			if cryptoInterval != "" {
-				if searchQuery != "" {
-					searchQuery += " "
-				}
-				searchQuery += cryptoInterval
-			}
-			if searchQuery == "" {
-				searchQuery = "crypto"
-			}
-			searchLimit := 50
-			resp, err := w.gamma.Search(cmd.Context(), &polytypes.SearchParams{
-				Q:            searchQuery,
-				LimitPerType: &searchLimit,
+			result, err := marketdatacrypto.New(w.gamma, w.clob).Run(cmd.Context(), marketdatacrypto.Request{
+				Asset:    cryptoAsset,
+				Interval: cryptoInterval,
+				Limit:    cryptoLimit,
 			})
 			if err != nil {
 				return err
 			}
-
-			type cryptoSnapshot struct {
-				EventID         string  `json:"event_id"`
-				EventTitle      string  `json:"event_title"`
-				MarketID        string  `json:"market_id"`
-				Question        string  `json:"question"`
-				TokenID         string  `json:"token_id"`
-				Outcome         string  `json:"outcome"`
-				Price           string  `json:"price"`
-				Spread          string  `json:"spread"`
-				Midpoint        string  `json:"midpoint"`
-				TickSize        string  `json:"tick_size"`
-				Volume24hr      float64 `json:"volume_24h"`
-				AcceptingOrders bool    `json:"accepting_orders"`
-				EndDate         string  `json:"end_date"`
-			}
-
-			var results []cryptoSnapshot
-			for _, event := range resp.Events {
-				if !event.Active || event.Closed {
-					continue
-				}
-				for _, market := range event.Markets {
-					if !market.Active || market.Closed {
-						continue
-					}
-					if cryptoAsset != "" &&
-						!strings.Contains(strings.ToUpper(market.Question), strings.ToUpper(cryptoAsset)) &&
-						!strings.Contains(strings.ToUpper(event.Title), strings.ToUpper(cryptoAsset)) {
-						continue
-					}
-					if cryptoInterval != "" &&
-						!strings.Contains(strings.ToLower(event.Title), strings.ToLower(cryptoInterval)) &&
-						!strings.Contains(strings.ToLower(market.Question), strings.ToLower(cryptoInterval)) {
-						continue
-					}
-
-					tokenIDs := parseClobTokenIDs(market.ClobTokenIDs)
-					if len(tokenIDs) == 0 {
-						continue
-					}
-					tokenID := tokenIDs[0]
-
-					cs := cryptoSnapshot{
-						EventID:         event.ID,
-						EventTitle:      event.Title,
-						MarketID:        market.ID,
-						Question:        market.Question,
-						TokenID:         tokenID,
-						Outcome:         "",
-						Volume24hr:      market.Volume24hr,
-						AcceptingOrders: market.AcceptingOrders,
-						EndDate:         market.EndDateISO,
-					}
-					if outcomes := []string(market.Outcomes); len(outcomes) > 0 {
-						cs.Outcome = outcomes[0]
-					}
-					if price, err := w.clob.Price(cmd.Context(), tokenID, "BUY"); err == nil {
-						cs.Price = price
-					}
-					if spread, err := w.clob.Spread(cmd.Context(), tokenID); err == nil {
-						cs.Spread = spread
-					}
-					if midpoint, err := w.clob.Midpoint(cmd.Context(), tokenID); err == nil {
-						cs.Midpoint = midpoint
-					}
-					if tick, err := w.clob.TickSize(cmd.Context(), tokenID); err == nil && tick != nil {
-						cs.TickSize = tick.MinimumTickSize
-					}
-
-					results = append(results, cs)
-					if len(results) >= cryptoLimit {
-						break
-					}
-				}
-				if len(results) >= cryptoLimit {
-					break
-				}
-			}
-
-			return w.printJSON(cmd, map[string]interface{}{
-				"query":    searchQuery,
-				"asset":    cryptoAsset,
-				"interval": cryptoInterval,
-				"count":    len(results),
-				"markets":  results,
-			})
+			return w.printJSON(cmd, result)
 		},
 	}
 	cryptoCmd.Flags().StringVar(&cryptoAsset, "asset", "", "crypto asset filter (BTC, ETH, SOL, XRP, DOGE, BNB, HYPE)")

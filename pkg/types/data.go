@@ -7,6 +7,8 @@ package types
 type Position struct {
 	TokenID         string  `json:"asset"`
 	ConditionID     string  `json:"conditionId"`
+	MarketID        string  `json:"market,omitempty"`
+	Side            string  `json:"side,omitempty"`
 	EventID         string  `json:"eventId"`
 	ProxyWallet     string  `json:"proxyWallet"`
 	Size            float64 `json:"size"`
@@ -14,6 +16,7 @@ type Position struct {
 	InitialValue    float64 `json:"initialValue"`
 	CurrentValue    float64 `json:"currentValue"`
 	CurrentPrice    float64 `json:"curPrice"`
+	UnrealizedPnl   float64 `json:"unrealizedPnl,omitempty"`
 	CashPnl         float64 `json:"cashPnl"`
 	PercentPnl      float64 `json:"percentPnl"`
 	TotalBought     float64 `json:"totalBought"`
@@ -96,10 +99,12 @@ type Activity struct {
 
 // Holder is a top-holder Data API row.
 type Holder struct {
-	Address string  `json:"address"`
-	Shares  float64 `json:"shares"`
-	Pnl     float64 `json:"pnl"`
-	Volume  float64 `json:"volume"`
+	Address     string  `json:"address"`
+	ProxyWallet string  `json:"proxyWallet,omitempty"`
+	Shares      float64 `json:"shares"`
+	Amount      float64 `json:"amount,omitempty"`
+	Pnl         float64 `json:"pnl"`
+	Volume      float64 `json:"volume"`
 }
 
 // PortfolioValue is a user's total portfolio value.
@@ -113,6 +118,7 @@ type PortfolioValue struct {
 type TotalMarketsTraded struct {
 	User          string `json:"user"`
 	MarketsTraded int    `json:"markets_traded"`
+	Traded        int    `json:"traded,omitempty"`
 }
 
 // OpenInterest is an open-interest row.

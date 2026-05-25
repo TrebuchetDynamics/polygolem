@@ -2,56 +2,45 @@ package cli
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/orderbookreads"
 	"github.com/spf13/cobra"
 )
 
+type orderbookRunner interface {
+	Run(context.Context, orderbookreads.Request) (any, error)
+}
+
 func orderbookCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
+	return newOrderbookCommand(orderbookreads.New(w.clob))
+}
+
+func newOrderbookCommand(runner orderbookRunner) *cobra.Command {
 	var tokenID string
 
 	cmd := commandGroup("orderbook", "Read CLOB order book data")
 
 	for _, spec := range []struct {
 		use, short string
-		fn         func(context.Context, string) (interface{}, error)
+		op         orderbookreads.Operation
 	}{
-		{"get", "Get L2 order book", func(ctx context.Context, tid string) (interface{}, error) { return w.clob.OrderBook(ctx, tid) }},
-		{"price", "Get best price (BUY side)", func(ctx context.Context, tid string) (interface{}, error) {
-			p, err := w.clob.Price(ctx, tid, "BUY")
-			return map[string]string{"token_id": tid, "price": p}, err
-		}},
-		{"midpoint", "Get midpoint price", func(ctx context.Context, tid string) (interface{}, error) {
-			m, err := w.clob.Midpoint(ctx, tid)
-			return map[string]string{"token_id": tid, "midpoint": m}, err
-		}},
-		{"spread", "Get bid-ask spread", func(ctx context.Context, tid string) (interface{}, error) {
-			s, err := w.clob.Spread(ctx, tid)
-			return map[string]string{"token_id": tid, "spread": s}, err
-		}},
-		{"tick-size", "Get minimum tick size", func(ctx context.Context, tid string) (interface{}, error) { return w.clob.TickSize(ctx, tid) }},
-		{"fee-rate", "Get fee rate in bps", func(ctx context.Context, tid string) (interface{}, error) {
-			f, err := w.clob.FeeRateBps(ctx, tid)
-			return map[string]string{"token_id": tid, "fee_rate_bps": strconv.Itoa(f)}, err
-		}},
-		{"last-trade", "Get last trade price", func(ctx context.Context, tid string) (interface{}, error) {
-			p, err := w.clob.LastTradePrice(ctx, tid)
-			return map[string]string{"token_id": tid, "price": p}, err
-		}},
+		{"get", "Get L2 order book", orderbookreads.Get},
+		{"price", "Get best price (BUY side)", orderbookreads.Price},
+		{"midpoint", "Get midpoint price", orderbookreads.Midpoint},
+		{"spread", "Get bid-ask spread", orderbookreads.Spread},
+		{"tick-size", "Get minimum tick size", orderbookreads.TickSize},
+		{"fee-rate", "Get fee rate in bps", orderbookreads.FeeRate},
+		{"last-trade", "Get last trade price", orderbookreads.LastTrade},
 	} {
 		sub := spec
 		c := &cobra.Command{Use: sub.use, Short: sub.short, Args: cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if tokenID == "" {
-					return fmt.Errorf("--token-id required")
-				}
-				result, err := sub.fn(cmd.Context(), tokenID)
+				result, err := runner.Run(cmd.Context(), orderbookreads.Request{Operation: sub.op, TokenID: tokenID})
 				if err != nil {
 					return err
 				}
-				return w.printJSON(cmd, result)
+				return writeCommandJSON(cmd, result)
 			},
 		}
 		c.Flags().StringVar(&tokenID, "token-id", "", "CLOB token ID")

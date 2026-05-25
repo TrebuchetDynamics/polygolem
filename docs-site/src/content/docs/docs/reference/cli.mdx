@@ -18,6 +18,8 @@ polygolem - Safe Polymarket SDK and CLI for Go
   bridge - Polymarket Bridge API
     assets - List supported bridge assets
     deposit - Create deposit addresses
+    quote - Quote a bridge deposit move
+    status - Get bridge deposit status
   builder - Manage builder credentials
     auto - Mint CLOB L2 creds via ClobAuth signature
     onboard - Capture builder credentials and persist locally
@@ -109,9 +111,12 @@ polygolem - Safe Polymarket SDK and CLI for Go
     sell - Simulate a sell order (paper trading)
     trade - Paper trade the current crypto window in one command
   preflight - Inspect local CLI readiness
+  relayer - Inspect Polymarket relayer state
+    transaction - Get relayer transaction state
   stream - Polymarket WebSocket streams
     crypto - Stream live crypto market events
     market - Stream public CLOB market events
+    user - Stream authenticated CLOB user order/trade events
   version - Print version
 ```
 
@@ -133,6 +138,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
 | `polygolem orderbook` | Read CLOB order book data |
 | `polygolem paper` | Paper trading simulation for crypto markets |
 | `polygolem preflight` | Inspect local CLI readiness |
+| `polygolem relayer` | Inspect Polymarket relayer state |
 | `polygolem stream` | Polymarket WebSocket streams |
 | `polygolem version` | Print version |
 

@@ -24,6 +24,7 @@ import (
 const (
 	chainID                  = int64(137)
 	clobExchangeAddress      = "0xE111180000d2663C0091e4f400237545B87B996B"
+	negRiskExchangeAddress   = "0xe2222d279d744050d28e00520010520000310F59"
 	bytes32Zero              = "0x0000000000000000000000000000000000000000000000000000000000000000"
 	depositWalletDomainName  = "DepositWallet"
 	depositWalletDomainVer   = "1"
@@ -45,7 +46,21 @@ func main() {
 	signatureType := int64(3) // poly1271
 	timestamp := "1700000000000"
 
-	td := buildOrderTypedData(salt, maker, signer, tokenID, makerAmount, takerAmount, side, signatureType, timestamp, false)
+	out := map[string]map[string]string{
+		"regular": emitVector(salt, maker, signer, tokenID, makerAmount, takerAmount, side, signatureType, timestamp, false),
+		"negRisk": emitVector(salt, maker, signer, tokenID, makerAmount, takerAmount, side, signatureType, timestamp, true),
+	}
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(out); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func emitVector(salt, maker, signer, tokenID, makerAmount, takerAmount, side string, signatureType int64, timestamp string, negRisk bool) map[string]string {
+	td := buildOrderTypedData(salt, maker, signer, tokenID, makerAmount, takerAmount, side, signatureType, timestamp, negRisk)
 
 	_, rawDataStr, err := apitypes.TypedDataAndHash(td)
 	if err != nil {
@@ -93,7 +108,7 @@ func main() {
 	wrap = append(wrap, []byte(canonicalContentsType)...)
 	wrap = append(wrap, lenBuf[:]...)
 
-	out := map[string]string{
+	return map[string]string{
 		"appDomainSep":        hex.EncodeToString(appDomainSep),
 		"contents":            hex.EncodeToString(contents),
 		"tdsTypeHash":         hex.EncodeToString(tdsTypeHash),
@@ -107,17 +122,13 @@ func main() {
 		"assembledWrap":       hex.EncodeToString(wrap),
 		"wrapLength":          fmt.Sprintf("%d", len(wrap)),
 	}
-
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(out); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }
 
 func buildOrderTypedData(salt, maker, signer, tokenID, makerAmount, takerAmount, side string, signatureType int64, timestamp string, negRisk bool) apitypes.TypedData {
 	verifyingContract := clobExchangeAddress
+	if negRisk {
+		verifyingContract = negRiskExchangeAddress
+	}
 	sideInt := int64(0)
 	if side == "SELL" {
 		sideInt = 1

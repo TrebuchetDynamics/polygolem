@@ -16,6 +16,8 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/internal/gamma"
 	"github.com/TrebuchetDynamics/polygolem/internal/relayer"
 	"github.com/TrebuchetDynamics/polygolem/internal/rpc"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletreads"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletsettlement"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 	"github.com/TrebuchetDynamics/polygolem/pkg/data"
@@ -72,6 +74,33 @@ func depositWalletCmd(jsonOut bool) *cobra.Command {
 	return cmd
 }
 
+func depositWalletReadsRunner(cmd *cobra.Command, enableTrading depositwalletreads.EnableTradingValidator) *depositwalletreads.Runner {
+	return depositwalletreads.New(depositwalletreads.Config{
+		PrivateKey: requirePrivateKey,
+		Relayer: func(ctx context.Context, privateKey string) (depositwalletreads.RelayerReader, error) {
+			rc, _, err := relayerClientForAutomation(ctx, cmd.ErrOrStderr(), privateKey)
+			return rc, err
+		},
+		Deployment:    contracts.DepositWalletDeployed,
+		RPCURL:        func() string { return os.Getenv("POLYGON_RPC_URL") },
+		EnableTrading: enableTrading,
+	})
+}
+
+func depositWalletSettlementRunner() *depositwalletsettlement.Runner {
+	return depositwalletsettlement.New(depositwalletsettlement.Config{
+		PrivateKey: requirePrivateKey,
+		DataClient: dataAPIClient,
+		RelayerConfigured: func() bool {
+			_, err := relayerClientFromEnv()
+			return err == nil
+		},
+		RPCURL:         func() string { return os.Getenv("POLYGON_RPC_URL") },
+		CheckReadiness: settlement.CheckReadiness,
+		FindRedeemable: settlement.FindRedeemable,
+	})
+}
+
 func depositWalletDeriveCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
 	cmd := &cobra.Command{
@@ -79,22 +108,11 @@ func depositWalletDeriveCmd(jsonOut bool) *cobra.Command {
 		Short: "Derive the deterministic deposit wallet address",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
+			result, err := depositWalletReadsRunner(cmd, nil).Derive(cmd.Context())
 			if err != nil {
 				return err
 			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			wallet, err := auth.MakerAddressForSignatureType(signer.Address(), signer.ChainID(), 3)
-			if err != nil {
-				return fmt.Errorf("derive deposit wallet: %w", err)
-			}
-			return w.printJSON(cmd, map[string]string{
-				"owner":         signer.Address(),
-				"depositWallet": wallet,
-			})
+			return w.printJSON(cmd, result)
 		},
 	}
 	return cmd
@@ -181,28 +199,11 @@ func depositWalletNonceCmd(jsonOut bool) *cobra.Command {
 		Short: "Get the current WALLET nonce for the owner",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
+			result, err := depositWalletReadsRunner(cmd, nil).Nonce(cmd.Context())
 			if err != nil {
 				return err
 			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			owner := signer.Address()
-			rc, _, err := relayerClientForAutomation(cmd.Context(), cmd.ErrOrStderr(), key)
-			if err != nil {
-				return fmt.Errorf("init relayer client: %w", err)
-			}
-			nonce, err := rc.GetNonce(cmd.Context(), owner)
-			if err != nil {
-				return fmt.Errorf("get nonce: %w", err)
-			}
-			return printJSON(cmd, map[string]string{
-				"address": owner,
-				"type":    "WALLET",
-				"nonce":   nonce,
-			})
+			return printJSON(cmd, result)
 		},
 	}
 	return cmd
@@ -217,62 +218,19 @@ func depositWalletStatusCmd(jsonOut bool) *cobra.Command {
 		Short: "Check deposit wallet deployment status or transaction state",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
-			if err != nil {
-				return err
-			}
-			rc, _, err := relayerClientForAutomation(cmd.Context(), cmd.ErrOrStderr(), key)
-			if err != nil {
-				return fmt.Errorf("init relayer client: %w", err)
-			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			owner := signer.Address()
-
+			reads := depositWalletReadsRunner(cmd, func(ctx context.Context, privateKey string, wallet string, nonce string) (map[string]interface{}, error) {
+				return validateEnableTradingReadiness(ctx, privateKey, wallet, nonce, clobCredentialsReadyForCLI(ctx, privateKey), firstNonEmptyCLI(rpcURL, os.Getenv("POLYGON_RPC_URL")))
+			})
 			if txID != "" {
-				tx, err := rc.GetTransaction(cmd.Context(), txID)
-				if err != nil {
-					return fmt.Errorf("get transaction: %w", err)
-				}
-				return printJSON(cmd, tx)
-			}
-			relayerDeployed, err := rc.IsDeployed(cmd.Context(), owner)
-			if err != nil {
-				return fmt.Errorf("deployed check: %w", err)
-			}
-			wallet, err := auth.MakerAddressForSignatureType(owner, 137, 3)
-			if err != nil {
-				return fmt.Errorf("derive deposit wallet address: %w", err)
-			}
-			onchainDeployed := relayerDeployed
-			if !relayerDeployed {
-				codeStatus, err := contracts.DepositWalletDeployed(cmd.Context(), wallet, os.Getenv("POLYGON_RPC_URL"))
-				if err != nil {
-					return fmt.Errorf("on-chain deposit wallet code check: %w", err)
-				}
-				onchainDeployed = codeStatus.Deployed
-			}
-			nonce, err := rc.GetNonce(cmd.Context(), owner)
-			if err != nil {
-				nonce = "error: " + err.Error()
-			}
-			result := map[string]interface{}{
-				"owner":                  owner,
-				"depositWallet":          wallet,
-				"deployed":               relayerDeployed || onchainDeployed,
-				"relayerDeployed":        relayerDeployed,
-				"onchainCodeDeployed":    onchainDeployed,
-				"deploymentStatusSource": deploymentStatusSource(relayerDeployed, onchainDeployed),
-				"walletNonce":            nonce,
-			}
-			if checkEnableTrading {
-				validation, err := validateEnableTradingReadiness(cmd.Context(), key, wallet, nonce, clobCredentialsReadyForCLI(cmd.Context(), key), firstNonEmptyCLI(rpcURL, os.Getenv("POLYGON_RPC_URL")))
+				tx, err := reads.Transaction(cmd.Context(), txID)
 				if err != nil {
 					return err
 				}
-				result["enableTrading"] = validation
+				return printJSON(cmd, tx)
+			}
+			result, err := reads.Status(cmd.Context(), depositwalletreads.StatusRequest{CheckEnableTrading: checkEnableTrading})
+			if err != nil {
+				return err
 			}
 			return printJSON(cmd, result)
 		},
@@ -1129,16 +1087,6 @@ func depositWalletDeployed(ctx context.Context, rc *relayer.Client, owner string
 	return status.Deployed, nil
 }
 
-func deploymentStatusSource(relayerDeployed bool, onchainDeployed bool) string {
-	if relayerDeployed {
-		return "relayer"
-	}
-	if onchainDeployed {
-		return "polygon_code"
-	}
-	return "relayer_and_polygon_code"
-}
-
 func parsePUSDAmount(s string) (*big.Int, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -1445,24 +1393,7 @@ deposit-wallet settlement is relayer + collateral adapter only: no direct EOA
 submission path, no raw ConditionalTokens path, and no SAFE/PROXY shortcut.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
-			if err != nil {
-				return err
-			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			owner := signer.Address()
-			wallet, err := auth.MakerAddressForSignatureType(owner, 137, 3)
-			if err != nil {
-				return fmt.Errorf("derive deposit wallet: %w", err)
-			}
-			_, relayerErr := relayerClientFromEnv()
-			status, err := settlement.CheckReadiness(cmd.Context(), dataAPIClient(), owner, wallet, settlement.ReadinessOptions{
-				RPCURL:            firstNonEmptyCLI(rpcURL, os.Getenv("POLYGON_RPC_URL")),
-				RelayerConfigured: relayerErr == nil,
-			})
+			status, err := depositWalletSettlementRunner().SettlementStatus(cmd.Context(), depositwalletsettlement.StatusRequest{RPCURL: rpcURL})
 			if err != nil {
 				return err
 			}
@@ -1488,27 +1419,11 @@ since POLY_1271 positions live in the wallet.
 Use this before running 'redeem' to see what would be submitted.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
+			result, err := depositWalletSettlementRunner().Redeemable(cmd.Context())
 			if err != nil {
 				return err
 			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			wallet, err := auth.MakerAddressForSignatureType(signer.Address(), 137, 3)
-			if err != nil {
-				return fmt.Errorf("derive deposit wallet: %w", err)
-			}
-			rows, err := settlement.FindRedeemable(cmd.Context(), dataAPIClient(), wallet)
-			if err != nil {
-				return fmt.Errorf("find redeemable: %w", err)
-			}
-			return printJSON(cmd, map[string]interface{}{
-				"depositWallet": wallet,
-				"count":         len(rows),
-				"positions":     rows,
-			})
+			return printJSON(cmd, result)
 		},
 	}
 	return cmd

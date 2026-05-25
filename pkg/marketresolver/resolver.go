@@ -415,7 +415,7 @@ func CryptoWindowSlug(asset, timeframe string, windowStart time.Time) string {
 
 func inferTimeframe(slug, question string) string {
 	text := strings.ToLower(slug + " " + question)
-	for _, tf := range []string{"5m", "5 min", "5-minute", "15m", "15 min", "15-minute"} {
+	for _, tf := range []string{"15m", "15 min", "15-minute", "5m", "5 min", "5-minute"} {
 		if strings.Contains(text, tf) {
 			if strings.HasPrefix(tf, "5") {
 				return "5m"

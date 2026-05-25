@@ -1,9 +1,8 @@
 # Polymarket Coverage Matrix
 
 This matrix tracks the Polymarket surfaces polygolem exposes through the Go
-SDK, CLI, docs, and tests. It is intentionally conservative: authenticated user
-WebSocket streams and live order execution gates remain documented gaps until
-they have local tests.
+SDK, CLI, docs, and tests. It is intentionally conservative: live order
+execution gates remain documented gaps until they have local tests.
 
 | Surface | Capabilities | SDK | CLI | Docs | Tests |
 |---|---|---|---|---|---|
@@ -13,20 +12,20 @@ they have local tests.
 | CLOB account reads | L2 API key creation/derivation, owner-scoped API key creation, balance, update balance, orders, order by ID, trades | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob create-api-key`, `clob create-api-key-for-address`, `clob balance`, `clob update-balance`, `clob orders`, `clob order`, `clob trades` | `docs/COMMANDS.md`, Starlight CLOB/CLI pages | CLOB and universal `httptest` tests, public SDK boundary test, CLI command registration |
 | Contracts | Polygon registry, deposit-wallet bytecode deployment status | `internal/rpc`, `pkg/contracts`, `pkg/relayer` compatibility wrapper | `deposit-wallet status`, `deposit-wallet deploy` preflight | `docs/CONTRACTS.md`, `docs/ONBOARDING.md`, `docs/SAFETY.md` | RPC bytecode tests, CLI status/deploy guard tests |
 | CLOB cancellation | Cancel one order, cancel a batch, cancel all, cancel by market/asset | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob cancel`, `clob cancel-orders`, `clob cancel-all`, `clob cancel-market` | `README.md`, `docs/COMMANDS.md`, Starlight CLOB/CLI pages | CLOB and universal `httptest` tests, public SDK boundary test, CLI command registration |
-| CLOB placement | Deposit-wallet limit and market/FOK order signing with CLOB V2 payload shape and optional builder attribution | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob create-order`, `clob market-order`, `--builder-code` | `README.md`, `docs/COMMANDS.md`, Starlight CLOB page, `docs/SAFETY.md` | CLOB order-signing and placement tests, public SDK boundary test |
+| CLOB placement | Deposit-wallet limit and buy/sell market/FOK order signing with CLOB V2 payload shape and optional builder attribution | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob create-order`, `clob market-order`, `--builder-code` | `README.md`, `docs/COMMANDS.md`, Starlight CLOB page, `docs/SAFETY.md` | CLOB order-signing and placement tests, public SDK boundary test |
 | CLOB builder fee keys | Create, list, and revoke CLOB builder fee keys for V2 order attribution | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob create-builder-fee-key`, `clob list-builder-fee-keys`, `clob revoke-builder-fee-key` | `docs/COMMANDS.md`, Starlight CLOB/CLI pages | CLOB `httptest` tests, public SDK boundary test, CLI command registration |
 | Data API | Positions, closed positions, trades, activity, holders, value, markets traded, open interest, leaderboard, live volume | `internal/dataapi`, `pkg/data`, `pkg/types`, `pkg/universal` | `data positions`, `data closed-positions`, `data trades`, `data activity`, `data holders`, `data value`, `data markets-traded`, `data open-interest`, `data leaderboard`, `data live-volume` | `README.md`, `docs/COMMANDS.md`, Starlight Data/CLI pages | Public Data API client tests, external SDK boundary test, universal route tests, CLI command registration |
-| Bridge | Supported assets, deposit address creation, deposit status, quotes | `pkg/bridge` | `bridge assets`, `bridge deposit` | `README.md`, `docs/COMMANDS.md`, Starlight bridge guide | Package examples, CLI command registration |
+| Bridge | Supported assets, deposit address creation, deposit status, quotes | `pkg/bridge` | `bridge assets`, `bridge deposit`, `bridge status`, `bridge quote` | `README.md`, `docs/COMMANDS.md`, Starlight bridge guide | Package examples, CLI command registration and JSON-envelope tests |
 | WebSocket market stream | Public market channel subscription, book/price/last-trade/tick-size/best-bid-ask/lifecycle dispatch, reconnect, dedup helpers | `internal/stream`, `pkg/stream`, `pkg/universal` stream constructor | `stream market --custom-features` | `README.md`, `docs/COMMANDS.md`, Starlight Stream/CLI pages | Local WebSocket SDK test, public SDK boundary test, CLI command registration |
 | Live market-data snapshots | Normalized latest best bid, best ask, spread, midpoint, tick size, last trade, and book levels per token | `pkg/marketdata`, `pkg/stream` | `marketdata live` | `docs/COMMANDS.md`, Starlight Stream/SDK/Orderbook pages | `pkg/marketdata` tracker tests, local WebSocket CLI test |
-| WebSocket user stream | Authenticated user order/trade stream | Gap | Gap | Documented as planned | Gap: requires L2 WebSocket auth tests |
-| Polygon deposit wallet | Derive, deploy, status, nonce, batch, approve, fund, onboard | `pkg/relayer`, `internal/auth`, `internal/relayer`, `internal/rpc` | `deposit-wallet *` | `README.md`, `docs/SAFETY.md`, deposit-wallet docs | Relayer onboard `httptest`, public SDK boundary test, existing auth/deposit-wallet tests |
+| WebSocket user stream | Authenticated user order/trade stream | `pkg/stream.UserClient` | `stream user` | `docs/PRD.md`, `docs/V2-PARITY.md`, generated CLI refs | Local WebSocket SDK test, workflow test, CLI command registration |
+| Polygon deposit wallet | Derive, deploy, status, nonce, batch, approve, fund, onboard, transaction lookup | `pkg/relayer`, `internal/auth`, `internal/relayer`, `internal/rpc` | `deposit-wallet *`, `relayer transaction` | `README.md`, `docs/SAFETY.md`, deposit-wallet docs, generated CLI refs | Relayer onboard `httptest`, public SDK boundary test, existing auth/deposit-wallet tests, CLI command registration |
 | Polygon wallet actions outside deposit wallet | EOA/proxy/Safe trading modes | Not supported for live trading | Blocked for new production accounts | Documented as unsupported | N/A |
 
-## Current Gaps
+## Current Notes And Gaps
 
-- Authenticated user WebSocket stream is still not implemented. Add it only
-  after L2 auth header signing and local WebSocket tests exist.
+- Authenticated user WebSocket support now exists in SDK and CLI form; keep any
+  live usage read-only/inspection-only and credential-gated.
 - Data API open-interest currently requires a token ID in the CLI. A future
   all-market variant should be added only after the response shape is captured.
 - `docs/COMMANDS.md` and the Starlight CLI reference are generated from the

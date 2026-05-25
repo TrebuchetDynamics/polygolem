@@ -35,16 +35,23 @@ func proxySalt(eoa string) []byte {
 	if len(clean) != 40 {
 		return make([]byte, 32)
 	}
-	salt := make([]byte, 32)
-	hexDecodeInto(salt[12:], clean)
-	return salt
+	return keccak256(hexToBytes(clean))
 }
 
 func safeSalt(eoa string) []byte {
 	clean := strip0x(eoa)
-	salt := make([]byte, 32)
-	hexDecodeInto(salt, clean)
-	return salt
+	if len(clean) != 40 {
+		return make([]byte, 32)
+	}
+	padded := make([]byte, 32)
+	hexDecodeInto(padded[12:], clean)
+	return keccak256(padded)
+}
+
+func keccak256(b []byte) []byte {
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write(b)
+	return hash.Sum(nil)
 }
 
 // deriveCreate2 implements EIP-1014 CREATE2 address derivation.

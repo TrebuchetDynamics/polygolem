@@ -386,6 +386,20 @@ func (c *Client) OrderScoring(ctx context.Context, orderID string) (bool, error)
 	return c.inner.OrderScoring(ctx, orderID)
 }
 
+// OrdersScoring checks scoring status for multiple order IDs.
+func (c *Client) OrdersScoring(ctx context.Context, orderIDs []string) ([]bool, error) {
+	return c.inner.OrdersScoring(ctx, orderIDs)
+}
+
+// PublicTrades returns unauthenticated CLOB trades, optionally filtered by market.
+func (c *Client) PublicTrades(ctx context.Context, market string) ([]TradeRecord, error) {
+	rows, err := c.inner.PublicTrades(ctx, market)
+	if err != nil {
+		return nil, err
+	}
+	return tradeRecordsFromInternal(rows), nil
+}
+
 // BuilderTrades returns trades attributed to the configured builder code.
 func (c *Client) BuilderTrades(ctx context.Context, limit int) ([]internalclob.BuilderTrade, error) {
 	return c.inner.BuilderTrades(ctx, limit)

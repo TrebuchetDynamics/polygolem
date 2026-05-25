@@ -9,6 +9,8 @@ import (
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
 	"github.com/TrebuchetDynamics/polygolem/internal/clob"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/authclobprobe"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/authstatus"
 	"github.com/spf13/cobra"
 )
 
@@ -30,93 +32,23 @@ is functional (makes a live network call). Without this flag, the check
 is faster but may report a stale key as existing.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			privateKey := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-			if privateKey == "" {
-				return fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
-			}
-
-			signer, err := auth.NewPrivateKeySigner(privateKey, 137)
+			result, err := authstatus.New(authstatus.Config{
+				PrivateKey: requirePrivateKey,
+				Relayer: func(context.Context) (authstatus.RelayerReader, error) {
+					return relayerClientFromEnv()
+				},
+				CLOB:          clob.NewClient(clobBaseURL, nil),
+				L2Credentials: clobL2CredentialsFromEnv,
+			}).Status(cmd.Context(), authstatus.Request{CheckDepositKey: checkDepositKey})
 			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
+				return err
 			}
-			owner := signer.Address()
-
-			depositWallet, err := auth.MakerAddressForSignatureType(owner, 137, 3)
-			if err != nil {
-				return fmt.Errorf("derive deposit wallet: %w", err)
-			}
-
-			var deployed bool
-			if rc, err := relayerClientFromEnv(); err == nil {
-				deployed, _ = rc.IsDeployed(cmd.Context(), owner)
-			}
-
-			eoaKeyExists := false
-			c := clob.NewClient(clobBaseURL, nil)
-			if _, err := c.DeriveAPIKey(cmd.Context(), privateKey); err == nil {
-				eoaKeyExists = true
-			}
-
-			depositKeyExists := false
-			if key, ok := clobL2CredentialsFromEnv(); ok {
-				c.SetL2Credentials(key)
-				depositKeyExists = key.Validate() == nil
-			}
-			if deployed && checkDepositKey {
-				_, err := c.ListOrders(cmd.Context(), privateKey)
-				depositKeyExists = (err == nil)
-			}
-
-			canTrade := deployed && depositKeyExists
-
-			result := map[string]interface{}{
-				"eoaAddress":                owner,
-				"depositWallet":             depositWallet,
-				"depositWalletDeployed":     deployed,
-				"eoaApiKeyExists":           eoaKeyExists,
-				"depositWalletApiKeyExists": depositKeyExists,
-				"canTrade":                  canTrade,
-			}
-
-			if !canTrade {
-				if !deployed {
-					result["nextStep"] = "Run: polygolem deposit-wallet deploy --wait"
-				} else if !depositKeyExists {
-					result["nextStep"] = "Run: polygolem auth login, then polygolem builder auto or polygolem clob create-api-key"
-				}
-				result["help"] = "https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/ONBOARDING.md"
-			}
-
 			return w.printJSON(cmd, result)
 		},
 	}
 
 	cmd.Flags().BoolVar(&checkDepositKey, "check-deposit-key", false, "make a live network call to verify the deposit-wallet API key exists")
 	return cmd
-}
-
-type clobCredentialProbeResult struct {
-	CredentialSource   string                       `json:"credentialSource"`
-	ReadOnly           bool                         `json:"readOnly"`
-	DeriveAPIKeyCalled bool                         `json:"deriveApiKeyCalled"`
-	EOAAddress         string                       `json:"eoaAddress"`
-	DepositWallet      string                       `json:"depositWallet"`
-	Orders             clobCredentialProbeCount     `json:"orders"`
-	Trades             clobCredentialProbeCount     `json:"trades"`
-	BalanceAllowance   clobCredentialProbeAllowance `json:"balanceAllowance"`
-}
-
-type clobCredentialProbeCount struct {
-	OK       bool   `json:"ok"`
-	Endpoint string `json:"endpoint"`
-	Count    int    `json:"count"`
-}
-
-type clobCredentialProbeAllowance struct {
-	OK        bool   `json:"ok"`
-	Endpoint  string `json:"endpoint"`
-	Balance   string `json:"balance"`
-	Allowance string `json:"allowance,omitempty"`
 }
 
 func newAuthCLOBProbeCommand(jsonOut bool) *cobra.Command {
@@ -130,15 +62,11 @@ read-only CLOB checks without creating or deriving an API key. The probe calls
 only GET /data/orders, GET /data/trades, and GET /balance-allowance.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			privateKey := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-			if privateKey == "" {
-				return fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
-			}
-			key, ok := clobL2CredentialsFromEnv()
-			if !ok {
-				return fmt.Errorf("configured CLOB L2 credentials are required: set POLYMARKET_CLOB_API_KEY, POLYMARKET_CLOB_SECRET, and POLYMARKET_CLOB_PASSPHRASE")
-			}
-			result, err := runCLOBCredentialProbe(cmd.Context(), w.clob, privateKey, key)
+			result, err := authclobprobe.New(authclobprobe.Config{
+				PrivateKey:    requirePrivateKey,
+				L2Credentials: clobL2CredentialsFromEnv,
+				CLOB:          w.clob,
+			}).Probe(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -147,61 +75,6 @@ only GET /data/orders, GET /data/trades, and GET /balance-allowance.`,
 	}
 
 	return cmd
-}
-
-func runCLOBCredentialProbe(ctx context.Context, client *clob.Client, privateKey string, key auth.APIKey) (*clobCredentialProbeResult, error) {
-	if client == nil {
-		return nil, fmt.Errorf("CLOB client is required")
-	}
-	if err := key.Validate(); err != nil {
-		return nil, fmt.Errorf("configured CLOB L2 credentials invalid: %w", err)
-	}
-	signer, err := auth.NewPrivateKeySigner(privateKey, 137)
-	if err != nil {
-		return nil, fmt.Errorf("init signer: %w", err)
-	}
-	depositWallet, err := auth.MakerAddressForSignatureType(signer.Address(), 137, 3)
-	if err != nil {
-		return nil, fmt.Errorf("derive deposit wallet: %w", err)
-	}
-
-	client.SetL2Credentials(key)
-	orders, err := client.ListOrders(ctx, privateKey)
-	if err != nil {
-		return nil, fmt.Errorf("read CLOB orders with configured L2 credentials: %w", err)
-	}
-	trades, err := client.ListTrades(ctx, privateKey)
-	if err != nil {
-		return nil, fmt.Errorf("read CLOB trades with configured L2 credentials: %w", err)
-	}
-	balance, err := client.BalanceAllowance(ctx, privateKey, clob.BalanceAllowanceParams{AssetType: "COLLATERAL"})
-	if err != nil {
-		return nil, fmt.Errorf("read CLOB collateral balance with configured L2 credentials: %w", err)
-	}
-
-	return &clobCredentialProbeResult{
-		CredentialSource:   "configured_clob_l2",
-		ReadOnly:           true,
-		DeriveAPIKeyCalled: false,
-		EOAAddress:         signer.Address(),
-		DepositWallet:      depositWallet,
-		Orders: clobCredentialProbeCount{
-			OK:       true,
-			Endpoint: "GET /data/orders",
-			Count:    len(orders),
-		},
-		Trades: clobCredentialProbeCount{
-			OK:       true,
-			Endpoint: "GET /data/trades",
-			Count:    len(trades),
-		},
-		BalanceAllowance: clobCredentialProbeAllowance{
-			OK:        true,
-			Endpoint:  "GET /balance-allowance",
-			Balance:   balance.Balance,
-			Allowance: firstNonEmptyCLI(balance.Allowance, balance.Allowances["collateral"], balance.Allowances["COLLATERAL"]),
-		},
-	}, nil
 }
 
 func warnIfNoDepositKey(ctx context.Context, stderr io.Writer, privateKey string) {

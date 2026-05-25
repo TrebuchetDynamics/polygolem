@@ -311,6 +311,16 @@ func (c *Client) CreateBuilderFeeKey(ctx context.Context, privateKey string) (sd
 	return c.clobRead.CreateBuilderFeeKey(ctx, privateKey)
 }
 
+// ListBuilderFeeKeys lists CLOB builder-fee keys for the authenticated wallet.
+func (c *Client) ListBuilderFeeKeys(ctx context.Context, privateKey string) ([]sdkclob.BuilderFeeKeyRecord, error) {
+	return c.clobRead.ListBuilderFeeKeys(ctx, privateKey)
+}
+
+// RevokeBuilderFeeKey deletes a CLOB builder-fee key.
+func (c *Client) RevokeBuilderFeeKey(ctx context.Context, privateKey, builderKey string) error {
+	return c.clobRead.RevokeBuilderFeeKey(ctx, privateKey, builderKey)
+}
+
 // DeriveAPIKey returns the deterministic L2 credentials for an existing
 // account via GET /auth/derive-api-key. Use CreateOrDeriveAPIKey when the
 // caller is unsure whether an account has been provisioned yet.
@@ -384,6 +394,11 @@ func (c *Client) OrderScoring(ctx context.Context, orderID string) (bool, error)
 // Returns one boolean per id, in the order supplied.
 func (c *Client) OrdersScoring(ctx context.Context, orderIDs []string) ([]bool, error) {
 	return c.clob.OrdersScoring(ctx, orderIDs)
+}
+
+// BuilderTrades returns trades attributed to the configured builder code.
+func (c *Client) BuilderTrades(ctx context.Context, limit int) ([]internalclob.BuilderTrade, error) {
+	return c.clobRead.BuilderTrades(ctx, limit)
 }
 
 // --- CLOB: Rewards ---
@@ -517,6 +532,11 @@ func (c *Client) LastTradePrice(ctx context.Context, tokenID string) (string, er
 // LastTradesPrices returns last trade prices for multiple tokens.
 func (c *Client) LastTradesPrices(ctx context.Context, params []types.CLOBBookParams) (map[string]string, error) {
 	return c.clobRead.LastTradesPrices(ctx, params)
+}
+
+// PublicTrades returns unauthenticated CLOB trades, optionally filtered by market.
+func (c *Client) PublicTrades(ctx context.Context, market string) ([]sdkclob.TradeRecord, error) {
+	return c.clobRead.PublicTrades(ctx, market)
 }
 
 // PricesHistory returns OHLCV price history.

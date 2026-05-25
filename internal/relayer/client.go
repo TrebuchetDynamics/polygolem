@@ -219,17 +219,26 @@ func (c *Client) PollTransaction(ctx context.Context, txID string, maxAttempts i
 	return nil, fmt.Errorf("relayer: timed out waiting for transaction %s after %d attempts", txID, maxAttempts)
 }
 
-// IsDeployed checks whether a deposit wallet has been deployed for the
-// given owner address.
-func (c *Client) IsDeployed(ctx context.Context, ownerAddress string) (bool, error) {
+// Deployed returns the full /deployed response for the given owner address.
+func (c *Client) Deployed(ctx context.Context, ownerAddress string) (*DeployedResponse, error) {
 	ownerAddress = strings.TrimSpace(ownerAddress)
 	if ownerAddress == "" {
-		return false, fmt.Errorf("relayer: owner address is required")
+		return nil, fmt.Errorf("relayer: owner address is required")
 	}
 	path := fmt.Sprintf("/deployed?address=%s", ownerAddress)
 	var resp DeployedResponse
 	if err := c.get(ctx, path, &resp); err != nil {
-		return false, fmt.Errorf("relayer: deployed check: %w", err)
+		return nil, fmt.Errorf("relayer: deployed check: %w", err)
+	}
+	return &resp, nil
+}
+
+// IsDeployed checks whether a deposit wallet has been deployed for the
+// given owner address.
+func (c *Client) IsDeployed(ctx context.Context, ownerAddress string) (bool, error) {
+	resp, err := c.Deployed(ctx, ownerAddress)
+	if err != nil {
+		return false, err
 	}
 	return resp.Deployed, nil
 }

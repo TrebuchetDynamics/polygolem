@@ -2,6 +2,8 @@ package clob
 
 import (
 	"context"
+	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,6 +31,42 @@ type BalanceAllowanceResponse struct {
 	Balance    string            `json:"balance"`
 	Allowances map[string]string `json:"allowances,omitempty"`
 	Allowance  string            `json:"allowance,omitempty"`
+}
+
+func (r *BalanceAllowanceResponse) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Balance    json.RawMessage            `json:"balance"`
+		Allowances map[string]json.RawMessage `json:"allowances"`
+		Allowance  json.RawMessage            `json:"allowance"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	r.Balance = jsonStringOrNumber(raw.Balance)
+	r.Allowance = jsonStringOrNumber(raw.Allowance)
+	if raw.Allowances != nil {
+		r.Allowances = make(map[string]string, len(raw.Allowances))
+		for key, value := range raw.Allowances {
+			r.Allowances[key] = jsonStringOrNumber(value)
+		}
+	}
+	return nil
+}
+
+// jsonStringOrNumber unwraps a JSON value that may be a string or a number,
+// returning the underlying lexical text without quotes.
+func jsonStringOrNumber(raw json.RawMessage) string {
+	s := strings.TrimSpace(string(raw))
+	if s == "" || s == "null" {
+		return ""
+	}
+	if s[0] == '"' {
+		var v string
+		if err := json.Unmarshal(raw, &v); err == nil {
+			return v
+		}
+	}
+	return s
 }
 
 // CreateOrderParams is the public input to CreateLimitOrder.
@@ -59,8 +97,66 @@ type OrderPlacementResponse struct {
 	MakingAmount       string   `json:"makingAmount,omitempty"`
 	TakingAmount       string   `json:"takingAmount,omitempty"`
 	ErrorMsg           string   `json:"errorMsg,omitempty"`
+	TransactionHash    string   `json:"transaction_hash,omitempty"`
 	TransactionsHashes []string `json:"transactionsHashes,omitempty"`
 	TradeIDs           []string `json:"tradeIDs,omitempty"`
+}
+
+func (r *OrderPlacementResponse) UnmarshalJSON(data []byte) error {
+	type alias OrderPlacementResponse
+	aux := struct {
+		*alias
+		OrderIDSnake            string            `json:"order_id"`
+		MakingAmountRaw         json.RawMessage   `json:"makingAmount"`
+		MakingAmountSnake       json.RawMessage   `json:"making_amount"`
+		TakingAmountRaw         json.RawMessage   `json:"takingAmount"`
+		TakingAmountSnake       json.RawMessage   `json:"taking_amount"`
+		TransactionHashCamel    string            `json:"transactionHash"`
+		ErrorMsgSnake           string            `json:"error_msg"`
+		TransactionsHashesRaw   []json.RawMessage `json:"transactionsHashes"`
+		TransactionHashesAlias  []json.RawMessage `json:"transactionHashes"`
+		TransactionsHashesSnake []json.RawMessage `json:"transaction_hashes"`
+		TradeIDsRaw             []json.RawMessage `json:"tradeIDs"`
+		TradeIDsAlias           []json.RawMessage `json:"tradeIds"`
+		TradeIDsSnake           []json.RawMessage `json:"trade_ids"`
+	}{alias: (*alias)(r)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if r.OrderID == "" {
+		r.OrderID = aux.OrderIDSnake
+	}
+	if r.MakingAmount == "" {
+		r.MakingAmount = firstNonEmptyString(jsonStringOrNumber(aux.MakingAmountRaw), jsonStringOrNumber(aux.MakingAmountSnake))
+	}
+	if r.TakingAmount == "" {
+		r.TakingAmount = firstNonEmptyString(jsonStringOrNumber(aux.TakingAmountRaw), jsonStringOrNumber(aux.TakingAmountSnake))
+	}
+	if r.TransactionHash == "" {
+		r.TransactionHash = aux.TransactionHashCamel
+	}
+	if r.ErrorMsg == "" {
+		r.ErrorMsg = aux.ErrorMsgSnake
+	}
+	if len(r.TransactionsHashes) == 0 && aux.TransactionsHashesRaw != nil {
+		r.TransactionsHashes = rawStringList(aux.TransactionsHashesRaw)
+	}
+	if len(r.TransactionsHashes) == 0 && aux.TransactionHashesAlias != nil {
+		r.TransactionsHashes = rawStringList(aux.TransactionHashesAlias)
+	}
+	if len(r.TransactionsHashes) == 0 && aux.TransactionsHashesSnake != nil {
+		r.TransactionsHashes = rawStringList(aux.TransactionsHashesSnake)
+	}
+	if len(r.TradeIDs) == 0 && aux.TradeIDsRaw != nil {
+		r.TradeIDs = rawStringList(aux.TradeIDsRaw)
+	}
+	if len(r.TradeIDs) == 0 && aux.TradeIDsAlias != nil {
+		r.TradeIDs = rawStringList(aux.TradeIDsAlias)
+	}
+	if len(r.TradeIDs) == 0 && aux.TradeIDsSnake != nil {
+		r.TradeIDs = rawStringList(aux.TradeIDsSnake)
+	}
+	return nil
 }
 
 // BatchOrderResponse is returned by CreateBatchOrders.
@@ -72,6 +168,68 @@ type BatchOrderResponse struct {
 type CancelOrdersResponse struct {
 	Canceled    []string          `json:"canceled"`
 	NotCanceled map[string]string `json:"not_canceled"`
+}
+
+func (r *CancelOrdersResponse) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Canceled         []json.RawMessage          `json:"canceled"`
+		NotCanceled      map[string]json.RawMessage `json:"not_canceled"`
+		NotCanceledCamel map[string]json.RawMessage `json:"notCanceled"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if raw.Canceled != nil {
+		r.Canceled = make([]string, 0, len(raw.Canceled))
+		for _, item := range raw.Canceled {
+			r.Canceled = append(r.Canceled, jsonStringOrNumber(item))
+		}
+	}
+	r.NotCanceled = rawStringMap(raw.NotCanceled)
+	if len(r.NotCanceled) == 0 && len(raw.NotCanceledCamel) > 0 {
+		r.NotCanceled = rawStringMap(raw.NotCanceledCamel)
+	}
+	return nil
+}
+
+func rawStringMap(raw map[string]json.RawMessage) map[string]string {
+	if raw == nil {
+		return nil
+	}
+	out := make(map[string]string, len(raw))
+	for key, value := range raw {
+		out[key] = jsonStringOrNumber(value)
+	}
+	return out
+}
+
+func rawStringList(raw []json.RawMessage) []string {
+	out := make([]string, 0, len(raw))
+	for _, value := range raw {
+		out = append(out, jsonStringOrNumber(value))
+	}
+	return out
+}
+
+func firstNonEmptyRaw(values ...json.RawMessage) json.RawMessage {
+	for _, value := range values {
+		if jsonStringOrNumber(value) != "" {
+			return value
+		}
+	}
+	return nil
+}
+
+func jsonIntOrNumberString(raw json.RawMessage) int {
+	value := jsonStringOrNumber(raw)
+	if value == "" {
+		return 0
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 // CancelMarketParams filters cancel-market requests by condition ID or token ID.
@@ -92,12 +250,62 @@ type OrderRecord struct {
 	SizeMatched     string   `json:"size_matched"`
 	Price           string   `json:"price"`
 	Outcome         string   `json:"outcome"`
+	Type            string   `json:"type,omitempty"`
 	OrderType       string   `json:"order_type,omitempty"`
 	SignatureType   int      `json:"signature_type,omitempty"`
 	CreatedAt       string   `json:"created_at"`
 	Expiration      string   `json:"expiration"`
 	MakerAddress    string   `json:"maker_address"`
 	AssociateTrades []string `json:"associate_trades,omitempty"`
+}
+
+func (o *OrderRecord) UnmarshalJSON(data []byte) error {
+	type alias OrderRecord
+	aux := struct {
+		*alias
+		AssetIDCamel      json.RawMessage   `json:"assetId"`
+		OriginalSize      json.RawMessage   `json:"original_size"`
+		OriginalSizeCamel json.RawMessage   `json:"originalSize"`
+		SizeMatched       json.RawMessage   `json:"size_matched"`
+		SizeMatchedCamel  json.RawMessage   `json:"sizeMatched"`
+		Price             json.RawMessage   `json:"price"`
+		OrderTypeCamel    json.RawMessage   `json:"orderType"`
+		CreatedAt         json.RawMessage   `json:"created_at"`
+		CreatedAtCamel    json.RawMessage   `json:"createdAt"`
+		Expiration        json.RawMessage   `json:"expiration"`
+		SignatureType     json.RawMessage   `json:"signature_type"`
+		SignatureCamel    json.RawMessage   `json:"signatureType"`
+		MakerAddrCamel    json.RawMessage   `json:"makerAddress"`
+		AssociateTrades   []json.RawMessage `json:"associate_trades"`
+		AssocTradesCamel  []json.RawMessage `json:"associateTrades"`
+	}{alias: (*alias)(o)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if o.AssetID == "" {
+		o.AssetID = jsonStringOrNumber(aux.AssetIDCamel)
+	}
+	o.OriginalSize = firstNonEmptyString(jsonStringOrNumber(aux.OriginalSize), jsonStringOrNumber(aux.OriginalSizeCamel))
+	o.SizeMatched = firstNonEmptyString(jsonStringOrNumber(aux.SizeMatched), jsonStringOrNumber(aux.SizeMatchedCamel))
+	o.Price = jsonStringOrNumber(aux.Price)
+	if o.OrderType == "" {
+		o.OrderType = jsonStringOrNumber(aux.OrderTypeCamel)
+	}
+	o.CreatedAt = firstNonEmptyString(jsonStringOrNumber(aux.CreatedAt), jsonStringOrNumber(aux.CreatedAtCamel))
+	o.Expiration = jsonStringOrNumber(aux.Expiration)
+	if len(aux.SignatureType) > 0 || len(aux.SignatureCamel) > 0 {
+		o.SignatureType = jsonIntOrNumberString(firstNonEmptyRaw(aux.SignatureType, aux.SignatureCamel))
+	}
+	if o.MakerAddress == "" {
+		o.MakerAddress = jsonStringOrNumber(aux.MakerAddrCamel)
+	}
+	if aux.AssociateTrades != nil {
+		o.AssociateTrades = rawStringList(aux.AssociateTrades)
+	}
+	if len(o.AssociateTrades) == 0 && aux.AssocTradesCamel != nil {
+		o.AssociateTrades = rawStringList(aux.AssocTradesCamel)
+	}
+	return nil
 }
 
 // TradeRecord is an authenticated CLOB trade record.
@@ -117,6 +325,41 @@ type TradeRecord struct {
 	TransactionHash string `json:"transaction_hash"`
 	CreatedAt       string `json:"created_at"`
 	LastUpdated     string `json:"last_updated"`
+}
+
+func (t *TradeRecord) UnmarshalJSON(data []byte) error {
+	type alias TradeRecord
+	aux := struct {
+		*alias
+		AssetIDCamel     json.RawMessage `json:"assetId"`
+		Price            json.RawMessage `json:"price"`
+		Size             json.RawMessage `json:"size"`
+		FeeRateBps       json.RawMessage `json:"fee_rate_bps"`
+		FeeRateBpsCamel  json.RawMessage `json:"feeRateBps"`
+		MatchedAmount    json.RawMessage `json:"matched_amount"`
+		MatchedAmtCamel  json.RawMessage `json:"matchedAmount"`
+		TxHashCamel      json.RawMessage `json:"transactionHash"`
+		CreatedAt        json.RawMessage `json:"created_at"`
+		CreatedAtCamel   json.RawMessage `json:"createdAt"`
+		LastUpdated      json.RawMessage `json:"last_updated"`
+		LastUpdatedCamel json.RawMessage `json:"lastUpdated"`
+	}{alias: (*alias)(t)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if t.AssetID == "" {
+		t.AssetID = jsonStringOrNumber(aux.AssetIDCamel)
+	}
+	t.Price = jsonStringOrNumber(aux.Price)
+	t.Size = jsonStringOrNumber(aux.Size)
+	t.FeeRateBps = firstNonEmptyString(jsonStringOrNumber(aux.FeeRateBps), jsonStringOrNumber(aux.FeeRateBpsCamel))
+	t.MatchedAmount = firstNonEmptyString(jsonStringOrNumber(aux.MatchedAmount), jsonStringOrNumber(aux.MatchedAmtCamel))
+	if t.TransactionHash == "" {
+		t.TransactionHash = jsonStringOrNumber(aux.TxHashCamel)
+	}
+	t.CreatedAt = firstNonEmptyString(jsonStringOrNumber(aux.CreatedAt), jsonStringOrNumber(aux.CreatedAtCamel))
+	t.LastUpdated = firstNonEmptyString(jsonStringOrNumber(aux.LastUpdated), jsonStringOrNumber(aux.LastUpdatedCamel))
+	return nil
 }
 
 type ProbeClassification string
@@ -156,6 +399,26 @@ type BuilderFeeKeyRecord struct {
 	Secret     string `json:"secret,omitempty"`
 	Passphrase string `json:"passphrase,omitempty"`
 	CreatedAt  string `json:"created_at,omitempty"`
+	UpdatedAt  string `json:"updated_at,omitempty"`
+}
+
+func (r *BuilderFeeKeyRecord) UnmarshalJSON(data []byte) error {
+	type alias BuilderFeeKeyRecord
+	aux := struct {
+		*alias
+		CreatedAtCamel string `json:"createdAt"`
+		UpdatedAtCamel string `json:"updatedAt"`
+	}{alias: (*alias)(r)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if r.CreatedAt == "" {
+		r.CreatedAt = aux.CreatedAtCamel
+	}
+	if r.UpdatedAt == "" {
+		r.UpdatedAt = aux.UpdatedAtCamel
+	}
+	return nil
 }
 
 // CreateOrDeriveAPIKey creates new CLOB L2 credentials, falling back to
@@ -231,6 +494,7 @@ func (c *Client) ListBuilderFeeKeys(ctx context.Context, privateKey string) ([]B
 			Secret:     row.Secret,
 			Passphrase: row.Passphrase,
 			CreatedAt:  row.CreatedAt,
+			UpdatedAt:  row.UpdatedAt,
 		}
 	}
 	return out, nil
@@ -352,7 +616,8 @@ func (c *Client) CreateBatchOrders(ctx context.Context, privateKey string, param
 	return batchOrderResponseFromInternal(row), nil
 }
 
-// CreateMarketOrder signs and submits a V2 buy-side market order.
+// CreateMarketOrder signs and submits a V2 market order.
+// For BUY, Amount is a USDC budget. For SELL, Amount is the share size to sell.
 func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, params MarketOrderParams) (*OrderPlacementResponse, error) {
 	row, err := c.inner.CreateMarketOrder(ctx, privateKey, marketOrderParamsToInternal(params))
 	if err != nil {
@@ -441,6 +706,7 @@ func orderRecordValueFromInternal(row internalclob.OrderRecord) OrderRecord {
 		SizeMatched:     row.SizeMatched,
 		Price:           row.Price,
 		Outcome:         row.Outcome,
+		Type:            row.Type,
 		OrderType:       firstNonEmptyString(row.OrderType, row.Type),
 		SignatureType:   row.SignatureType,
 		CreatedAt:       row.CreatedAt,
@@ -575,6 +841,7 @@ func orderPlacementFromInternal(row *internalclob.OrderPlacementResponse) *Order
 		MakingAmount:       row.MakingAmount,
 		TakingAmount:       row.TakingAmount,
 		ErrorMsg:           row.ErrorMsg,
+		TransactionHash:    row.TransactionHash,
 		TransactionsHashes: row.TransactionsHashes,
 		TradeIDs:           row.TradeIDs,
 	}

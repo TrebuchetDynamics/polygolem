@@ -1351,17 +1351,18 @@ Agent rules:
 
 ### Command catalog — `stream`
 
-Public CLOB WebSocket stream. Read-only. No credentials.
+Public CLOB WebSocket stream plus authenticated user order/trade inspection.
 
 ```bash
 ./polygolem stream market --asset-ids "$TOKEN_ID" --max-messages 10 --json
+./polygolem stream user --markets "$CONDITION_ID" --max-messages 10 --json
 ```
 
 Agent rules:
 
 - Use `--max-messages` for bounded automation and tests.
-- The authenticated user stream is not implemented yet. Do not ask for L2
-  WebSocket credentials or imply user order/trade stream support.
+- `stream user` is read-only but requires configured CLOB L2 credentials;
+  never request or echo secrets in chat/log output.
 
 ### Command catalog — `deposit-wallet`
 

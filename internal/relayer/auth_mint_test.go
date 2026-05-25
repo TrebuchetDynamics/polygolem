@@ -36,6 +36,9 @@ func TestMintV2APIKeyHitsCorrectEndpointAndParsesResponse(t *testing.T) {
 	if key.Key != "019e0650-uuid" || key.Address != "0xabc" {
 		t.Errorf("key=%+v", key)
 	}
+	if key.CreatedAt != "2026-05-08T00:00:00Z" || key.UpdatedAt != "2026-05-08T00:00:00Z" {
+		t.Errorf("timestamps not decoded: %+v", key)
+	}
 }
 
 func TestMintV2APIKeyReturnsErrorOnNon2xx(t *testing.T) {

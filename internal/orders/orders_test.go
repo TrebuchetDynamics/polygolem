@@ -99,6 +99,17 @@ func TestFluentBuilderMustBuildPanics(t *testing.T) {
 	NewBuilder("", polytypes.SideBuy).MustBuild()
 }
 
+func TestRoundToTickFloorsToCurrentTick(t *testing.T) {
+	got := RoundToTick(polytypes.MustDecimal("0.555").Rat(), polytypes.MustDecimal("0.01").Rat())
+	if got.FloatString(2) != "0.55" {
+		t.Fatalf("RoundToTick(0.555, 0.01)=%s, want 0.55", got.FloatString(2))
+	}
+	got = RoundToTick(polytypes.MustDecimal("0.560").Rat(), polytypes.MustDecimal("0.01").Rat())
+	if got.FloatString(2) != "0.56" {
+		t.Fatalf("RoundToTick(0.560, 0.01)=%s, want 0.56", got.FloatString(2))
+	}
+}
+
 func TestValidatePriceAgainstTick(t *testing.T) {
 	price := polytypes.MustDecimal("0.55").Rat()
 	tick := polytypes.MustDecimal("0.01").Rat()

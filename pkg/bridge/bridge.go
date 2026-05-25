@@ -17,6 +17,9 @@ package bridge
 
 import (
 	"context"
+	"encoding/json"
+	"strconv"
+	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/transport"
 )
@@ -68,6 +71,23 @@ type TokenInfo struct {
 	Decimals int    `json:"decimals"`
 }
 
+func (t *TokenInfo) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Name     json.RawMessage `json:"name"`
+		Symbol   json.RawMessage `json:"symbol"`
+		Address  json.RawMessage `json:"address"`
+		Decimals json.RawMessage `json:"decimals"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	t.Name = bridgeStringOrNumber(raw.Name)
+	t.Symbol = bridgeStringOrNumber(raw.Symbol)
+	t.Address = bridgeStringOrNumber(raw.Address)
+	t.Decimals = int(bridgeInt64OrZero(raw.Decimals))
+	return nil
+}
+
 // SupportedAsset is one entry in the Bridge's supported-assets list,
 // pairing a chain with the token usable as deposit collateral.
 type SupportedAsset struct {
@@ -75,6 +95,23 @@ type SupportedAsset struct {
 	ChainName      string    `json:"chainName"`
 	Token          TokenInfo `json:"token"`
 	MinCheckoutUsd float64   `json:"minCheckoutUsd"`
+}
+
+func (s *SupportedAsset) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ChainID        json.RawMessage `json:"chainId"`
+		ChainName      json.RawMessage `json:"chainName"`
+		Token          TokenInfo       `json:"token"`
+		MinCheckoutUsd json.RawMessage `json:"minCheckoutUsd"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	s.ChainID = bridgeStringOrNumber(raw.ChainID)
+	s.ChainName = bridgeStringOrNumber(raw.ChainName)
+	s.Token = raw.Token
+	s.MinCheckoutUsd = bridgeFloat64OrZero(raw.MinCheckoutUsd)
+	return nil
 }
 
 // SupportedAssetsResponse is the response shape for GET /supported-assets.
@@ -94,6 +131,69 @@ type DepositTransaction struct {
 	TxHash             string `json:"txHash,omitempty"`
 	CreatedTimeMs      int64  `json:"createdTimeMs,omitempty"`
 	Status             string `json:"status"`
+}
+
+func (d *DepositTransaction) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		FromChainID        json.RawMessage `json:"fromChainId"`
+		FromTokenAddress   json.RawMessage `json:"fromTokenAddress"`
+		FromAmountBaseUnit json.RawMessage `json:"fromAmountBaseUnit"`
+		ToChainID          json.RawMessage `json:"toChainId"`
+		ToTokenAddress     json.RawMessage `json:"toTokenAddress"`
+		TxHash             json.RawMessage `json:"txHash"`
+		CreatedTimeMs      json.RawMessage `json:"createdTimeMs"`
+		Status             json.RawMessage `json:"status"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	d.FromChainID = bridgeStringOrNumber(raw.FromChainID)
+	d.FromTokenAddress = bridgeStringOrNumber(raw.FromTokenAddress)
+	d.FromAmountBaseUnit = bridgeStringOrNumber(raw.FromAmountBaseUnit)
+	d.ToChainID = bridgeStringOrNumber(raw.ToChainID)
+	d.ToTokenAddress = bridgeStringOrNumber(raw.ToTokenAddress)
+	d.TxHash = bridgeStringOrNumber(raw.TxHash)
+	d.CreatedTimeMs = bridgeInt64OrZero(raw.CreatedTimeMs)
+	d.Status = bridgeStringOrNumber(raw.Status)
+	return nil
+}
+
+func bridgeStringOrNumber(raw json.RawMessage) string {
+	s := strings.TrimSpace(string(raw))
+	if s == "" || s == "null" {
+		return ""
+	}
+	if s[0] == '"' {
+		var value string
+		if err := json.Unmarshal(raw, &value); err == nil {
+			return value
+		}
+	}
+	return s
+}
+
+func bridgeInt64OrZero(raw json.RawMessage) int64 {
+	value := bridgeStringOrNumber(raw)
+	if value == "" {
+		return 0
+	}
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return parsed
+}
+
+func bridgeFloat64OrZero(raw json.RawMessage) float64 {
+	value := bridgeStringOrNumber(raw)
+	if value == "" {
+		return 0
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0
+	}
+	return parsed
 }
 
 // DepositStatusResponse is the response shape for GET /status/{address}.
@@ -129,6 +229,39 @@ type FeeBreakdown struct {
 	TotalImpactUsd  float64 `json:"totalImpactUsd"`
 }
 
+func (f *FeeBreakdown) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		AppFeeLabel     json.RawMessage `json:"appFeeLabel"`
+		AppFeePercent   json.RawMessage `json:"appFeePercent"`
+		AppFeeUsd       json.RawMessage `json:"appFeeUsd"`
+		FillCostPercent json.RawMessage `json:"fillCostPercent"`
+		FillCostUsd     json.RawMessage `json:"fillCostUsd"`
+		GasUsd          json.RawMessage `json:"gasUsd"`
+		MaxSlippage     json.RawMessage `json:"maxSlippage"`
+		MinReceived     json.RawMessage `json:"minReceived"`
+		SwapImpact      json.RawMessage `json:"swapImpact"`
+		SwapImpactUsd   json.RawMessage `json:"swapImpactUsd"`
+		TotalImpact     json.RawMessage `json:"totalImpact"`
+		TotalImpactUsd  json.RawMessage `json:"totalImpactUsd"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	f.AppFeeLabel = bridgeStringOrNumber(raw.AppFeeLabel)
+	f.AppFeePercent = bridgeFloat64OrZero(raw.AppFeePercent)
+	f.AppFeeUsd = bridgeFloat64OrZero(raw.AppFeeUsd)
+	f.FillCostPercent = bridgeFloat64OrZero(raw.FillCostPercent)
+	f.FillCostUsd = bridgeFloat64OrZero(raw.FillCostUsd)
+	f.GasUsd = bridgeFloat64OrZero(raw.GasUsd)
+	f.MaxSlippage = bridgeFloat64OrZero(raw.MaxSlippage)
+	f.MinReceived = bridgeFloat64OrZero(raw.MinReceived)
+	f.SwapImpact = bridgeFloat64OrZero(raw.SwapImpact)
+	f.SwapImpactUsd = bridgeFloat64OrZero(raw.SwapImpactUsd)
+	f.TotalImpact = bridgeFloat64OrZero(raw.TotalImpact)
+	f.TotalImpactUsd = bridgeFloat64OrZero(raw.TotalImpactUsd)
+	return nil
+}
+
 // QuoteResponse is the response shape for POST /quote — estimated input
 // and output USD, an estimated time, the fee breakdown, and a quote ID
 // that the caller must echo when accepting the quote.
@@ -139,6 +272,27 @@ type QuoteResponse struct {
 	EstOutputUsd       float64      `json:"estOutputUsd"`
 	EstToTokenBaseUnit string       `json:"estToTokenBaseUnit"`
 	QuoteID            string       `json:"quoteId"`
+}
+
+func (q *QuoteResponse) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		EstCheckoutTimeMs  json.RawMessage `json:"estCheckoutTimeMs"`
+		EstFeeBreakdown    FeeBreakdown    `json:"estFeeBreakdown"`
+		EstInputUsd        json.RawMessage `json:"estInputUsd"`
+		EstOutputUsd       json.RawMessage `json:"estOutputUsd"`
+		EstToTokenBaseUnit json.RawMessage `json:"estToTokenBaseUnit"`
+		QuoteID            json.RawMessage `json:"quoteId"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	q.EstCheckoutTimeMs = bridgeInt64OrZero(raw.EstCheckoutTimeMs)
+	q.EstFeeBreakdown = raw.EstFeeBreakdown
+	q.EstInputUsd = bridgeFloat64OrZero(raw.EstInputUsd)
+	q.EstOutputUsd = bridgeFloat64OrZero(raw.EstOutputUsd)
+	q.EstToTokenBaseUnit = bridgeStringOrNumber(raw.EstToTokenBaseUnit)
+	q.QuoteID = bridgeStringOrNumber(raw.QuoteID)
+	return nil
 }
 
 // --- Methods ---

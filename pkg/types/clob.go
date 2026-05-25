@@ -1,6 +1,10 @@
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strconv"
+	"strings"
+)
 
 // CLOBServerTime is the CLOB server-time response.
 type CLOBServerTime struct {
@@ -12,6 +16,19 @@ type CLOBServerTime struct {
 type CLOBOrderBookLevel struct {
 	Price string `json:"price"`
 	Size  string `json:"size"`
+}
+
+func (l *CLOBOrderBookLevel) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Price json.RawMessage `json:"price"`
+		Size  json.RawMessage `json:"size"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	l.Price = clobStringOrNumber(raw.Price)
+	l.Size = clobStringOrNumber(raw.Size)
+	return nil
 }
 
 // CLOBOrderBook is a public CLOB order-book snapshot for one outcome token.
@@ -28,11 +45,63 @@ type CLOBOrderBook struct {
 	LastTradePrice string               `json:"last_trade_price,omitempty"`
 }
 
+func (o *CLOBOrderBook) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Market              string               `json:"market"`
+		AssetID             json.RawMessage      `json:"asset_id"`
+		AssetIDCamel        json.RawMessage      `json:"assetId"`
+		Timestamp           json.RawMessage      `json:"timestamp"`
+		Hash                string               `json:"hash"`
+		Bids                []CLOBOrderBookLevel `json:"bids"`
+		Asks                []CLOBOrderBookLevel `json:"asks"`
+		MinOrderSize        json.RawMessage      `json:"min_order_size"`
+		MinOrderSizeCamel   json.RawMessage      `json:"minOrderSize"`
+		TickSize            json.RawMessage      `json:"tick_size"`
+		TickSizeCamel       json.RawMessage      `json:"tickSize"`
+		NegRisk             json.RawMessage      `json:"neg_risk"`
+		NegRiskCamel        json.RawMessage      `json:"negRisk"`
+		LastTradePrice      json.RawMessage      `json:"last_trade_price"`
+		LastTradePriceCamel json.RawMessage      `json:"lastTradePrice"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	o.Market = raw.Market
+	o.AssetID = firstNonEmptyClobString(clobStringOrNumber(raw.AssetID), clobStringOrNumber(raw.AssetIDCamel))
+	o.Timestamp = clobStringOrNumber(raw.Timestamp)
+	o.Hash = raw.Hash
+	o.Bids = raw.Bids
+	o.Asks = raw.Asks
+	o.MinOrderSize = firstNonEmptyClobString(clobStringOrNumber(raw.MinOrderSize), clobStringOrNumber(raw.MinOrderSizeCamel))
+	o.TickSize = firstNonEmptyClobString(clobStringOrNumber(raw.TickSize), clobStringOrNumber(raw.TickSizeCamel))
+	o.NegRisk = clobBoolOrFalse(firstNonEmptyClobRaw(raw.NegRisk, raw.NegRiskCamel))
+	o.LastTradePrice = firstNonEmptyClobString(clobStringOrNumber(raw.LastTradePrice), clobStringOrNumber(raw.LastTradePriceCamel))
+	return nil
+}
+
 // CLOBTickSize is the minimum size and price increment metadata for a token.
 type CLOBTickSize struct {
 	MinimumTickSize  string `json:"minimum_tick_size"`
 	MinimumOrderSize string `json:"minimum_order_size"`
 	TickSize         string `json:"tick_size"`
+}
+
+func (t *CLOBTickSize) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		MinimumTickSize       json.RawMessage `json:"minimum_tick_size"`
+		MinimumTickSizeCamel  json.RawMessage `json:"minimumTickSize"`
+		MinimumOrderSize      json.RawMessage `json:"minimum_order_size"`
+		MinimumOrderSizeCamel json.RawMessage `json:"minimumOrderSize"`
+		TickSize              json.RawMessage `json:"tick_size"`
+		TickSizeCamel         json.RawMessage `json:"tickSize"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	t.MinimumTickSize = firstNonEmptyClobString(clobStringOrNumber(raw.MinimumTickSize), clobStringOrNumber(raw.MinimumTickSizeCamel))
+	t.MinimumOrderSize = firstNonEmptyClobString(clobStringOrNumber(raw.MinimumOrderSize), clobStringOrNumber(raw.MinimumOrderSizeCamel))
+	t.TickSize = firstNonEmptyClobString(clobStringOrNumber(raw.TickSize), clobStringOrNumber(raw.TickSizeCamel))
+	return nil
 }
 
 // CLOBNegRiskInfo is negative-risk metadata for a token.
@@ -42,11 +111,48 @@ type CLOBNegRiskInfo struct {
 	NegRiskFeeBips  int    `json:"neg_risk_fee_bips,omitempty"`
 }
 
+func (n *CLOBNegRiskInfo) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		NegRisk              json.RawMessage `json:"neg_risk"`
+		NegRiskCamel         json.RawMessage `json:"negRisk"`
+		NegRiskMarketID      json.RawMessage `json:"neg_risk_market_id"`
+		NegRiskMarketIDCamel json.RawMessage `json:"negRiskMarketID"`
+		NegRiskFeeBips       json.RawMessage `json:"neg_risk_fee_bips"`
+		NegRiskFeeBipsCamel  json.RawMessage `json:"negRiskFeeBips"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	n.NegRisk = clobBoolOrFalse(firstNonEmptyClobRaw(raw.NegRisk, raw.NegRiskCamel))
+	n.NegRiskMarketID = firstNonEmptyClobString(clobStringOrNumber(raw.NegRiskMarketID), clobStringOrNumber(raw.NegRiskMarketIDCamel))
+	n.NegRiskFeeBips, _ = strconv.Atoi(firstNonEmptyClobString(clobStringOrNumber(raw.NegRiskFeeBips), clobStringOrNumber(raw.NegRiskFeeBipsCamel)))
+	return nil
+}
+
 // CLOBFeeDetails is the fee curve metadata returned by CLOB market info.
 type CLOBFeeDetails struct {
 	Rate      float64 `json:"rate,omitempty"`
 	Exponent  float64 `json:"exponent,omitempty"`
 	TakerOnly bool    `json:"taker_only,omitempty"`
+}
+
+func (f *CLOBFeeDetails) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Rate           json.RawMessage `json:"rate"`
+		RateShort      json.RawMessage `json:"r"`
+		Exponent       json.RawMessage `json:"exponent"`
+		ExponentShort  json.RawMessage `json:"e"`
+		TakerOnly      json.RawMessage `json:"taker_only"`
+		TakerOnlyCamel json.RawMessage `json:"takerOnly"`
+		TakerOnlyShort json.RawMessage `json:"to"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	f.Rate, _ = strconv.ParseFloat(firstNonEmptyClobString(clobStringOrNumber(raw.Rate), clobStringOrNumber(raw.RateShort)), 64)
+	f.Exponent, _ = strconv.ParseFloat(firstNonEmptyClobString(clobStringOrNumber(raw.Exponent), clobStringOrNumber(raw.ExponentShort)), 64)
+	f.TakerOnly = clobBoolOrFalse(firstNonEmptyClobRaw(raw.TakerOnly, raw.TakerOnlyCamel, raw.TakerOnlyShort))
+	return nil
 }
 
 // CLOBMarket is a market from the CLOB API.
@@ -77,11 +183,66 @@ type CLOBMarket struct {
 	MinimumOrderAge       int            `json:"minimum_order_age,omitempty"`
 }
 
+func clobStringOrNumber(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var value any
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return ""
+	}
+	switch v := value.(type) {
+	case nil:
+		return ""
+	case string:
+		return strings.TrimSpace(v)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	default:
+		return strings.TrimSpace(string(raw))
+	}
+}
+
+func firstNonEmptyClobString(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstNonEmptyClobRaw(values ...json.RawMessage) json.RawMessage {
+	for _, value := range values {
+		text := strings.TrimSpace(string(value))
+		if len(value) == 0 || text == "" || text == "null" {
+			continue
+		}
+		return value
+	}
+	return nil
+}
+
+func clobBoolOrFalse(raw json.RawMessage) bool {
+	switch strings.ToLower(clobStringOrNumber(raw)) {
+	case "true", "1":
+		return true
+	default:
+		return false
+	}
+}
+
 func (m *CLOBMarket) UnmarshalJSON(b []byte) error {
 	type alias CLOBMarket
 	var raw struct {
 		alias
 		ConditionIDShort   string `json:"c"`
+		QuestionIDShort    string `json:"q"`
 		GameStartTimeShort string `json:"gst"`
 		TokensShort        []struct {
 			TokenID string `json:"t"`
@@ -94,22 +255,19 @@ func (m *CLOBMarket) UnmarshalJSON(b []byte) error {
 			MaxSpread       *float64 `json:"ma"`
 			MinimumOrderAge *int     `json:"moas"`
 		} `json:"r"`
-		OrderMinSizeShort          *float64 `json:"mos"`
-		OrderPriceMinTickSizeShort *float64 `json:"mts"`
-		MakerBaseFeeShort          *int     `json:"mbf"`
-		TakerBaseFeeShort          *int     `json:"tbf"`
-		AcceptingOrdersShort       *bool    `json:"ao"`
-		EnableOrderBookShort       *bool    `json:"cbos"`
-		NegRiskShort               *bool    `json:"nr"`
-		RFQEnabledShort            *bool    `json:"rfqe"`
-		TakerOrderDelayShort       *bool    `json:"itode"`
-		BlockaidCheckEnabledShort  *bool    `json:"ibce"`
-		FeeDetailsShort            *struct {
-			Rate      *float64 `json:"r"`
-			Exponent  *float64 `json:"e"`
-			TakerOnly *bool    `json:"to"`
-		} `json:"fd"`
-		MinimumOrderAgeShort *int `json:"oas"`
+		OrderMinSizeShort          *float64        `json:"mos"`
+		OrderPriceMinTickSizeShort *float64        `json:"mts"`
+		MakerBaseFeeShort          *int            `json:"mbf"`
+		TakerBaseFeeShort          *int            `json:"tbf"`
+		AcceptingOrdersShort       *bool           `json:"ao"`
+		EnableOrderBookShort       *bool           `json:"cbos"`
+		NegRiskShort               *bool           `json:"nr"`
+		RFQEnabledShort            *bool           `json:"rfqe"`
+		TakerOrderDelayShort       *bool           `json:"itode"`
+		BlockaidCheckEnabledShort  *bool           `json:"ibce"`
+		FeeDetailsCamel            *CLOBFeeDetails `json:"feeDetails"`
+		FeeDetailsShort            *CLOBFeeDetails `json:"fd"`
+		MinimumOrderAgeShort       *int            `json:"oas"`
 	}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
@@ -117,6 +275,9 @@ func (m *CLOBMarket) UnmarshalJSON(b []byte) error {
 	*m = CLOBMarket(raw.alias)
 	if m.ConditionID == "" {
 		m.ConditionID = raw.ConditionIDShort
+	}
+	if m.QuestionID == "" {
+		m.QuestionID = raw.QuestionIDShort
 	}
 	if m.GameStartTime == "" {
 		m.GameStartTime = raw.GameStartTimeShort
@@ -173,16 +334,11 @@ func (m *CLOBMarket) UnmarshalJSON(b []byte) error {
 	if raw.BlockaidCheckEnabledShort != nil {
 		m.BlockaidCheckEnabled = *raw.BlockaidCheckEnabledShort
 	}
+	if raw.FeeDetailsCamel != nil {
+		m.FeeDetails = *raw.FeeDetailsCamel
+	}
 	if raw.FeeDetailsShort != nil {
-		if raw.FeeDetailsShort.Rate != nil {
-			m.FeeDetails.Rate = *raw.FeeDetailsShort.Rate
-		}
-		if raw.FeeDetailsShort.Exponent != nil {
-			m.FeeDetails.Exponent = *raw.FeeDetailsShort.Exponent
-		}
-		if raw.FeeDetailsShort.TakerOnly != nil {
-			m.FeeDetails.TakerOnly = *raw.FeeDetailsShort.TakerOnly
-		}
+		m.FeeDetails = *raw.FeeDetailsShort
 	}
 	if raw.MinimumOrderAgeShort != nil {
 		m.MinimumOrderAge = *raw.MinimumOrderAgeShort
@@ -226,6 +382,26 @@ type CLOBPricePoint struct {
 	P        string `json:"p"`
 	Volume   string `json:"v,omitempty"`
 	Interval string `json:"interval,omitempty"`
+}
+
+func (p *CLOBPricePoint) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		T              json.RawMessage `json:"t"`
+		Timestamp      json.RawMessage `json:"timestamp"`
+		P              json.RawMessage `json:"p"`
+		Price          json.RawMessage `json:"price"`
+		Volume         json.RawMessage `json:"v"`
+		VolumeLongName json.RawMessage `json:"volume"`
+		Interval       string          `json:"interval"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	p.T = firstNonEmptyClobString(clobStringOrNumber(raw.T), clobStringOrNumber(raw.Timestamp))
+	p.P = firstNonEmptyClobString(clobStringOrNumber(raw.P), clobStringOrNumber(raw.Price))
+	p.Volume = firstNonEmptyClobString(clobStringOrNumber(raw.Volume), clobStringOrNumber(raw.VolumeLongName))
+	p.Interval = raw.Interval
+	return nil
 }
 
 // CLOBPriceHistory is the CLOB price-history response.

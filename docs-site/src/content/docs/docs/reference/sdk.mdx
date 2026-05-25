@@ -179,6 +179,8 @@ type Config struct {
 
 func NewMarketClient(cfg Config) *MarketClient
 func DefaultConfig(url string) Config
+func NewUserClient(cfg Config, credentials UserCredentials) *UserClient
+func DefaultUserConfig(url string) Config
 func NewDeduplicator(size int, ttl time.Duration) *Deduplicator
 ```
 
@@ -189,6 +191,11 @@ func (c *MarketClient) Connect(ctx context.Context) error
 func (c *MarketClient) SubscribeAssets(ctx context.Context, assetIDs []string) error
 func (c *MarketClient) Close()
 func (c *MarketClient) IsConnected() bool
+
+func (c *UserClient) Connect(ctx context.Context) error
+func (c *UserClient) SubscribeUser(ctx context.Context, markets []string) error
+func (c *UserClient) Close()
+func (c *UserClient) IsConnected() bool
 
 func (d *Deduplicator) Process(data []byte) bool
 func (d *Deduplicator) Reset()
@@ -207,11 +214,14 @@ type TickSizeChangeMessage struct
 type BestBidAskMessage struct
 type NewMarketMessage struct
 type MarketResolvedMessage struct
+type UserCredentials struct
+type UserOrderMessage struct
+type UserTradeMessage struct
 ```
 
-`pkg/stream` is public market data only. Authenticated user streams are not
-part of this contract. Set `Config.CustomFeatureEnabled = true` to request
-top-of-book and market lifecycle events from the V2 market channel.
+`pkg/stream` covers public market data and authenticated user order/trade
+streams. Set `Config.CustomFeatureEnabled = true` to request top-of-book and
+market lifecycle events from the V2 market channel.
 
 ## `pkg/marketdata` — Live Share-Price Snapshots
 

@@ -10,6 +10,18 @@ import (
 	"time"
 )
 
+func TestInferTimeframePrefers15mBefore5mSubstring(t *testing.T) {
+	if got := inferTimeframe("btc-updown-15m-1778114700", ""); got != "15m" {
+		t.Fatalf("15m slug inferred %q", got)
+	}
+	if got := inferTimeframe("", "Bitcoin 15-minute window"); got != "15m" {
+		t.Fatalf("15-minute question inferred %q", got)
+	}
+	if got := inferTimeframe("btc-updown-5m-1778114700", ""); got != "5m" {
+		t.Fatalf("5m slug inferred %q", got)
+	}
+}
+
 func TestResolveTokenIDsUsesEmbeddedPublicSearchMarkets(t *testing.T) {
 	eventLookupCalled := false
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

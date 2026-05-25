@@ -37,6 +37,20 @@ func TestCurrentPositionsWithLimitUsesQueryParams(t *testing.T) {
 // decodes onto the typed struct. The fixture values mirror the live
 // 2026-05-09 response from deposit wallet 0x21999a07...02D4 for the
 // resolved ETH-Up market.
+func TestCurrentPositionsDecodesStringNumericFields(t *testing.T) {
+	var row Position
+	raw := `{"asset":"token-1","conditionId":"condition-1","market":"market-1","size":"7.5","avgPrice":"0.42","initialValue":"3.15","currentValue":"4.125","curPrice":"0.55","unrealizedPnl":"1.25","cashPnl":"2.5","percentPnl":"12.5","totalBought":"8","realizedPnl":"0.75","percentRealizedPnl":"3.25","outcomeIndex":"1","redeemable":"true","mergeable":"false","negativeRisk":"true"}`
+	if err := json.Unmarshal([]byte(raw), &row); err != nil {
+		t.Fatal(err)
+	}
+	if row.Size != 7.5 || row.AvgPrice != 0.42 || row.CurrentPrice != 0.55 || row.UnrealizedPnl != 1.25 {
+		t.Fatalf("numeric fields not decoded: %+v", row)
+	}
+	if row.OutcomeIndex != 1 || !row.Redeemable || row.Mergeable || !row.NegativeRisk {
+		t.Fatalf("bool/int fields not decoded: %+v", row)
+	}
+}
+
 func TestCurrentPositionsDecodesV2Schema(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode([]map[string]any{{
@@ -121,12 +135,36 @@ func TestClosedPositionsWithLimitUsesQueryParams(t *testing.T) {
 	}
 }
 
+func TestClosedPositionsDecodesStringOutcomeIndex(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode([]map[string]any{{
+			"asset":        "token-closed",
+			"conditionId":  "condition-closed",
+			"size":         "2.5",
+			"avgPrice":     "0.45",
+			"realizedPnl":  "1.25",
+			"curPrice":     "0.62",
+			"outcomeIndex": "1",
+		}})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, transport.New(server.Client(), transport.DefaultConfig(server.URL)))
+	rows, err := client.ClosedPositionsWithLimit(context.Background(), "0xuser", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].OutcomeIndex != 1 || rows[0].Size != 2.5 || rows[0].RealizedPnl != 1.25 {
+		t.Fatalf("rows=%+v", rows)
+	}
+}
+
 func TestActivityAcceptsNumericMarketFields(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/activity" {
 			t.Fatalf("path=%s want /activity", r.URL.Path)
 		}
-		_, _ = w.Write([]byte(`[{"type":"TRADE","price":0.45,"size":2,"timestamp":1710000000}]`))
+		_, _ = w.Write([]byte(`[{"type":"TRADE","market":"0xmarket","assetId":"token-1","price":0.45,"size":2,"timestamp":1710000000}]`))
 	}))
 	defer server.Close()
 
@@ -135,7 +173,31 @@ func TestActivityAcceptsNumericMarketFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 1 || rows[0].Price != "0.45" || rows[0].Size != "2" || rows[0].Timestamp != "1710000000" {
+	if len(rows) != 1 || rows[0].AssetID != "token-1" || rows[0].Price != "0.45" || rows[0].Size != "2" || rows[0].Timestamp != "1710000000" {
+		t.Fatalf("rows=%+v", rows)
+	}
+}
+
+func TestTopHoldersDecodesStringNumericFields(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode([]map[string]any{{
+			"token": "token-1",
+			"holders": []map[string]any{{
+				"proxyWallet": "0xholder",
+				"amount":      "7.5",
+				"pnl":         "1.25",
+				"volume":      "100",
+			}},
+		}})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, transport.New(server.Client(), transport.DefaultConfig(server.URL)))
+	rows, err := client.TopHolders(context.Background(), "condition-1", 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].Address != "0xholder" || rows[0].Shares != 7.5 || rows[0].Amount != 7.5 || rows[0].Pnl != 1.25 || rows[0].Volume != 100 {
 		t.Fatalf("rows=%+v", rows)
 	}
 }
@@ -178,6 +240,33 @@ func TestTradesDecodeCurrentDataAPIShape(t *testing.T) {
 	}
 }
 
+func TestTradesDecodeStringOutcomeIndex(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode([]map[string]any{{
+			"id":              "trade-1",
+			"conditionId":     "condition-1",
+			"asset":           "token-1",
+			"price":           "0.55",
+			"size":            "12.5",
+			"feeRateBps":      "25",
+			"outcome":         "Yes",
+			"outcomeIndex":    "1",
+			"transactionHash": "0xtx",
+			"timestamp":       "1714001234",
+		}})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, transport.New(server.Client(), transport.DefaultConfig(server.URL)))
+	rows, err := client.Trades(context.Background(), "0xuser", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].OutcomeIndex != 1 || rows[0].FeeRateBps != 25 || rows[0].CreatedAt != "1714001234" {
+		t.Fatalf("rows=%+v", rows)
+	}
+}
+
 func TestMarketTradesUsesMarketFilter(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/trades" {
@@ -209,6 +298,63 @@ func TestMarketTradesUsesMarketFilter(t *testing.T) {
 	}
 	if len(rows) != 1 || rows[0].Market != "0xmarket" || rows[0].AssetID != "yes-token" {
 		t.Fatalf("rows=%+v", rows)
+	}
+}
+
+func TestAggregateDTOsDecodeStringNumericFields(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/value":
+			_ = json.NewEncoder(w).Encode(map[string]any{"user": "0xuser", "value": "1234.56", "timestamp": 1714000000})
+		case "/traded":
+			_ = json.NewEncoder(w).Encode(map[string]any{"user": "0xuser", "traded": "42"})
+		case "/oi":
+			_ = json.NewEncoder(w).Encode([]map[string]any{{"market": "0xcondition", "asset_id": "token-1", "open_value": "9999.99"}})
+		case "/v1/leaderboard":
+			_ = json.NewEncoder(w).Encode([]map[string]any{{"rank": "1", "proxyWallet": "0xleader", "vol": "1000000.5", "pnl": "50000.25", "roi": "0.05"}})
+		case "/live-volume":
+			_ = json.NewEncoder(w).Encode(map[string]any{"total": "42.5", "markets": []map[string]any{{"market": "0xcondition", "value": "42.5"}}, "events": []map[string]any{{"event_id": "event-1", "event_slug": "event", "title": "Event", "volume": "7.25"}}})
+		default:
+			t.Fatalf("unexpected path=%s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, transport.New(server.Client(), transport.DefaultConfig(server.URL)))
+	value, err := client.TotalValue(context.Background(), "0xuser")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if value.Value != 1234.56 || value.Timestamp != "1714000000" {
+		t.Fatalf("value=%+v", value)
+	}
+	traded, err := client.MarketsTraded(context.Background(), "0xuser")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if traded.MarketsTraded != 42 || traded.Traded != 42 {
+		t.Fatalf("traded=%+v", traded)
+	}
+	oi, err := client.OpenInterest(context.Background(), "0xcondition")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if oi.OpenValue != 9999.99 || oi.AssetID != "token-1" {
+		t.Fatalf("oi=%+v", oi)
+	}
+	leaders, err := client.TraderLeaderboard(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(leaders) != 1 || leaders[0].Volume != 1000000.5 || leaders[0].Pnl != 50000.25 || leaders[0].ROI != 0.05 {
+		t.Fatalf("leaders=%+v", leaders)
+	}
+	live, err := client.LiveVolume(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if live.Total != 42.5 || live.Markets[0].Value != 42.5 || live.Events[0].Volume != 7.25 {
+		t.Fatalf("live=%+v", live)
 	}
 }
 

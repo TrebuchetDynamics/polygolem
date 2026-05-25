@@ -75,6 +75,16 @@ func TestFedDecisionSearchFixtureFindsEventBeforeDetail(t *testing.T) {
 	}
 }
 
+func TestCLOBMarketDecodesAbbreviatedQuestionID(t *testing.T) {
+	var market CLOBMarket
+	if err := json.Unmarshal([]byte(`{"c":"0xcondition","q":"0xquestion"}`), &market); err != nil {
+		t.Fatal(err)
+	}
+	if market.QuestionID != "0xquestion" {
+		t.Fatalf("QuestionID=%q", market.QuestionID)
+	}
+}
+
 func TestFedDecisionCLOBFixturesPreserveCurrentProviderShape(t *testing.T) {
 	var markets []CLOBMarket
 	readJSONFixture(t, "clob-markets.json", &markets)

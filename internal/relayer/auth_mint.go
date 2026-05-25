@@ -30,11 +30,12 @@ import (
 
 // V2APIKey is the V2 relayer API key triple. The "triple" is misleading —
 // V2 uses two values (Key + Address) where V1 used three (Key, Secret,
-// Passphrase). The `CreatedAt` field is captured for diagnostics.
+// Passphrase). Timestamp fields are captured for diagnostics.
 type V2APIKey struct {
 	Key       string `json:"apiKey"`
 	Address   string `json:"address"`
 	CreatedAt string `json:"createdAt,omitempty"`
+	UpdatedAt string `json:"updatedAt,omitempty"`
 }
 
 // V2Headers returns the plain headers the V2 relayer expects on every

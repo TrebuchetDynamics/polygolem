@@ -63,41 +63,25 @@ For each V2-touching surface, columns are SDK / CLI / Test status. ✅ wired,
 |---------------------------------|-----|-----|------|--------------------------------------------------------------------------------------------------------|
 | V2 limit order signing (BUY)    | ✅  | ✅  | ✅   | `clob create-order`                                                                                    |
 | V2 limit order signing (SELL)   | ✅  | ✅  | ✅   | Same path; side is a parameter                                                                         |
-| V2 market order (BUY)           | ✅  | ✅  | ✅   | `pkg/clob/auth.go:312` doc string explicitly says "buy-side"                                           |
-| V2 market order (SELL)          | ❌  | ❌  | ❌   | **Gap.** `internal/clob/orders.go:632` only computes price for buy; no sell-side branch                |
+| V2 market order (BUY)           | ✅  | ✅  | ✅   | Buy market orders treat `amount` as USDC budget and discover price from asks when omitted                |
+| V2 market order (SELL)          | ✅  | ✅  | ✅   | Sell market orders treat `amount` as share size and discover price from bids when omitted               |
 | V2 cancel one / batch / all     | ✅  | ✅  | ✅   | `clob cancel`, `cancel-orders`, `cancel-all`, `cancel-market`                                          |
 | V2 builder fee key              | ✅  | ✅  | ✅   | Create/list/revoke wired                                                                               |
 | V2 CLOB account reads           | ✅  | ✅  | ✅   | balance, orders, trades                                                                                |
 | V2 relayer wallet-create        | ✅  | ✅  | ✅   | `deposit-wallet onboard`                                                                               |
 | V2 relayer wallet-batch         | ✅  | ✅  | ✅   | Approval/redeem flows                                                                                  |
-| V2 relayer transaction lookup   | ✅  | ⚠️  | ✅   | `Client.GetTransaction` / `PollTransaction` exist (`pkg/relayer/relayer.go:167,194`); no direct CLI    |
+| V2 relayer transaction lookup   | ✅  | ✅  | ✅   | `Client.GetTransaction` / `PollTransaction`; CLI lookup via `relayer transaction <id>` or `deposit-wallet status --tx-id <id>` |
 | V2 collateral adapters          | ✅  | ✅  | ✅   | Approve/split/merge/redeem                                                                             |
 | WS market channel               | ✅  | ✅  | ✅   | `wss://ws-subscriptions-clob.polymarket.com/ws/market` — `internal/stream/client.go:16`                |
-| WS user channel (auth)          | ❌  | ❌  | ❌   | **Gap.** `internal/stream/doc.go:5` and `pkg/stream/client.go:5` explicitly disclaim user streams      |
+| WS user channel (auth)          | ✅  | ✅  | ✅   | `pkg/stream.UserClient` and `polygolem stream user` handle authenticated order/trade events           |
 | Bridge supported assets         | ✅  | ✅  | ✅   | `bridge assets`                                                                                        |
 | Bridge create deposit address   | ✅  | ✅  | ✅   | `bridge deposit`                                                                                       |
-| Bridge get quote                | ✅  | ❌  | ⚠️  | **Gap.** `pkg/bridge/client.go:180` `GetQuote` exists; no CLI binding                                  |
-| Bridge get deposit status       | ✅  | ❌  | ⚠️  | **Gap.** `pkg/bridge/client.go:169` `GetDepositStatus` exists; no CLI binding                          |
+| Bridge get quote                | ✅  | ✅  | ✅   | `bridge quote` posts source/destination token details and returns the Bridge quote payload               |
+| Bridge get deposit status       | ✅  | ✅  | ✅   | `bridge status <deposit-address>` returns observed Bridge transactions                                  |
 
 ## Confirmed gaps (with evidence)
 
-1. **Authenticated user WebSocket.** No user channel URL constant, no
-   `SubscribeUser` / user-event dispatch. `internal/stream/doc.go:5` and
-   `pkg/stream/client.go:5` explicitly state user streams are not implemented.
-   PRD §R8 (`docs/PRD.md:542`) lists `trade` and `order` as the two user-channel
-   events to implement.
-2. **Sell-side market orders.** `pkg/clob/auth.go:312`:
-   `// CreateMarketOrder signs and submits a V2 buy-side market order.`
-   `internal/clob/orders.go:632` calls `marketOrderPrice` only for the buy
-   path; sell-side amount→price conversion is absent.
-3. **Bridge CLI: `quote` and `status` not bound.** SDK has both
-   (`pkg/bridge/client.go:169`, `:180`). CLI group only declares `assets` and
-   `deposit` (`internal/cli/root.go:1597` and adjacent).
-4. **Relayer transaction CLI surface.** `pkg/relayer.Client` exposes
-   `GetTransaction`, `PollTransaction`, `IsDeployed`, `GetNonce`; only
-   `GetNonce` and `IsDeployed` are reachable from CLI (via
-   `deposit-wallet nonce` / `deposit-wallet status`). A general
-   `relayer tx <id>` lookup is missing.
+No confirmed V2 surface gaps remain in this focused matrix. Continue to treat live order execution, relayer submission, and approvals as safety-gated flows that require explicit operator intent and local tests.
 
 ## Non-gaps that may look like gaps
 
@@ -110,17 +94,7 @@ For each V2-touching surface, columns are SDK / CLI / Test status. ✅ wired,
 
 ## Recommended slice order
 
-Priority is dictated by what the live bot cannot do without it.
-
-1. **Authenticated user WebSocket** — biggest functional gap. Without it the
-   live loop must poll `clob orders` / `clob trades` to know about its own
-   fills, which is wrong for both latency and rate-limit reasons. Two events
-   to handle (`trade`, `order`) plus L2-auth handshake.
-2. **Sell-side market orders** — required for any automated exit / stop-out
-   path. Smaller scope than (1); reuses the existing limit-order signing.
-3. **Bridge `quote` + `status` CLI** — operator-facing only; SDK already there.
-   Cheap to land, mostly cobra wiring.
-4. **`relayer tx <id>` CLI** — operator convenience; small.
+No remaining V2 parity slices are currently identified in this focused matrix.
 
 ## What this audit deliberately does not include
 

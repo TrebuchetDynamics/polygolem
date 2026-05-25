@@ -314,6 +314,56 @@ func TestDeriveAPIKeyForAddress(t *testing.T) {
 	}
 }
 
+func TestBuilderFeeKeyManagement(t *testing.T) {
+	var listed bool
+	var revoked bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/auth/derive-api-key":
+			json.NewEncoder(w).Encode(map[string]string{
+				"apiKey":     "builder-owner-key",
+				"secret":     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+				"passphrase": "builder-owner-pass",
+			})
+		case "/auth/builder-api-keys":
+			if r.Method != http.MethodGet {
+				t.Errorf("expected GET, got %s", r.Method)
+			}
+			listed = true
+			json.NewEncoder(w).Encode([]map[string]string{{
+				"key":        "fee-1",
+				"secret":     "fee-secret",
+				"passphrase": "fee-pass",
+				"created_at": "1710000000",
+			}})
+		case "/auth/builder-api-key/fee-1":
+			if r.Method != http.MethodDelete {
+				t.Errorf("expected DELETE, got %s", r.Method)
+			}
+			revoked = true
+			w.WriteHeader(http.StatusOK)
+		default:
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer srv.Close()
+
+	c := NewClient(Config{CLOBBaseURL: srv.URL})
+	rows, err := c.ListBuilderFeeKeys(context.Background(), testPrivateKey)
+	if err != nil {
+		t.Fatalf("ListBuilderFeeKeys error: %v", err)
+	}
+	if len(rows) != 1 || rows[0].Key != "fee-1" || rows[0].Passphrase != "fee-pass" {
+		t.Fatalf("unexpected builder fee keys: %+v", rows)
+	}
+	if err := c.RevokeBuilderFeeKey(context.Background(), testPrivateKey, "fee-1"); err != nil {
+		t.Fatalf("RevokeBuilderFeeKey error: %v", err)
+	}
+	if !listed || !revoked {
+		t.Fatalf("listed=%v revoked=%v", listed, revoked)
+	}
+}
+
 func TestDeriveAPIKey(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/auth/derive-api-key" {
@@ -758,6 +808,46 @@ func TestOrderScoring(t *testing.T) {
 	}
 	if !scoring {
 		t.Error("expected scoring=true")
+	}
+}
+
+func TestPublicTrades(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/trades" || r.URL.Query().Get("market") != "condition-1" {
+			t.Fatalf("unexpected request: %s?%s", r.URL.Path, r.URL.RawQuery)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"id":"trade-1","status":"MATCHED","market":"condition-1","asset_id":"token-1","side":"BUY","price":"0.52","size":"10","transaction_hash":"0xtx"}]`))
+	}))
+	defer server.Close()
+
+	c := NewClient(Config{CLOBBaseURL: server.URL})
+	trades, err := c.PublicTrades(context.Background(), "condition-1")
+	if err != nil {
+		t.Fatalf("PublicTrades error: %v", err)
+	}
+	if len(trades) != 1 || trades[0].ID != "trade-1" || trades[0].TransactionHash != "0xtx" {
+		t.Fatalf("trades=%+v", trades)
+	}
+}
+
+func TestBuilderTrades(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/builder-trades" || r.URL.Query().Get("limit") != "25" {
+			t.Fatalf("unexpected request: %s?%s", r.URL.Path, r.URL.RawQuery)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"trades":[{"trade_id":"trade-1","order_id":"order-1","market":"condition-1","asset_id":"token-1","side":"BUY","size":"10","price":"0.52","timestamp":"1714000000"}]}`))
+	}))
+	defer server.Close()
+
+	c := NewClient(Config{CLOBBaseURL: server.URL})
+	trades, err := c.BuilderTrades(context.Background(), 25)
+	if err != nil {
+		t.Fatalf("BuilderTrades error: %v", err)
+	}
+	if len(trades) != 1 || trades[0].TradeID != "trade-1" || trades[0].Price != "0.52" {
+		t.Fatalf("trades=%+v", trades)
 	}
 }
 

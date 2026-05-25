@@ -1,18 +1,20 @@
 package cli
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/TrebuchetDynamics/polygolem/internal/paper"
-	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/paperaccount"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/papercrypto"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/papertrade"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketresolver"
 	"github.com/spf13/cobra"
 )
 
 func paperCmd(jsonOut bool) *cobra.Command {
+	w := newWire(jsonOut)
+	return newPaperCommand(jsonOut, w.clob)
+}
+
+func newPaperCommand(jsonOut bool, pricer paperaccount.Pricer) *cobra.Command {
 	cmd := commandGroup("paper", "Paper trading simulation for crypto markets")
 
 	var paperCash float64
@@ -21,6 +23,7 @@ func paperCmd(jsonOut bool) *cobra.Command {
 	var sizeStr string
 
 	paperState := paper.NewState("USD", 10000.0)
+	account := paperaccount.New(paperaccount.Config{State: paperState, Pricer: pricer})
 
 	buyCmd := &cobra.Command{
 		Use:   "buy",
@@ -29,54 +32,11 @@ func paperCmd(jsonOut bool) *cobra.Command {
 Uses current best ask price if --price is not specified.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tokenID == "" {
-				return fmt.Errorf("--token-id required")
-			}
-
-			price := 0.5
-			if priceStr != "" {
-				p, err := strconv.ParseFloat(priceStr, 64)
-				if err != nil {
-					return fmt.Errorf("invalid price: %w", err)
-				}
-				price = p
-			} else {
-				// Get current price from CLOB
-				w := newWire(jsonOut)
-				if p, err := w.clob.Price(cmd.Context(), tokenID, "SELL"); err == nil {
-					if parsed, err := strconv.ParseFloat(p, 64); err == nil {
-						price = parsed
-					}
-				}
-			}
-
-			size := 1.0
-			if sizeStr != "" {
-				s, err := strconv.ParseFloat(sizeStr, 64)
-				if err != nil {
-					return fmt.Errorf("invalid size: %w", err)
-				}
-				size = s
-			}
-
-			fill, err := paperState.Buy(paper.Order{
-				TokenID: tokenID,
-				Price:   price,
-				Size:    size,
-			})
+			result, err := account.Buy(cmd.Context(), paperaccount.TradeRequest{TokenID: tokenID, Price: priceStr, Size: sizeStr})
 			if err != nil {
 				return err
 			}
-
-			return writeCommandJSON(cmd, map[string]interface{}{
-				"action":   "buy",
-				"token_id": tokenID,
-				"price":    price,
-				"size":     size,
-				"cost":     price * size,
-				"cash":     paperState.Cash,
-				"fill":     fill,
-			})
+			return writeCommandJSON(cmd, result)
 		},
 	}
 	buyCmd.Flags().StringVar(&tokenID, "token-id", "", "CLOB token ID to buy")
@@ -91,54 +51,11 @@ Uses current best ask price if --price is not specified.`,
 Uses current best bid price if --price is not specified.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tokenID == "" {
-				return fmt.Errorf("--token-id required")
-			}
-
-			price := 0.5
-			if priceStr != "" {
-				p, err := strconv.ParseFloat(priceStr, 64)
-				if err != nil {
-					return fmt.Errorf("invalid price: %w", err)
-				}
-				price = p
-			} else {
-				w := newWire(jsonOut)
-				if p, err := w.clob.Price(cmd.Context(), tokenID, "BUY"); err == nil {
-					if parsed, err := strconv.ParseFloat(p, 64); err == nil {
-						price = parsed
-					}
-				}
-			}
-
-			size := 1.0
-			if sizeStr != "" {
-				s, err := strconv.ParseFloat(sizeStr, 64)
-				if err != nil {
-					return fmt.Errorf("invalid size: %w", err)
-				}
-				size = s
-			}
-
-			// For paper trading, selling is just buying the opposite outcome
-			fill, err := paperState.Buy(paper.Order{
-				TokenID: tokenID,
-				Price:   price,
-				Size:    size,
-			})
+			result, err := account.Sell(cmd.Context(), paperaccount.TradeRequest{TokenID: tokenID, Price: priceStr, Size: sizeStr})
 			if err != nil {
 				return err
 			}
-
-			return writeCommandJSON(cmd, map[string]interface{}{
-				"action":   "sell",
-				"token_id": tokenID,
-				"price":    price,
-				"size":     size,
-				"proceeds": price * size,
-				"cash":     paperState.Cash,
-				"fill":     fill,
-			})
+			return writeCommandJSON(cmd, result)
 		},
 	}
 	sellCmd.Flags().StringVar(&tokenID, "token-id", "", "CLOB token ID to sell")
@@ -151,11 +68,7 @@ Uses current best bid price if --price is not specified.`,
 		Short: "Show current paper trading positions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return writeCommandJSON(cmd, map[string]interface{}{
-				"cash":      paperState.Cash,
-				"positions": paperState.Positions,
-				"fills":     paperState.Fills,
-			})
+			return writeCommandJSON(cmd, account.Positions())
 		},
 	}
 	cmd.AddCommand(positionsCmd)
@@ -165,11 +78,7 @@ Uses current best bid price if --price is not specified.`,
 		Short: "Reset paper trading state",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			paperState = paper.NewState("USD", paperCash)
-			return writeCommandJSON(cmd, map[string]interface{}{
-				"status": "reset",
-				"cash":   paperCash,
-			})
+			return writeCommandJSON(cmd, account.Reset(paperCash))
 		},
 	}
 	resetCmd.Flags().Float64Var(&paperCash, "cash", 10000.0, "initial paper cash")
@@ -188,86 +97,15 @@ Examples:
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			w := newWire(jsonOut)
-			searchQuery := ""
-
-			if cryptoAsset != "" {
-				searchQuery = cryptoAsset
-			}
-			if cryptoInterval != "" {
-				if searchQuery != "" {
-					searchQuery += " "
-				}
-				searchQuery += cryptoInterval
-			}
-			if searchQuery == "" {
-				searchQuery = "crypto"
-			}
-			if cryptoLimit == 0 {
-				cryptoLimit = 10
-			}
-
-			resp, err := w.gamma.Search(cmd.Context(), &polytypes.SearchParams{
-				Q:            searchQuery,
-				LimitPerType: &cryptoLimit,
+			result, err := papercrypto.New(w.gamma).Run(cmd.Context(), papercrypto.Request{
+				Asset:    cryptoAsset,
+				Interval: cryptoInterval,
+				Limit:    cryptoLimit,
 			})
 			if err != nil {
 				return err
 			}
-
-			type cryptoMarket struct {
-				EventID    string   `json:"event_id"`
-				EventTitle string   `json:"event_title"`
-				MarketID   string   `json:"market_id"`
-				Question   string   `json:"question"`
-				TokenID    string   `json:"token_id"`
-				Outcomes   []string `json:"outcomes"`
-				EndDate    string   `json:"end_date"`
-			}
-
-			var results []cryptoMarket
-			for _, event := range resp.Events {
-				if !event.Active || event.Closed {
-					continue
-				}
-				for _, market := range event.Markets {
-					if !market.Active || market.Closed {
-						continue
-					}
-					if cryptoAsset != "" &&
-						!strings.Contains(strings.ToUpper(market.Question), strings.ToUpper(cryptoAsset)) &&
-						!strings.Contains(strings.ToUpper(event.Title), strings.ToUpper(cryptoAsset)) {
-						continue
-					}
-					if cryptoInterval != "" &&
-						!strings.Contains(strings.ToLower(event.Title), strings.ToLower(cryptoInterval)) &&
-						!strings.Contains(strings.ToLower(market.Question), strings.ToLower(cryptoInterval)) {
-						continue
-					}
-
-					tokenIDs := parseClobTokenIDs(market.ClobTokenIDs)
-					if len(tokenIDs) == 0 {
-						continue
-					}
-
-					cm := cryptoMarket{
-						EventID:    event.ID,
-						EventTitle: event.Title,
-						MarketID:   market.ID,
-						Question:   market.Question,
-						TokenID:    tokenIDs[0],
-						EndDate:    market.EndDateISO,
-					}
-					cm.Outcomes = []string(market.Outcomes)
-					results = append(results, cm)
-				}
-			}
-
-			return writeCommandJSON(cmd, map[string]interface{}{
-				"query":   searchQuery,
-				"count":   len(results),
-				"markets": results,
-				"help":    "Use 'polygolem paper buy --token-id <ID> --size 1' to paper trade",
-			})
+			return writeCommandJSON(cmd, result)
 		},
 	}
 	cryptoCmd.Flags().StringVar(&cryptoAsset, "asset", "", "crypto asset filter (BTC, ETH, SOL, etc.)")
@@ -287,111 +125,19 @@ Examples:
   polygolem paper trade --asset ETH --interval 15m --side down --size 2 --price 0.48`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			w := newWire(jsonOut)
-
-			var targetTokenID string
-			if tokenID != "" {
-				targetTokenID = tokenID
-			} else {
-				if tradeAsset == "" {
-					return fmt.Errorf("--asset required (or use --token-id)")
-				}
-				if tradeInterval == "" {
-					return fmt.Errorf("--interval required (or use --token-id)")
-				}
-				if tradeSide == "" {
-					return fmt.Errorf("--side required (up or down)")
-				}
-
-				windowStart, err := currentWindowStart(tradeInterval)
-				if err != nil {
-					return err
-				}
-
-				slug := marketresolver.CryptoWindowSlug(tradeAsset, tradeInterval, windowStart)
-				if slug == "" {
-					return fmt.Errorf("unable to construct slug for asset=%s interval=%s", tradeAsset, tradeInterval)
-				}
-
-				evt, err := w.gamma.EventBySlug(cmd.Context(), slug)
-				if err != nil {
-					return fmt.Errorf("window not found: slug=%s: %w", slug, err)
-				}
-
-				var found bool
-				for _, market := range evt.Markets {
-					if !market.Active || market.Closed {
-						continue
-					}
-					tokenIDs := parseClobTokenIDs(market.ClobTokenIDs)
-					outcomes := market.Outcomes
-					if len(tokenIDs) != len(outcomes) || len(tokenIDs) == 0 {
-						continue
-					}
-					for i, outcome := range outcomes {
-						lower := strings.ToLower(outcome)
-						if (tradeSide == "up" && (lower == "up" || lower == "yes")) ||
-							(tradeSide == "down" && (lower == "down" || lower == "no")) {
-							targetTokenID = tokenIDs[i]
-							found = true
-							break
-						}
-					}
-					if found {
-						break
-					}
-				}
-				if !found {
-					return fmt.Errorf("no active market with %s outcome found for %s %s", tradeSide, tradeAsset, tradeInterval)
-				}
-			}
-
-			price := 0.5
-			if priceStr != "" {
-				p, err := strconv.ParseFloat(priceStr, 64)
-				if err != nil {
-					return fmt.Errorf("invalid price: %w", err)
-				}
-				price = p
-			} else {
-				side := "SELL"
-				if tradeSide == "down" {
-					side = "BUY"
-				}
-				if tokenPrice, err := w.clob.Price(cmd.Context(), targetTokenID, side); err == nil {
-					if parsed, err := strconv.ParseFloat(tokenPrice, 64); err == nil {
-						price = parsed
-					}
-				}
-			}
-
-			size := tradeSize
-			if size == 0 {
-				size = 1.0
-			}
-
-			fill, err := paperState.Buy(paper.Order{
-				TokenID: targetTokenID,
-				Price:   price,
-				Size:    size,
+			runner := papertrade.New(marketresolver.NewResolver(gammaBaseURL), pricer, paperState)
+			result, err := runner.Run(cmd.Context(), papertrade.Request{
+				Asset:    tradeAsset,
+				Interval: tradeInterval,
+				Side:     tradeSide,
+				TokenID:  tokenID,
+				Price:    priceStr,
+				Size:     tradeSize,
 			})
 			if err != nil {
 				return err
 			}
-
-			return writeCommandJSON(cmd, map[string]interface{}{
-				"action":    "paper_trade",
-				"asset":     tradeAsset,
-				"interval":  tradeInterval,
-				"side":      tradeSide,
-				"token_id":  targetTokenID,
-				"price":     price,
-				"size":      size,
-				"cost":      price * size,
-				"cash":      paperState.Cash,
-				"fill":      fill,
-				"timestamp": time.Now().UTC().Format(time.RFC3339),
-			})
+			return writeCommandJSON(cmd, result)
 		},
 	}
 	tradeCmd.Flags().StringVar(&tradeAsset, "asset", "", "crypto asset (BTC, ETH, SOL, XRP, DOGE, BNB)")

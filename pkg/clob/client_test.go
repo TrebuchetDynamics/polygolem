@@ -21,6 +21,181 @@ const testDepositWallet = "0x19bE70b1e4F59C0663a999C0dC6f5b3C68CFCaF3"
 // deposit-wallet identity rides on the order body's signatureType=3.
 const testEOA = "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23"
 
+func TestPublicOrderRecordDecodesCamelCaseAliases(t *testing.T) {
+	var row OrderRecord
+	raw := `{"id":"ord-1","assetId":"token-1","originalSize":10,"sizeMatched":5,"orderType":"GTC","signatureType":"3","createdAt":1710000000,"makerAddress":"0xmaker","associateTrades":[1,"trade-2"]}`
+	if err := json.Unmarshal([]byte(raw), &row); err != nil {
+		t.Fatal(err)
+	}
+	if row.AssetID != "token-1" || row.OriginalSize != "10" || row.SizeMatched != "5" || row.OrderType != "GTC" {
+		t.Fatalf("unexpected decoded order: %+v", row)
+	}
+	if row.SignatureType != 3 || row.CreatedAt != "1710000000" || row.MakerAddress != "0xmaker" {
+		t.Fatalf("unexpected scalar fields: %+v", row)
+	}
+	if got := strings.Join(row.AssociateTrades, ","); got != "1,trade-2" {
+		t.Fatalf("AssociateTrades=%q", got)
+	}
+}
+
+func TestPublicTradeRecordDecodesCamelCaseAliases(t *testing.T) {
+	var row TradeRecord
+	raw := `{"id":"trade-1","assetId":"token-1","feeRateBps":10,"matchedAmount":5,"transactionHash":"0xhash","createdAt":1710000000,"lastUpdated":1710000060}`
+	if err := json.Unmarshal([]byte(raw), &row); err != nil {
+		t.Fatal(err)
+	}
+	if row.AssetID != "token-1" || row.FeeRateBps != "10" || row.MatchedAmount != "5" || row.TransactionHash != "0xhash" || row.CreatedAt != "1710000000" || row.LastUpdated != "1710000060" {
+		t.Fatalf("unexpected decoded trade: %+v", row)
+	}
+}
+
+func TestPublicOrderRecordDecodesNumericAssociateTrades(t *testing.T) {
+	var row OrderRecord
+	if err := json.Unmarshal([]byte(`{"id":"ord-1","associate_trades":[1,"trade-2"]}`), &row); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(row.AssociateTrades, ","); got != "1,trade-2" {
+		t.Fatalf("AssociateTrades=%q", got)
+	}
+}
+
+func TestPublicOrderRecordDecodesNumericScalarFields(t *testing.T) {
+	var row OrderRecord
+	raw := `{"id":"ord-1","original_size":10,"size_matched":5,"price":0.49,"signature_type":"3","created_at":1710000000,"expiration":0}`
+	if err := json.Unmarshal([]byte(raw), &row); err != nil {
+		t.Fatal(err)
+	}
+	if row.OriginalSize != "10" || row.SizeMatched != "5" || row.Price != "0.49" {
+		t.Fatalf("unexpected amount fields: %+v", row)
+	}
+	if row.SignatureType != 3 || row.CreatedAt != "1710000000" || row.Expiration != "0" {
+		t.Fatalf("unexpected scalar fields: %+v", row)
+	}
+}
+
+func TestPublicTradeRecordDecodesNumericScalarFields(t *testing.T) {
+	var row TradeRecord
+	raw := `{"id":"trade-1","price":0.52,"size":10,"fee_rate_bps":0,"matched_amount":10,"created_at":1710000000,"last_updated":1710000060}`
+	if err := json.Unmarshal([]byte(raw), &row); err != nil {
+		t.Fatal(err)
+	}
+	if row.Price != "0.52" || row.Size != "10" || row.FeeRateBps != "0" || row.MatchedAmount != "10" {
+		t.Fatalf("unexpected amount fields: %+v", row)
+	}
+	if row.CreatedAt != "1710000000" || row.LastUpdated != "1710000060" {
+		t.Fatalf("unexpected timestamp fields: %+v", row)
+	}
+}
+
+func TestBuilderFeeKeyRecordDecodesCamelCaseTimestamps(t *testing.T) {
+	var row BuilderFeeKeyRecord
+	if err := json.Unmarshal([]byte(`{"key":"fee-1","createdAt":"2026-05-08T00:00:00Z","updatedAt":"2026-05-08T01:00:00Z"}`), &row); err != nil {
+		t.Fatal(err)
+	}
+	if row.CreatedAt != "2026-05-08T00:00:00Z" || row.UpdatedAt != "2026-05-08T01:00:00Z" {
+		t.Fatalf("row=%+v", row)
+	}
+}
+
+func TestOrderPlacementResponseDecodesSnakeCaseErrorMessage(t *testing.T) {
+	var resp OrderPlacementResponse
+	if err := json.Unmarshal([]byte(`{"success":false,"orderID":"0xorder","error_msg":"price out of band"}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.ErrorMsg != "price out of band" {
+		t.Fatalf("ErrorMsg=%q", resp.ErrorMsg)
+	}
+}
+
+func TestCancelOrdersResponseDecodesCamelCaseNotCanceled(t *testing.T) {
+	var resp CancelOrdersResponse
+	if err := json.Unmarshal([]byte(`{"canceled":["0x1"],"notCanceled":{"0x2":"already filled"}}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if got := resp.NotCanceled["0x2"]; got != "already filled" {
+		t.Fatalf("NotCanceled[0x2]=%q", got)
+	}
+}
+
+func TestCancelOrdersResponseDecodesNumericValues(t *testing.T) {
+	var resp CancelOrdersResponse
+	if err := json.Unmarshal([]byte(`{"canceled":[1,"0x2"],"not_canceled":{"0x3":404,"0x4":"already filled"}}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(resp.Canceled, ","); got != "1,0x2" {
+		t.Fatalf("Canceled=%q", got)
+	}
+	if got := resp.NotCanceled["0x3"]; got != "404" {
+		t.Fatalf("NotCanceled[0x3]=%q", got)
+	}
+	if got := resp.NotCanceled["0x4"]; got != "already filled" {
+		t.Fatalf("NotCanceled[0x4]=%q", got)
+	}
+}
+
+func TestOrderPlacementResponseDecodesCamelResponseAliases(t *testing.T) {
+	var resp OrderPlacementResponse
+	if err := json.Unmarshal([]byte(`{"success":true,"orderID":"0xorder","status":"matched","transactionHash":"0xtx","tradeIds":["trade-1"]}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.TransactionHash != "0xtx" {
+		t.Fatalf("TransactionHash=%q", resp.TransactionHash)
+	}
+	if got := strings.Join(resp.TradeIDs, ","); got != "trade-1" {
+		t.Fatalf("TradeIDs=%q", got)
+	}
+}
+
+func TestOrderPlacementResponseDecodesTransactionHashesAlias(t *testing.T) {
+	var resp OrderPlacementResponse
+	if err := json.Unmarshal([]byte(`{"success":true,"orderID":"0xorder","status":"matched","transactionHashes":["0xtx"]}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(resp.TransactionsHashes, ","); got != "0xtx" {
+		t.Fatalf("TransactionsHashes=%q", got)
+	}
+}
+
+func TestOrderPlacementResponseDecodesNumericListFields(t *testing.T) {
+	var resp OrderPlacementResponse
+	if err := json.Unmarshal([]byte(`{"success":true,"orderID":"0xorder","transactionHashes":[1,"0xtx"],"tradeIDs":[2,"trade-3"]}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(resp.TransactionsHashes, ","); got != "1,0xtx" {
+		t.Fatalf("TransactionsHashes=%q", got)
+	}
+	if got := strings.Join(resp.TradeIDs, ","); got != "2,trade-3" {
+		t.Fatalf("TradeIDs=%q", got)
+	}
+}
+
+func TestOrderPlacementResponseDecodesNumericAmountFields(t *testing.T) {
+	var resp OrderPlacementResponse
+	if err := json.Unmarshal([]byte(`{"success":true,"orderID":"0xorder","status":"matched","makingAmount":100,"takingAmount":200}`), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.MakingAmount != "100" || resp.TakingAmount != "200" {
+		t.Fatalf("unexpected decoded response: %+v", resp)
+	}
+}
+
+func TestOrderPlacementResponseDecodesSnakeCaseFields(t *testing.T) {
+	var resp OrderPlacementResponse
+	raw := `{"success":true,"order_id":"0xorder","status":"matched","making_amount":"100","taking_amount":"200","transaction_hash":"0xtx","transaction_hashes":["0xtx2"],"trade_ids":["trade-1"]}`
+	if err := json.Unmarshal([]byte(raw), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.OrderID != "0xorder" || resp.MakingAmount != "100" || resp.TakingAmount != "200" || resp.TransactionHash != "0xtx" {
+		t.Fatalf("unexpected decoded response: %+v", resp)
+	}
+	if got := strings.Join(resp.TransactionsHashes, ","); got != "0xtx2" {
+		t.Fatalf("TransactionsHashes=%q", got)
+	}
+	if got := strings.Join(resp.TradeIDs, ","); got != "trade-1" {
+		t.Fatalf("TradeIDs=%q", got)
+	}
+}
+
 func TestClientOrderBookReturnsPublicDTO(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/book" || r.URL.Query().Get("token_id") != "token-1" {
@@ -298,10 +473,11 @@ func TestClientAuthenticatedMethodsReturnPublicDTOs(t *testing.T) {
 				"market":"0xmarket",
 				"asset_id":"token-1",
 				"side":"BUY",
-				"original_size":"10",
-				"size_matched":"2",
-				"price":"0.45",
+				"original_size":10,
+				"size_matched":2,
+				"price":0.45,
 				"outcome":"Yes",
+				"type":"limit",
 				"order_type":"GTC",
 				"maker_address":"0xmaker",
 				"owner":"api-key",
@@ -316,13 +492,13 @@ func TestClientAuthenticatedMethodsReturnPublicDTOs(t *testing.T) {
 				"market":"0xmarket",
 				"asset_id":"token-1",
 				"side":"BUY",
-				"price":"0.45",
-				"size":"2",
-				"fee_rate_bps":"0",
+				"price":0.45,
+				"size":2,
+				"fee_rate_bps":0,
 				"outcome":"Yes",
 				"owner":"api-key",
 				"builder":"builder",
-				"matched_amount":"2",
+				"matched_amount":2,
 				"transaction_hash":"0xtx",
 				"created_at":"1710000000",
 				"last_updated":"1710000001"
@@ -351,7 +527,7 @@ func TestClientAuthenticatedMethodsReturnPublicDTOs(t *testing.T) {
 		t.Fatalf("ListOrders returned error: %v", err)
 	}
 	var publicOrders []OrderRecord = orders
-	if len(publicOrders) != 1 || publicOrders[0].OrderType != "GTC" || publicOrders[0].AssetID != "token-1" {
+	if len(publicOrders) != 1 || publicOrders[0].Type != "limit" || publicOrders[0].OrderType != "GTC" || publicOrders[0].AssetID != "token-1" || publicOrders[0].OriginalSize != "10" || publicOrders[0].SizeMatched != "2" || publicOrders[0].Price != "0.45" {
 		t.Fatalf("unexpected public orders: %+v", publicOrders)
 	}
 
@@ -360,7 +536,7 @@ func TestClientAuthenticatedMethodsReturnPublicDTOs(t *testing.T) {
 		t.Fatalf("ListTrades returned error: %v", err)
 	}
 	var publicTrades []TradeRecord = trades
-	if len(publicTrades) != 1 || publicTrades[0].TransactionHash != "0xtx" {
+	if len(publicTrades) != 1 || publicTrades[0].TransactionHash != "0xtx" || publicTrades[0].Price != "0.45" || publicTrades[0].Size != "2" || publicTrades[0].MatchedAmount != "2" {
 		t.Fatalf("unexpected public trades: %+v", publicTrades)
 	}
 
@@ -392,6 +568,31 @@ func TestClientAuthenticatedMethodsReturnPublicDTOs(t *testing.T) {
 	}
 }
 
+func TestClientPublicTrades(t *testing.T) {
+	var gotMarket string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/trades" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		gotMarket = r.URL.Query().Get("market")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"trades":[{"id":"trade-1","status":"MATCHED","market":"condition-1","asset_id":"token-1","side":"BUY","price":"0.52","size":"10","transaction_hash":"0xtx"}]}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL})
+	trades, err := client.PublicTrades(context.Background(), " condition-1 ")
+	if err != nil {
+		t.Fatalf("PublicTrades returned error: %v", err)
+	}
+	if gotMarket != "condition-1" {
+		t.Fatalf("market query=%q want condition-1", gotMarket)
+	}
+	if len(trades) != 1 || trades[0].ID != "trade-1" || trades[0].TransactionHash != "0xtx" {
+		t.Fatalf("unexpected trades: %+v", trades)
+	}
+}
+
 func TestClientUsesConfiguredCredentialsForAuthenticatedMethods(t *testing.T) {
 	var derived bool
 	var orderAPIKey string
@@ -403,7 +604,7 @@ func TestClientUsesConfiguredCredentialsForAuthenticatedMethods(t *testing.T) {
 			http.Error(w, "derive should not be called", http.StatusTeapot)
 		case "/data/orders":
 			orderAPIKey = r.Header.Get("POLY_API_KEY")
-			_, _ = w.Write([]byte(`[{"id":"0xorder","status":"ORDER_STATUS_LIVE"}]`))
+			_, _ = w.Write([]byte(`[{"id":"0xorder","status":"ORDER_STATUS_LIVE","signature_type":"3"}]`))
 		default:
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.String())
 		}
@@ -428,8 +629,35 @@ func TestClientUsesConfiguredCredentialsForAuthenticatedMethods(t *testing.T) {
 	if orderAPIKey != "configured-key" {
 		t.Fatalf("POLY_API_KEY=%q want configured-key", orderAPIKey)
 	}
-	if len(orders) != 1 || orders[0].ID != "0xorder" {
+	if len(orders) != 1 || orders[0].ID != "0xorder" || orders[0].SignatureType != 3 {
 		t.Fatalf("orders=%+v", orders)
+	}
+}
+
+func TestClientBalanceAllowanceDecodesNumericAllowanceValues(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path != "/balance-allowance" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.String())
+		}
+		_, _ = w.Write([]byte(`{"balance":1000000,"allowance":999,"allowances":{"0xCtfExchangeV2":999999999}}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{
+		BaseURL: server.URL,
+		Credentials: APIKey{
+			Key:        "configured-key",
+			Secret:     "c2VjcmV0",
+			Passphrase: "pass",
+		},
+	})
+	balance, err := client.BalanceAllowance(context.Background(), testPrivateKey, BalanceAllowanceParams{AssetType: "COLLATERAL"})
+	if err != nil {
+		t.Fatalf("BalanceAllowance returned error: %v", err)
+	}
+	if balance.Balance != "1000000" || balance.Allowance != "999" || balance.Allowances["0xCtfExchangeV2"] != "999999999" {
+		t.Fatalf("unexpected balance allowance: %+v", balance)
 	}
 }
 
@@ -516,6 +744,39 @@ func TestClientCreateBatchOrdersReturnsPublicResponses(t *testing.T) {
 	}
 	if len(posted) != 2 || posted[1]["postOnly"] != true {
 		t.Fatalf("unexpected posted batch: %#v", posted)
+	}
+}
+
+func TestClientOrdersScoringPostsOrderIDs(t *testing.T) {
+	var posted map[string][]string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/orders/scoring" || r.Method != http.MethodPost {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.String())
+		}
+		if err := json.NewDecoder(r.Body).Decode(&posted); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[true,false,true]`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL})
+	got, err := client.OrdersScoring(context.Background(), []string{"order-1", "order-2", "order-3"})
+	if err != nil {
+		t.Fatalf("OrdersScoring returned error: %v", err)
+	}
+	if len(got) != 3 || !got[0] || got[1] || !got[2] {
+		t.Fatalf("unexpected scoring result: %+v", got)
+	}
+	want := []string{"order-1", "order-2", "order-3"}
+	if len(posted["order_ids"]) != len(want) {
+		t.Fatalf("posted order_ids=%+v", posted["order_ids"])
+	}
+	for i := range want {
+		if posted["order_ids"][i] != want[i] {
+			t.Fatalf("posted order_ids=%+v want %+v", posted["order_ids"], want)
+		}
 	}
 }
 

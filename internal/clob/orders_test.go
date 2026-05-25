@@ -268,6 +268,92 @@ func TestCreateMarketOrderRoundsBuyAmountToCLOBMarketAccuracy(t *testing.T) {
 	}
 }
 
+func TestCreateMarketOrderSupportsSellSideShareAmount(t *testing.T) {
+	var posted map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/tick-size":
+			_, _ = w.Write([]byte(`{"minimum_tick_size":"0.01","minimum_order_size":"5"}`))
+		case "/neg-risk":
+			_, _ = w.Write([]byte(`{"neg_risk":false}`))
+		case "/auth/derive-api-key":
+			_, _ = w.Write([]byte(`{"apiKey":"owner-key","secret":"c2VjcmV0","passphrase":"pass"}`))
+		case "/order":
+			if err := json.NewDecoder(r.Body).Decode(&posted); err != nil {
+				t.Fatalf("decode order body: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"success":true,"orderID":"0xsell","status":"matched"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	_, err := client.CreateMarketOrder(context.Background(), testOrderPrivateKey, MarketOrderParams{
+		TokenID:   "12345",
+		Side:      "sell",
+		Amount:    "3.000000",
+		Price:     "0.500000",
+		OrderType: "FOK",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	order := posted["order"].(map[string]any)
+	if order["side"] != "SELL" {
+		t.Fatalf("side=%v", order["side"])
+	}
+	if order["makerAmount"] != "3000000" || order["takerAmount"] != "1500000" {
+		t.Fatalf("amounts=%v/%v", order["makerAmount"], order["takerAmount"])
+	}
+}
+
+func TestCreateMarketOrderDiscoversSellPriceFromBids(t *testing.T) {
+	var posted map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/tick-size":
+			_, _ = w.Write([]byte(`{"minimum_tick_size":"0.01","minimum_order_size":"5"}`))
+		case "/book":
+			_, _ = w.Write([]byte(`{"bids":[{"price":"0.600000","size":"5.000000"},{"price":"0.550000","size":"3.000000"}],"asks":[]}`))
+		case "/neg-risk":
+			_, _ = w.Write([]byte(`{"neg_risk":false}`))
+		case "/auth/derive-api-key":
+			_, _ = w.Write([]byte(`{"apiKey":"owner-key","secret":"c2VjcmV0","passphrase":"pass"}`))
+		case "/order":
+			if err := json.NewDecoder(r.Body).Decode(&posted); err != nil {
+				t.Fatalf("decode order body: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"success":true,"orderID":"0xsell","status":"matched"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	_, err := client.CreateMarketOrder(context.Background(), testOrderPrivateKey, MarketOrderParams{
+		TokenID:   "12345",
+		Side:      "sell",
+		Amount:    "7.000000",
+		OrderType: "FOK",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	order := posted["order"].(map[string]any)
+	if order["makerAmount"] != "7000000" || order["takerAmount"] != "3850000" {
+		t.Fatalf("amounts=%v/%v", order["makerAmount"], order["takerAmount"])
+	}
+}
+
 func TestCreateMarketOrderUsesEOABoundAuthAndDepositMaker(t *testing.T) {
 	wantDepositWallet := "0xfd5041047be8c192c725a66228f141196fa3cf9c"
 	var deriveAddress string

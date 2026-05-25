@@ -41,6 +41,26 @@ type BalanceAllowanceResponse struct {
 	Allowance  string            `json:"allowance,omitempty"`
 }
 
+func (r *BalanceAllowanceResponse) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Balance    json.RawMessage            `json:"balance"`
+		Allowances map[string]json.RawMessage `json:"allowances"`
+		Allowance  json.RawMessage            `json:"allowance"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	r.Balance = jsonStringOrNumber(raw.Balance)
+	r.Allowance = jsonStringOrNumber(raw.Allowance)
+	if raw.Allowances != nil {
+		r.Allowances = make(map[string]string, len(raw.Allowances))
+		for key, value := range raw.Allowances {
+			r.Allowances[key] = jsonStringOrNumber(value)
+		}
+	}
+	return nil
+}
+
 // NewClient creates a CLOB API client.
 func NewClient(baseURL string, tc *transport.Client) *Client {
 	if tc == nil {
@@ -195,6 +215,26 @@ type BuilderFeeKeyRecord struct {
 	Secret     string `json:"secret,omitempty"`
 	Passphrase string `json:"passphrase,omitempty"`
 	CreatedAt  string `json:"created_at,omitempty"`
+	UpdatedAt  string `json:"updated_at,omitempty"`
+}
+
+func (r *BuilderFeeKeyRecord) UnmarshalJSON(data []byte) error {
+	type alias BuilderFeeKeyRecord
+	aux := struct {
+		*alias
+		CreatedAtCamel string `json:"createdAt"`
+		UpdatedAtCamel string `json:"updatedAt"`
+	}{alias: (*alias)(r)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if r.CreatedAt == "" {
+		r.CreatedAt = aux.CreatedAtCamel
+	}
+	if r.UpdatedAt == "" {
+		r.UpdatedAt = aux.UpdatedAtCamel
+	}
+	return nil
 }
 
 // ListBuilderFeeKeys returns every builder fee key minted for the
@@ -612,19 +652,23 @@ func (c *Client) NegRisk(ctx context.Context, tokenID string) (*polytypes.NegRis
 func (c *Client) FeeRateBps(ctx context.Context, tokenID string) (int, error) {
 	path := fmt.Sprintf("/fee-rate?token_id=%s", url.QueryEscape(tokenID))
 	var wrapper struct {
-		FeeRateBps *int `json:"fee_rate_bps"`
-		BaseFee    *int `json:"base_fee"`
+		FeeRateBps      polytypes.NumericString `json:"fee_rate_bps"`
+		FeeRateBpsCamel polytypes.NumericString `json:"feeRateBps"`
+		BaseFee         polytypes.NumericString `json:"base_fee"`
+		BaseFeeCamel    polytypes.NumericString `json:"baseFee"`
 	}
 	if err := c.transport.Get(ctx, path, &wrapper); err != nil {
 		return 0, err
 	}
-	if wrapper.FeeRateBps != nil {
-		return *wrapper.FeeRateBps, nil
+	value := firstNonEmpty(string(wrapper.FeeRateBps), string(wrapper.FeeRateBpsCamel), string(wrapper.BaseFee), string(wrapper.BaseFeeCamel))
+	if value == "" {
+		return 0, nil
 	}
-	if wrapper.BaseFee != nil {
-		return *wrapper.BaseFee, nil
+	fee, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, err
 	}
-	return 0, nil
+	return fee, nil
 }
 
 // --- Rewards ---
@@ -727,6 +771,33 @@ func (c *Client) SamplingSimplifiedMarkets(ctx context.Context, nextCursor strin
 
 // --- Order Scoring ---
 
+// PublicTrades returns unauthenticated CLOB trades, optionally filtered by market.
+func (c *Client) PublicTrades(ctx context.Context, market string) ([]TradeRecord, error) {
+	path := "/trades"
+	if strings.TrimSpace(market) != "" {
+		path += "?market=" + url.QueryEscape(strings.TrimSpace(market))
+	}
+	var raw json.RawMessage
+	if err := c.transport.Get(ctx, path, &raw); err != nil {
+		return nil, err
+	}
+	var rows []TradeRecord
+	if err := json.Unmarshal(raw, &rows); err == nil {
+		return rows, nil
+	}
+	var wrapped struct {
+		Trades []TradeRecord `json:"trades"`
+		Data   []TradeRecord `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &wrapped); err != nil {
+		return nil, err
+	}
+	if wrapped.Trades != nil {
+		return wrapped.Trades, nil
+	}
+	return wrapped.Data, nil
+}
+
 // BuilderTrade represents a trade attributed to a builder code.
 type BuilderTrade struct {
 	TradeID   string `json:"trade_id"`
@@ -737,6 +808,35 @@ type BuilderTrade struct {
 	Size      string `json:"size"`
 	Price     string `json:"price"`
 	Timestamp string `json:"timestamp"`
+}
+
+func (t *BuilderTrade) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		TradeID        polytypes.NumericString `json:"trade_id"`
+		TradeIDCamel   polytypes.NumericString `json:"tradeId"`
+		OrderID        polytypes.NumericString `json:"order_id"`
+		OrderIDCamel   polytypes.NumericString `json:"orderId"`
+		Market         polytypes.NumericString `json:"market"`
+		AssetID        polytypes.NumericString `json:"asset_id"`
+		AssetIDCamel   polytypes.NumericString `json:"assetId"`
+		Side           string                  `json:"side"`
+		Size           polytypes.NumericString `json:"size"`
+		Price          polytypes.NumericString `json:"price"`
+		Timestamp      polytypes.NumericString `json:"timestamp"`
+		TimestampCamel polytypes.NumericString `json:"createdAt"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	t.TradeID = firstNonEmpty(string(raw.TradeID), string(raw.TradeIDCamel))
+	t.OrderID = firstNonEmpty(string(raw.OrderID), string(raw.OrderIDCamel))
+	t.Market = string(raw.Market)
+	t.AssetID = firstNonEmpty(string(raw.AssetID), string(raw.AssetIDCamel))
+	t.Side = raw.Side
+	t.Size = string(raw.Size)
+	t.Price = string(raw.Price)
+	t.Timestamp = firstNonEmpty(string(raw.Timestamp), string(raw.TimestampCamel))
+	return nil
 }
 
 // BuilderTrades returns trades attributed to the configured builder code.
@@ -753,21 +853,30 @@ func (c *Client) BuilderTrades(ctx context.Context, limit int) ([]BuilderTrade, 
 
 func (c *Client) OrderScoring(ctx context.Context, orderID string) (bool, error) {
 	var wrapper struct {
-		Scoring bool `json:"scoring"`
+		Scoring json.RawMessage `json:"scoring"`
 	}
 	if err := c.transport.Get(ctx, "/orders/scoring?order_id="+url.QueryEscape(orderID), &wrapper); err != nil {
 		return false, err
 	}
-	return wrapper.Scoring, nil
+	return boolishRaw(wrapper.Scoring), nil
 }
 
 func (c *Client) OrdersScoring(ctx context.Context, orderIDs []string) ([]bool, error) {
-	var result []bool
+	var raw []json.RawMessage
 	body := map[string]interface{}{"order_ids": orderIDs}
-	if err := c.transport.Post(ctx, "/orders/scoring", body, &result); err != nil {
+	if err := c.transport.Post(ctx, "/orders/scoring", body, &raw); err != nil {
 		return nil, err
 	}
+	result := make([]bool, len(raw))
+	for i, value := range raw {
+		result[i] = boolishRaw(value)
+	}
 	return result, nil
+}
+
+func boolishRaw(raw json.RawMessage) bool {
+	text := strings.Trim(strings.ToLower(strings.TrimSpace(string(raw))), "\"")
+	return text == "true" || text == "1"
 }
 
 // LastTradePrice returns the last trade price for a token.

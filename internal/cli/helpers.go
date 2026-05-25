@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"os"
 	"strings"
 
@@ -151,52 +150,4 @@ func validateBuilderCodeForCLI(builderCode string) error {
 		return fmt.Errorf("builder code must be hex: %w", err)
 	}
 	return nil
-}
-
-func balanceResponseMap(res *clob.BalanceAllowanceResponse) map[string]interface{} {
-	out := map[string]interface{}{}
-	if res == nil {
-		return out
-	}
-	out["balance"] = res.Balance
-	if len(res.Allowances) > 0 {
-		out["allowances"] = res.Allowances
-	}
-	if strings.TrimSpace(res.Allowance) != "" {
-		out["allowance"] = res.Allowance
-	}
-	return out
-}
-
-func normalizeCollateralBalanceResponse(raw map[string]interface{}) map[string]interface{} {
-	out := make(map[string]interface{}, len(raw))
-	for key, value := range raw {
-		out[key] = value
-	}
-	balance, ok := out["balance"].(string)
-	if !ok {
-		return out
-	}
-	if scaled, ok := scaleBaseUnits(balance, 6); ok {
-		out["balance"] = scaled
-	}
-	return out
-}
-
-func scaleBaseUnits(value string, decimals int) (string, bool) {
-	value = strings.TrimSpace(value)
-	if value == "" || strings.Contains(value, ".") || decimals <= 0 {
-		return value, false
-	}
-	n := new(big.Int)
-	if _, ok := n.SetString(value, 10); !ok {
-		return value, false
-	}
-	scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
-	whole := new(big.Int).Quo(new(big.Int).Set(n), scale)
-	frac := new(big.Int).Mod(new(big.Int).Set(n), scale).String()
-	if len(frac) < decimals {
-		frac = strings.Repeat("0", decimals-len(frac)) + frac
-	}
-	return whole.String() + "." + frac, true
 }

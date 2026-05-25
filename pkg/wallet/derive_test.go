@@ -7,22 +7,18 @@ import (
 func TestDeriveProxyWallet(t *testing.T) {
 	eoa := "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23"
 	result := DeriveProxyWallet(eoa)
-	if result == "" {
-		t.Fatal("expected non-empty address")
-	}
-	if len(result) != 42 {
-		t.Fatalf("expected 42-char address: %s (%d)", result, len(result))
+	want := "0x96a9892de6a11fe0b18cf63373b9763055eca8a6"
+	if result != want {
+		t.Fatalf("proxy wallet = %s, want %s", result, want)
 	}
 }
 
 func TestDeriveSafeWallet(t *testing.T) {
 	eoa := "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23"
 	result := DeriveSafeWallet(eoa)
-	if result == "" {
-		t.Fatal("expected non-empty address")
-	}
-	if len(result) != 42 {
-		t.Fatalf("expected 42-char address: %s (%d)", result, len(result))
+	want := "0x907c14d6cea8e8fc78dd3db152f0a93f43276b4d"
+	if result != want {
+		t.Fatalf("safe wallet = %s, want %s", result, want)
 	}
 }
 

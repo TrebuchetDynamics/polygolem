@@ -7,12 +7,13 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
 	"github.com/TrebuchetDynamics/polygolem/internal/clob"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/authclobprobe"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/localpreflight"
 	"github.com/gorilla/websocket"
 )
 
@@ -312,13 +313,17 @@ func TestAuthCLOBProbeUsesConfiguredCredentialsForReadOnlyEndpoints(t *testing.T
 	defer server.Close()
 
 	client := clob.NewClient(server.URL, nil)
-	result, err := runCLOBCredentialProbe(context.Background(), client, "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318", auth.APIKey{
-		Key:        "configured-key",
-		Secret:     "c2VjcmV0",
-		Passphrase: "pass",
-	})
+	result, err := authclobprobe.New(authclobprobe.Config{
+		PrivateKey: func() (string, error) {
+			return "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318", nil
+		},
+		L2Credentials: func() (auth.APIKey, bool) {
+			return auth.APIKey{Key: "configured-key", Secret: "c2VjcmV0", Passphrase: "pass"}, true
+		},
+		CLOB: client,
+	}).Probe(context.Background())
 	if err != nil {
-		t.Fatalf("runCLOBCredentialProbe returned error: %v", err)
+		t.Fatalf("auth clob probe workflow returned error: %v", err)
 	}
 	if sawAPIKey != "configured-key" {
 		t.Fatalf("POLY_API_KEY=%q, want configured-key", sawAPIKey)
@@ -534,6 +539,8 @@ func TestDocumentedSubcommandsAreRegistered(t *testing.T) {
 		{"events", "list"},
 		{"bridge", "assets"},
 		{"bridge", "deposit"},
+		{"bridge", "status"},
+		{"bridge", "quote"},
 		{"health"},
 		{"paper", "buy"},
 		{"paper", "sell"},
@@ -704,7 +711,7 @@ func TestCLOBL2CredentialsFromEnvTreatsPartialConfigAsConfigured(t *testing.T) {
 func TestPreflightRejectsInvalidBuilderCodeEnv(t *testing.T) {
 	t.Setenv("POLYMARKET_BUILDER_CODE", "0x1234")
 
-	result := runLocalPreflight(context.Background(), "test-version")
+	result := localpreflight.New(localpreflight.Config{Version: "test-version", BuilderCode: builderCodeFromFlagOrEnv("")}).Run(context.Background())
 	if result.OK {
 		t.Fatal("preflight should fail when POLYMARKET_BUILDER_CODE is malformed")
 	}
@@ -925,23 +932,5 @@ func TestDocumentedSubcommandArgsAreNotHandledByParentOnly(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "polygolem discover search") {
 		t.Fatalf("discover search was not handled by its own command:\n%s", stdout.String())
-	}
-}
-
-func TestNormalizeCollateralBalanceResponseScalesBaseUnits(t *testing.T) {
-	raw := map[string]interface{}{
-		"balance": "14000000",
-		"allowances": map[string]string{
-			"0xspender": "1000000",
-		},
-	}
-
-	got := normalizeCollateralBalanceResponse(raw)
-
-	if got["balance"] != "14.000000" {
-		t.Fatalf("balance=%v", got["balance"])
-	}
-	if !reflect.DeepEqual(got["allowances"], raw["allowances"]) {
-		t.Fatalf("allowances changed: %#v", got["allowances"])
 	}
 }

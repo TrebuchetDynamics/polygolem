@@ -153,6 +153,8 @@ func positionsFromInternal(rows []dataapi.Position) []types.Position {
 		out[i] = types.Position{
 			TokenID:         row.TokenID,
 			ConditionID:     row.ConditionID,
+			MarketID:        row.MarketID,
+			Side:            row.Side,
 			EventID:         row.EventID,
 			ProxyWallet:     row.ProxyWallet,
 			Size:            row.Size,
@@ -160,6 +162,7 @@ func positionsFromInternal(rows []dataapi.Position) []types.Position {
 			InitialValue:    row.InitialValue,
 			CurrentValue:    row.CurrentValue,
 			CurrentPrice:    row.CurrentPrice,
+			UnrealizedPnl:   row.UnrealizedPnl,
 			CashPnl:         row.CashPnl,
 			PercentPnl:      row.PercentPnl,
 			TotalBought:     row.TotalBought,
@@ -260,11 +263,21 @@ func activitiesFromInternal(rows []dataapi.Activity) []types.Activity {
 func holdersFromInternal(rows []dataapi.MetaHolder) []types.Holder {
 	out := make([]types.Holder, len(rows))
 	for i, row := range rows {
+		address := row.Address
+		if address == "" {
+			address = row.ProxyWallet
+		}
+		shares := row.Shares
+		if shares == 0 {
+			shares = row.Amount
+		}
 		out[i] = types.Holder{
-			Address: row.Address,
-			Shares:  row.Shares,
-			Pnl:     row.Pnl,
-			Volume:  row.Volume,
+			Address:     address,
+			ProxyWallet: row.ProxyWallet,
+			Shares:      shares,
+			Amount:      row.Amount,
+			Pnl:         row.Pnl,
+			Volume:      row.Volume,
 		}
 	}
 	return out
@@ -285,9 +298,14 @@ func totalMarketsTradedFromInternal(row *dataapi.TotalMarketsTraded) *types.Tota
 	if row == nil {
 		return nil
 	}
+	traded := row.Traded
+	if traded == 0 {
+		traded = row.MarketsTraded
+	}
 	return &types.TotalMarketsTraded{
 		User:          row.User,
 		MarketsTraded: row.MarketsTraded,
+		Traded:        traded,
 	}
 }
 

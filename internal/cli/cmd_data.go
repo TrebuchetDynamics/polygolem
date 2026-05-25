@@ -1,17 +1,24 @@
 package cli
 
 import (
-	"fmt"
-	"strings"
+	"context"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/dataorderresults"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/datareads"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
-	sdkdata "github.com/TrebuchetDynamics/polygolem/pkg/data"
-	sdkorderresults "github.com/TrebuchetDynamics/polygolem/pkg/orderresults"
 	"github.com/spf13/cobra"
 )
 
+type dataReadRunner interface {
+	Run(context.Context, datareads.Request) (any, error)
+}
+
 func dataCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
+	return newDataCommand(datareads.New(w.data))
+}
+
+func newDataCommand(reads dataReadRunner) *cobra.Command {
 	cmd := commandGroup("data", "Polymarket Data API analytics")
 
 	var user string
@@ -25,12 +32,6 @@ func dataCmd(jsonOut bool) *cobra.Command {
 		addUser(c)
 		c.Flags().IntVar(&limit, "limit", 20, "max rows")
 	}
-	requireUser := func() error {
-		if strings.TrimSpace(user) == "" {
-			return fmt.Errorf("--user required")
-		}
-		return nil
-	}
 	addToken := func(c *cobra.Command) {
 		c.Flags().StringVar(&tokenID, "token-id", "", "CLOB token ID")
 	}
@@ -38,54 +39,35 @@ func dataCmd(jsonOut bool) *cobra.Command {
 		addToken(c)
 		c.Flags().IntVar(&limit, "limit", 20, "max rows")
 	}
-	requireToken := func() error {
-		if strings.TrimSpace(tokenID) == "" {
-			return fmt.Errorf("--token-id required")
-		}
-		return nil
-	}
-
-	positionsCmd := &cobra.Command{Use: "positions", Short: "List open positions for a user", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireUser(); err != nil {
-				return err
-			}
-			rows, err := w.data.CurrentPositions(cmd.Context(), user)
+	runRead := func(operation datareads.Operation) func(*cobra.Command, []string) error {
+		return func(cmd *cobra.Command, args []string) error {
+			result, err := reads.Run(cmd.Context(), datareads.Request{
+				Operation: operation,
+				User:      user,
+				TokenID:   tokenID,
+				Limit:     limit,
+			})
 			if err != nil {
 				return err
 			}
-			return w.printJSON(cmd, rows)
-		},
+			return writeCommandJSON(cmd, result)
+		}
+	}
+
+	positionsCmd := &cobra.Command{Use: "positions", Short: "List open positions for a user", Args: cobra.NoArgs,
+		RunE: runRead(datareads.Positions),
 	}
 	addUserLimit(positionsCmd)
 	cmd.AddCommand(positionsCmd)
 
 	closedPositionsCmd := &cobra.Command{Use: "closed-positions", Short: "List closed positions for a user", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireUser(); err != nil {
-				return err
-			}
-			rows, err := w.data.ClosedPositions(cmd.Context(), user)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, rows)
-		},
+		RunE: runRead(datareads.ClosedPositions),
 	}
 	addUserLimit(closedPositionsCmd)
 	cmd.AddCommand(closedPositionsCmd)
 
 	tradesCmd := &cobra.Command{Use: "trades", Short: "List public Data API trades for a user", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireUser(); err != nil {
-				return err
-			}
-			rows, err := w.data.Trades(cmd.Context(), user, limit)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, rows)
-		},
+		RunE: runRead(datareads.Trades),
 	}
 	addUserLimit(tradesCmd)
 	cmd.AddCommand(tradesCmd)
@@ -93,35 +75,31 @@ func dataCmd(jsonOut bool) *cobra.Command {
 	var includeCLOB bool
 	orderResultsCmd := &cobra.Command{Use: "order-results", Short: "Join positions, trades, and results for a user", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireUser(); err != nil {
-				return err
-			}
-			source := sdkorderresults.Source{
-				Data: sdkdata.NewClient(sdkdata.Config{BaseURL: dataBaseURL}),
-			}
-			opts := sdkorderresults.Options{Limit: limit}
-			if includeCLOB {
-				key, err := privateKeyFromEnv()
-				if err != nil {
-					return err
-				}
-				opts.IncludeCLOB = true
-				opts.PrivateKey = key
-				cfg := sdkclob.Config{BaseURL: clobBaseURL}
-				if creds, ok := clobL2CredentialsFromEnv(); ok {
-					cfg.Credentials = sdkclob.APIKey{
+			runner := dataorderresults.New(dataorderresults.Config{
+				DataBaseURL: dataBaseURL,
+				CLOBBaseURL: clobBaseURL,
+				PrivateKey:  privateKeyFromEnv,
+				CLOBCredentials: func() (sdkclob.APIKey, bool) {
+					creds, ok := clobL2CredentialsFromEnv()
+					if !ok {
+						return sdkclob.APIKey{}, false
+					}
+					return sdkclob.APIKey{
 						Key:        creds.Key,
 						Secret:     creds.Secret,
 						Passphrase: creds.Passphrase,
-					}
-				}
-				source.CLOB = sdkclob.NewClient(cfg)
-			}
-			report, err := sdkorderresults.BuildReport(cmd.Context(), source, user, opts)
+					}, true
+				},
+			})
+			report, err := runner.Run(cmd.Context(), dataorderresults.Request{
+				User:        user,
+				Limit:       limit,
+				IncludeCLOB: includeCLOB,
+			})
 			if err != nil {
 				return err
 			}
-			return w.printJSON(cmd, report)
+			return writeCommandJSON(cmd, report)
 		},
 	}
 	addUserLimit(orderResultsCmd)
@@ -129,100 +107,43 @@ func dataCmd(jsonOut bool) *cobra.Command {
 	cmd.AddCommand(orderResultsCmd)
 
 	activityCmd := &cobra.Command{Use: "activity", Short: "List public activity for a user", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireUser(); err != nil {
-				return err
-			}
-			rows, err := w.data.Activity(cmd.Context(), user, limit)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, rows)
-		},
+		RunE: runRead(datareads.Activity),
 	}
 	addUserLimit(activityCmd)
 	cmd.AddCommand(activityCmd)
 
 	holdersCmd := &cobra.Command{Use: "holders", Short: "List top holders for a token", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireToken(); err != nil {
-				return err
-			}
-			rows, err := w.data.TopHolders(cmd.Context(), tokenID, limit)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, rows)
-		},
+		RunE: runRead(datareads.Holders),
 	}
 	addTokenLimit(holdersCmd)
 	cmd.AddCommand(holdersCmd)
 
 	valueCmd := &cobra.Command{Use: "value", Short: "Get total portfolio value for a user", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireUser(); err != nil {
-				return err
-			}
-			value, err := w.data.TotalValue(cmd.Context(), user)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, value)
-		},
+		RunE: runRead(datareads.Value),
 	}
 	addUser(valueCmd)
 	cmd.AddCommand(valueCmd)
 
 	marketsTradedCmd := &cobra.Command{Use: "markets-traded", Short: "Get total markets traded for a user", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireUser(); err != nil {
-				return err
-			}
-			value, err := w.data.MarketsTraded(cmd.Context(), user)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, value)
-		},
+		RunE: runRead(datareads.MarketsTraded),
 	}
 	addUser(marketsTradedCmd)
 	cmd.AddCommand(marketsTradedCmd)
 
 	openInterestCmd := &cobra.Command{Use: "open-interest", Short: "Get open interest for a token", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireToken(); err != nil {
-				return err
-			}
-			value, err := w.data.OpenInterest(cmd.Context(), tokenID)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, value)
-		},
+		RunE: runRead(datareads.OpenInterest),
 	}
 	addToken(openInterestCmd)
 	cmd.AddCommand(openInterestCmd)
 
 	leaderboardCmd := &cobra.Command{Use: "leaderboard", Short: "List trader leaderboard rows", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			rows, err := w.data.TraderLeaderboard(cmd.Context(), limit)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, rows)
-		},
+		RunE: runRead(datareads.Leaderboard),
 	}
 	leaderboardCmd.Flags().IntVar(&limit, "limit", 20, "max rows")
 	cmd.AddCommand(leaderboardCmd)
 
 	liveVolumeCmd := &cobra.Command{Use: "live-volume", Short: "Get live volume summary", Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			value, err := w.data.LiveVolume(cmd.Context(), limit)
-			if err != nil {
-				return err
-			}
-			return w.printJSON(cmd, value)
-		},
+		RunE: runRead(datareads.LiveVolume),
 	}
 	liveVolumeCmd.Flags().IntVar(&limit, "limit", 20, "max rows")
 	cmd.AddCommand(liveVolumeCmd)

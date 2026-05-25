@@ -34,6 +34,9 @@ type BuilderConfig = auth.BuilderConfig
 // EOA private key. Use [NewSigner] to construct one.
 type PrivateKeySigner = auth.PrivateKeySigner
 
+// RelayerError is a structured error returned by the relayer API.
+type RelayerError = internalrelayer.RelayerError
+
 // RelayerTransaction is the relayer's tracked-transaction record.
 type RelayerTransaction = internalrelayer.RelayerTransaction
 

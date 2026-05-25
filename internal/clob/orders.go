@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -66,14 +67,122 @@ type OrderPlacementResponse struct {
 	MakingAmount       string   `json:"makingAmount,omitempty"`
 	TakingAmount       string   `json:"takingAmount,omitempty"`
 	ErrorMsg           string   `json:"errorMsg,omitempty"`
+	TransactionHash    string   `json:"transaction_hash,omitempty"`
 	TransactionsHashes []string `json:"transactionsHashes,omitempty"`
 	TradeIDs           []string `json:"tradeIDs,omitempty"`
+}
+
+func (r *OrderPlacementResponse) UnmarshalJSON(data []byte) error {
+	type alias OrderPlacementResponse
+	aux := struct {
+		*alias
+		OrderIDSnake            string            `json:"order_id"`
+		MakingAmountRaw         json.RawMessage   `json:"makingAmount"`
+		MakingAmountSnake       json.RawMessage   `json:"making_amount"`
+		TakingAmountRaw         json.RawMessage   `json:"takingAmount"`
+		TakingAmountSnake       json.RawMessage   `json:"taking_amount"`
+		TransactionHashCamel    string            `json:"transactionHash"`
+		ErrorMsgSnake           string            `json:"error_msg"`
+		TransactionsHashesRaw   []json.RawMessage `json:"transactionsHashes"`
+		TransactionHashesAlias  []json.RawMessage `json:"transactionHashes"`
+		TransactionsHashesSnake []json.RawMessage `json:"transaction_hashes"`
+		TradeIDsRaw             []json.RawMessage `json:"tradeIDs"`
+		TradeIDsAlias           []json.RawMessage `json:"tradeIds"`
+		TradeIDsSnake           []json.RawMessage `json:"trade_ids"`
+	}{alias: (*alias)(r)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if r.OrderID == "" {
+		r.OrderID = aux.OrderIDSnake
+	}
+	if r.MakingAmount == "" {
+		r.MakingAmount = firstNonEmpty(jsonStringOrNumber(aux.MakingAmountRaw), jsonStringOrNumber(aux.MakingAmountSnake))
+	}
+	if r.TakingAmount == "" {
+		r.TakingAmount = firstNonEmpty(jsonStringOrNumber(aux.TakingAmountRaw), jsonStringOrNumber(aux.TakingAmountSnake))
+	}
+	if r.TransactionHash == "" {
+		r.TransactionHash = aux.TransactionHashCamel
+	}
+	if r.ErrorMsg == "" {
+		r.ErrorMsg = aux.ErrorMsgSnake
+	}
+	if len(r.TransactionsHashes) == 0 && aux.TransactionsHashesRaw != nil {
+		r.TransactionsHashes = rawStringList(aux.TransactionsHashesRaw)
+	}
+	if len(r.TransactionsHashes) == 0 && aux.TransactionHashesAlias != nil {
+		r.TransactionsHashes = rawStringList(aux.TransactionHashesAlias)
+	}
+	if len(r.TransactionsHashes) == 0 && aux.TransactionsHashesSnake != nil {
+		r.TransactionsHashes = rawStringList(aux.TransactionsHashesSnake)
+	}
+	if len(r.TradeIDs) == 0 && aux.TradeIDsRaw != nil {
+		r.TradeIDs = rawStringList(aux.TradeIDsRaw)
+	}
+	if len(r.TradeIDs) == 0 && aux.TradeIDsAlias != nil {
+		r.TradeIDs = rawStringList(aux.TradeIDsAlias)
+	}
+	if len(r.TradeIDs) == 0 && aux.TradeIDsSnake != nil {
+		r.TradeIDs = rawStringList(aux.TradeIDsSnake)
+	}
+	return nil
 }
 
 // CancelOrdersResponse is returned by cancel order and cancel-all endpoints.
 type CancelOrdersResponse struct {
 	Canceled    []string          `json:"canceled"`
 	NotCanceled map[string]string `json:"not_canceled"`
+}
+
+func (r *CancelOrdersResponse) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Canceled         []json.RawMessage          `json:"canceled"`
+		NotCanceled      map[string]json.RawMessage `json:"not_canceled"`
+		NotCanceledCamel map[string]json.RawMessage `json:"notCanceled"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if raw.Canceled != nil {
+		r.Canceled = make([]string, 0, len(raw.Canceled))
+		for _, item := range raw.Canceled {
+			r.Canceled = append(r.Canceled, jsonStringOrNumber(item))
+		}
+	}
+	r.NotCanceled = rawStringMap(raw.NotCanceled)
+	if len(r.NotCanceled) == 0 && len(raw.NotCanceledCamel) > 0 {
+		r.NotCanceled = rawStringMap(raw.NotCanceledCamel)
+	}
+	return nil
+}
+
+func rawStringMap(raw map[string]json.RawMessage) map[string]string {
+	if raw == nil {
+		return nil
+	}
+	out := make(map[string]string, len(raw))
+	for key, value := range raw {
+		out[key] = jsonStringOrNumber(value)
+	}
+	return out
+}
+
+func rawStringList(raw []json.RawMessage) []string {
+	out := make([]string, 0, len(raw))
+	for _, value := range raw {
+		out = append(out, jsonStringOrNumber(value))
+	}
+	return out
+}
+
+func firstNonEmptyRaw(values ...json.RawMessage) json.RawMessage {
+	for _, value := range values {
+		if jsonStringOrNumber(value) != "" {
+			return value
+		}
+	}
+	return nil
 }
 
 // BatchOrderResponse is returned by CreateBatchOrders.
@@ -114,14 +223,48 @@ func (o *OrderRecord) UnmarshalJSON(data []byte) error {
 	type alias OrderRecord
 	aux := struct {
 		*alias
-		CreatedAt  json.RawMessage `json:"created_at"`
-		Expiration json.RawMessage `json:"expiration"`
+		AssetIDCamel      json.RawMessage   `json:"assetId"`
+		OriginalSize      json.RawMessage   `json:"original_size"`
+		OriginalSizeCamel json.RawMessage   `json:"originalSize"`
+		SizeMatched       json.RawMessage   `json:"size_matched"`
+		SizeMatchedCamel  json.RawMessage   `json:"sizeMatched"`
+		Price             json.RawMessage   `json:"price"`
+		OrderTypeCamel    json.RawMessage   `json:"orderType"`
+		CreatedAt         json.RawMessage   `json:"created_at"`
+		CreatedAtCamel    json.RawMessage   `json:"createdAt"`
+		Expiration        json.RawMessage   `json:"expiration"`
+		SignatureType     json.RawMessage   `json:"signature_type"`
+		SignatureCamel    json.RawMessage   `json:"signatureType"`
+		MakerAddrCamel    json.RawMessage   `json:"makerAddress"`
+		AssociateTrades   []json.RawMessage `json:"associate_trades"`
+		AssocTradesCamel  []json.RawMessage `json:"associateTrades"`
 	}{alias: (*alias)(o)}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	o.CreatedAt = jsonStringOrNumber(aux.CreatedAt)
+	if o.AssetID == "" {
+		o.AssetID = jsonStringOrNumber(aux.AssetIDCamel)
+	}
+	o.OriginalSize = firstNonEmpty(jsonStringOrNumber(aux.OriginalSize), jsonStringOrNumber(aux.OriginalSizeCamel))
+	o.SizeMatched = firstNonEmpty(jsonStringOrNumber(aux.SizeMatched), jsonStringOrNumber(aux.SizeMatchedCamel))
+	o.Price = jsonStringOrNumber(aux.Price)
+	if o.OrderType == "" {
+		o.OrderType = jsonStringOrNumber(aux.OrderTypeCamel)
+	}
+	o.CreatedAt = firstNonEmpty(jsonStringOrNumber(aux.CreatedAt), jsonStringOrNumber(aux.CreatedAtCamel))
 	o.Expiration = jsonStringOrNumber(aux.Expiration)
+	if len(aux.SignatureType) > 0 || len(aux.SignatureCamel) > 0 {
+		o.SignatureType = jsonIntOrNumberString(firstNonEmptyRaw(aux.SignatureType, aux.SignatureCamel))
+	}
+	if o.MakerAddress == "" {
+		o.MakerAddress = jsonStringOrNumber(aux.MakerAddrCamel)
+	}
+	if aux.AssociateTrades != nil {
+		o.AssociateTrades = rawStringList(aux.AssociateTrades)
+	}
+	if len(o.AssociateTrades) == 0 && aux.AssocTradesCamel != nil {
+		o.AssociateTrades = rawStringList(aux.AssocTradesCamel)
+	}
 	return nil
 }
 
@@ -181,14 +324,34 @@ func (t *TradeRecord) UnmarshalJSON(data []byte) error {
 	type alias TradeRecord
 	aux := struct {
 		*alias
-		CreatedAt   json.RawMessage `json:"created_at"`
-		LastUpdated json.RawMessage `json:"last_updated"`
+		AssetIDCamel     json.RawMessage `json:"assetId"`
+		Price            json.RawMessage `json:"price"`
+		Size             json.RawMessage `json:"size"`
+		FeeRateBps       json.RawMessage `json:"fee_rate_bps"`
+		FeeRateBpsCamel  json.RawMessage `json:"feeRateBps"`
+		MatchedAmount    json.RawMessage `json:"matched_amount"`
+		MatchedAmtCamel  json.RawMessage `json:"matchedAmount"`
+		TxHashCamel      json.RawMessage `json:"transactionHash"`
+		CreatedAt        json.RawMessage `json:"created_at"`
+		CreatedAtCamel   json.RawMessage `json:"createdAt"`
+		LastUpdated      json.RawMessage `json:"last_updated"`
+		LastUpdatedCamel json.RawMessage `json:"lastUpdated"`
 	}{alias: (*alias)(t)}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	t.CreatedAt = jsonStringOrNumber(aux.CreatedAt)
-	t.LastUpdated = jsonStringOrNumber(aux.LastUpdated)
+	if t.AssetID == "" {
+		t.AssetID = jsonStringOrNumber(aux.AssetIDCamel)
+	}
+	t.Price = jsonStringOrNumber(aux.Price)
+	t.Size = jsonStringOrNumber(aux.Size)
+	t.FeeRateBps = firstNonEmpty(jsonStringOrNumber(aux.FeeRateBps), jsonStringOrNumber(aux.FeeRateBpsCamel))
+	t.MatchedAmount = firstNonEmpty(jsonStringOrNumber(aux.MatchedAmount), jsonStringOrNumber(aux.MatchedAmtCamel))
+	if t.TransactionHash == "" {
+		t.TransactionHash = jsonStringOrNumber(aux.TxHashCamel)
+	}
+	t.CreatedAt = firstNonEmpty(jsonStringOrNumber(aux.CreatedAt), jsonStringOrNumber(aux.CreatedAtCamel))
+	t.LastUpdated = firstNonEmpty(jsonStringOrNumber(aux.LastUpdated), jsonStringOrNumber(aux.LastUpdatedCamel))
 	return nil
 }
 
@@ -207,6 +370,18 @@ func jsonStringOrNumber(raw json.RawMessage) string {
 		}
 	}
 	return s
+}
+
+func jsonIntOrNumberString(raw json.RawMessage) int {
+	value := jsonStringOrNumber(raw)
+	if value == "" {
+		return 0
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 // signedOrderPayload is the CLOB V2 order wire format.
@@ -794,9 +969,6 @@ func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, param
 	if err != nil {
 		return nil, err
 	}
-	if side != "BUY" {
-		return nil, fmt.Errorf("market-order amount is currently supported for BUY only")
-	}
 	tokenID, err := parseTokenID(params.TokenID)
 	if err != nil {
 		return nil, err
@@ -829,12 +1001,22 @@ func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, param
 		return nil, fmt.Errorf("price must be positive")
 	}
 
-	maker := truncateRat(amount, 2)
-	if maker.Sign() <= 0 {
-		return nil, fmt.Errorf("amount must be at least 0.01 for market buy orders")
+	var maker, taker *big.Rat
+	if side == "BUY" {
+		maker = truncateRat(amount, 2)
+		if maker.Sign() <= 0 {
+			return nil, fmt.Errorf("amount must be at least 0.01 for market buy orders")
+		}
+		taker = new(big.Rat).Quo(maker, price)
+		taker = truncateRat(taker, tickScale+2)
+	} else {
+		maker = truncateRat(amount, tickScale+2)
+		if maker.Sign() <= 0 {
+			return nil, fmt.Errorf("amount must be at least the market sell precision")
+		}
+		taker = new(big.Rat).Mul(maker, price)
+		taker = truncateRat(taker, 2)
 	}
-	taker := new(big.Rat).Quo(maker, price)
-	taker = truncateRat(taker, tickScale+2)
 	draft := orderDraft{
 		tokenID:     tokenID,
 		side:        side,
@@ -1085,7 +1267,11 @@ func (c *Client) marketOrderPrice(ctx context.Context, tokenID, side string, amo
 		if err != nil {
 			return nil, err
 		}
-		sum.Add(sum, new(big.Rat).Mul(size, price))
+		if side == "BUY" {
+			sum.Add(sum, new(big.Rat).Mul(size, price))
+		} else {
+			sum.Add(sum, size)
+		}
 		if sum.Cmp(amount) >= 0 {
 			return price, nil
 		}

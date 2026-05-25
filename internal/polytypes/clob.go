@@ -2,6 +2,7 @@ package polytypes
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 )
 
@@ -9,6 +10,19 @@ import (
 type OrderBookLevel struct {
 	Price string `json:"price"`
 	Size  string `json:"size"`
+}
+
+func (l *OrderBookLevel) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Price NumericString `json:"price"`
+		Size  NumericString `json:"size"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	l.Price = string(raw.Price)
+	l.Size = string(raw.Size)
+	return nil
 }
 
 // OrderBook represents L2 order book depth for a token.
@@ -25,11 +39,63 @@ type OrderBook struct {
 	LastTradePrice string           `json:"last_trade_price,omitempty"`
 }
 
+func (o *OrderBook) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Market              string           `json:"market"`
+		AssetID             NumericString    `json:"asset_id"`
+		AssetIDCamel        NumericString    `json:"assetId"`
+		Timestamp           NumericString    `json:"timestamp"`
+		Hash                string           `json:"hash"`
+		Bids                []OrderBookLevel `json:"bids"`
+		Asks                []OrderBookLevel `json:"asks"`
+		MinOrderSize        NumericString    `json:"min_order_size"`
+		MinOrderSizeCamel   NumericString    `json:"minOrderSize"`
+		TickSize            NumericString    `json:"tick_size"`
+		TickSizeCamel       NumericString    `json:"tickSize"`
+		NegRisk             json.RawMessage  `json:"neg_risk"`
+		NegRiskCamel        json.RawMessage  `json:"negRisk"`
+		LastTradePrice      NumericString    `json:"last_trade_price"`
+		LastTradePriceCamel NumericString    `json:"lastTradePrice"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	o.Market = raw.Market
+	o.AssetID = firstNonEmptyString(string(raw.AssetID), string(raw.AssetIDCamel))
+	o.Timestamp = string(raw.Timestamp)
+	o.Hash = raw.Hash
+	o.Bids = raw.Bids
+	o.Asks = raw.Asks
+	o.MinOrderSize = firstNonEmptyString(string(raw.MinOrderSize), string(raw.MinOrderSizeCamel))
+	o.TickSize = firstNonEmptyString(string(raw.TickSize), string(raw.TickSizeCamel))
+	o.NegRisk = jsonBoolOrFalse(firstNonEmptyRaw(raw.NegRisk, raw.NegRiskCamel))
+	o.LastTradePrice = firstNonEmptyString(string(raw.LastTradePrice), string(raw.LastTradePriceCamel))
+	return nil
+}
+
 // TickSize represents the minimum tick size for a market.
 type TickSize struct {
 	MinimumTickSize  string `json:"minimum_tick_size"`
 	MinimumOrderSize string `json:"minimum_order_size"`
 	TickSize         string `json:"tick_size"`
+}
+
+func (t *TickSize) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		MinimumTickSize       NumericString `json:"minimum_tick_size"`
+		MinimumTickSizeCamel  NumericString `json:"minimumTickSize"`
+		MinimumOrderSize      NumericString `json:"minimum_order_size"`
+		MinimumOrderSizeCamel NumericString `json:"minimumOrderSize"`
+		TickSize              NumericString `json:"tick_size"`
+		TickSizeCamel         NumericString `json:"tickSize"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	t.MinimumTickSize = firstNonEmptyString(string(raw.MinimumTickSize), string(raw.MinimumTickSizeCamel))
+	t.MinimumOrderSize = firstNonEmptyString(string(raw.MinimumOrderSize), string(raw.MinimumOrderSizeCamel))
+	t.TickSize = firstNonEmptyString(string(raw.TickSize), string(raw.TickSizeCamel))
+	return nil
 }
 
 // NegRiskInfo represents negative risk market info.
@@ -39,9 +105,39 @@ type NegRiskInfo struct {
 	NegRiskFeeBips  int    `json:"neg_risk_fee_bips,omitempty"`
 }
 
+func (n *NegRiskInfo) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		NegRisk              json.RawMessage `json:"neg_risk"`
+		NegRiskCamel         json.RawMessage `json:"negRisk"`
+		NegRiskMarketID      NumericString   `json:"neg_risk_market_id"`
+		NegRiskMarketIDCamel NumericString   `json:"negRiskMarketID"`
+		NegRiskFeeBips       NumericString   `json:"neg_risk_fee_bips"`
+		NegRiskFeeBipsCamel  NumericString   `json:"negRiskFeeBips"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	n.NegRisk = jsonBoolOrFalse(firstNonEmptyRaw(raw.NegRisk, raw.NegRiskCamel))
+	n.NegRiskMarketID = firstNonEmptyString(string(raw.NegRiskMarketID), string(raw.NegRiskMarketIDCamel))
+	n.NegRiskFeeBips, _ = strconv.Atoi(firstNonEmptyString(string(raw.NegRiskFeeBips), string(raw.NegRiskFeeBipsCamel)))
+	return nil
+}
+
 // FeeRate represents the fee rate in basis points.
 type FeeRate struct {
 	FeeRateBps int `json:"fee_rate_bps"`
+}
+
+func (f *FeeRate) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		FeeRateBps      NumericString `json:"fee_rate_bps"`
+		FeeRateBpsCamel NumericString `json:"feeRateBps"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	f.FeeRateBps, _ = strconv.Atoi(firstNonEmptyString(string(raw.FeeRateBps), string(raw.FeeRateBpsCamel)))
+	return nil
 }
 
 // PricePoint represents a single price history data point.
@@ -54,17 +150,20 @@ type PricePoint struct {
 
 func (p *PricePoint) UnmarshalJSON(b []byte) error {
 	var raw struct {
-		T        NumericString `json:"t"`
-		P        NumericString `json:"p"`
-		Volume   NumericString `json:"v"`
-		Interval string        `json:"interval"`
+		T              NumericString `json:"t"`
+		Timestamp      NumericString `json:"timestamp"`
+		P              NumericString `json:"p"`
+		Price          NumericString `json:"price"`
+		Volume         NumericString `json:"v"`
+		VolumeLongName NumericString `json:"volume"`
+		Interval       string        `json:"interval"`
 	}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	p.T = string(raw.T)
-	p.P = string(raw.P)
-	p.Volume = string(raw.Volume)
+	p.T = firstNonEmptyString(string(raw.T), string(raw.Timestamp))
+	p.P = firstNonEmptyString(string(raw.P), string(raw.Price))
+	p.Volume = firstNonEmptyString(string(raw.Volume), string(raw.VolumeLongName))
 	p.Interval = raw.Interval
 	return nil
 }
@@ -79,6 +178,25 @@ type CLOBFeeDetails struct {
 	Rate      float64 `json:"rate,omitempty"`
 	Exponent  float64 `json:"exponent,omitempty"`
 	TakerOnly bool    `json:"taker_only,omitempty"`
+}
+
+func (f *CLOBFeeDetails) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Rate           NumericString   `json:"rate"`
+		RateShort      NumericString   `json:"r"`
+		Exponent       NumericString   `json:"exponent"`
+		ExponentShort  NumericString   `json:"e"`
+		TakerOnly      json.RawMessage `json:"taker_only"`
+		TakerOnlyCamel json.RawMessage `json:"takerOnly"`
+		TakerOnlyShort json.RawMessage `json:"to"`
+	}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	f.Rate, _ = strconv.ParseFloat(firstNonEmptyString(string(raw.Rate), string(raw.RateShort)), 64)
+	f.Exponent, _ = strconv.ParseFloat(firstNonEmptyString(string(raw.Exponent), string(raw.ExponentShort)), 64)
+	f.TakerOnly = jsonBoolOrFalse(firstNonEmptyRaw(raw.TakerOnly, raw.TakerOnlyCamel, raw.TakerOnlyShort))
+	return nil
 }
 
 // CLOBMarket represents a market from the CLOB API.
@@ -131,22 +249,19 @@ func (m *CLOBMarket) UnmarshalJSON(b []byte) error {
 			MaxSpread       *float64 `json:"ma"`
 			MinimumOrderAge *int     `json:"moas"`
 		} `json:"r"`
-		OrderMinSizeShort          *float64 `json:"mos"`
-		OrderPriceMinTickSizeShort *float64 `json:"mts"`
-		MakerBaseFeeShort          *int     `json:"mbf"`
-		TakerBaseFeeShort          *int     `json:"tbf"`
-		AcceptingOrdersShort       *bool    `json:"ao"`
-		EnableOrderBookShort       *bool    `json:"cbos"`
-		NegRiskShort               *bool    `json:"nr"`
-		RFQEnabledShort            *bool    `json:"rfqe"`
-		TakerOrderDelayShort       *bool    `json:"itode"`
-		BlockaidCheckEnabledShort  *bool    `json:"ibce"`
-		FeeDetailsShort            *struct {
-			Rate      *float64 `json:"r"`
-			Exponent  *float64 `json:"e"`
-			TakerOnly *bool    `json:"to"`
-		} `json:"fd"`
-		MinimumOrderAgeShort *int `json:"oas"`
+		OrderMinSizeShort          *float64        `json:"mos"`
+		OrderPriceMinTickSizeShort *float64        `json:"mts"`
+		MakerBaseFeeShort          *int            `json:"mbf"`
+		TakerBaseFeeShort          *int            `json:"tbf"`
+		AcceptingOrdersShort       *bool           `json:"ao"`
+		EnableOrderBookShort       *bool           `json:"cbos"`
+		NegRiskShort               *bool           `json:"nr"`
+		RFQEnabledShort            *bool           `json:"rfqe"`
+		TakerOrderDelayShort       *bool           `json:"itode"`
+		BlockaidCheckEnabledShort  *bool           `json:"ibce"`
+		FeeDetailsCamel            *CLOBFeeDetails `json:"feeDetails"`
+		FeeDetailsShort            *CLOBFeeDetails `json:"fd"`
+		MinimumOrderAgeShort       *int            `json:"oas"`
 	}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
@@ -208,16 +323,11 @@ func (m *CLOBMarket) UnmarshalJSON(b []byte) error {
 	if raw.BlockaidCheckEnabledShort != nil {
 		m.BlockaidCheckEnabled = *raw.BlockaidCheckEnabledShort
 	}
+	if raw.FeeDetailsCamel != nil {
+		m.FeeDetails = *raw.FeeDetailsCamel
+	}
 	if raw.FeeDetailsShort != nil {
-		if raw.FeeDetailsShort.Rate != nil {
-			m.FeeDetails.Rate = *raw.FeeDetailsShort.Rate
-		}
-		if raw.FeeDetailsShort.Exponent != nil {
-			m.FeeDetails.Exponent = *raw.FeeDetailsShort.Exponent
-		}
-		if raw.FeeDetailsShort.TakerOnly != nil {
-			m.FeeDetails.TakerOnly = *raw.FeeDetailsShort.TakerOnly
-		}
+		m.FeeDetails = *raw.FeeDetailsShort
 	}
 	if raw.MinimumOrderAgeShort != nil {
 		m.MinimumOrderAge = *raw.MinimumOrderAgeShort
@@ -254,6 +364,30 @@ func (s *NumericString) UnmarshalJSON(b []byte) error {
 
 func (s NumericString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(s))
+}
+
+func firstNonEmptyString(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstNonEmptyRaw(values ...json.RawMessage) json.RawMessage {
+	for _, value := range values {
+		if len(value) == 0 || strings.TrimSpace(string(value)) == "null" || strings.TrimSpace(string(value)) == "" {
+			continue
+		}
+		return value
+	}
+	return nil
+}
+
+func jsonBoolOrFalse(raw json.RawMessage) bool {
+	text := strings.Trim(strings.ToLower(strings.TrimSpace(string(raw))), "\"")
+	return text == "true" || text == "1"
 }
 
 // CLOBPaginatedMarkets represents cursor-paginated CLOB markets.

@@ -528,9 +528,10 @@ Acceptance criteria:
 
 > **Status:** Partial. `pkg/stream` ships a public `MarketClient`
 > with reconnect, ping/pong, dedup, and `SubscribeAssets`, backed by
-> `internal/stream` and exposed via `polygolem stream market`. The
-> authenticated user stream and RTDS-channel isolation described here are not
-> yet implemented.
+> `internal/stream` and exposed via `polygolem stream market`. It also ships
+> an authenticated `UserClient` for typed order/trade events, exposed for
+> inspection through `polygolem stream user`. RTDS-channel isolation remains
+> planned.
 
 The SDK must provide resilient typed streaming clients.
 
