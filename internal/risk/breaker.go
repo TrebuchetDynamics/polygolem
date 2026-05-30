@@ -116,11 +116,12 @@ func (b *Breaker) RecordSuccess() {
 }
 
 // RecordLoss adds to daily PnL. Returns true if daily limit hit.
+// Negative amounts are treated as zero (breakers track losses, not net PnL).
 func (b *Breaker) RecordLoss(amount float64) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.checkDailyResetLocked()
-	b.dailyLoss += amount
+	b.dailyLoss += clampNonNegative(amount)
 	if b.dailyLoss >= b.policy.DailyLossLimitUSD {
 		b.halted = true
 		b.tripReason = ReasonDailyLossLimit
@@ -136,17 +137,14 @@ func (b *Breaker) RecordPosition(tokenID string, size float64) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.positions[tokenID] = size
-	total := 0.0
-	for _, v := range b.positions {
-		total += abs(v)
-	}
-	if b.policy.MaxPositionPerMarket > 0 && abs(size) > b.policy.MaxPositionPerMarket {
+	total := computeTotalAbsPosition(b.positions)
+	if shouldTripPerMarket(size, b.policy.MaxPositionPerMarket) {
 		b.halted = true
 		b.tripReason = ReasonPositionPerMarket
 		b.lastBreak = time.Now()
 		return true
 	}
-	if b.policy.MaxTotalPosition > 0 && total > b.policy.MaxTotalPosition {
+	if shouldTripTotalPosition(total, b.policy.MaxTotalPosition) {
 		b.halted = true
 		b.tripReason = ReasonTotalPosition
 		b.lastBreak = time.Now()
@@ -173,10 +171,7 @@ func (b *Breaker) Status() Status {
 	if b.halted && b.policy.CoolDownSecs > 0 {
 		coolDownReady = time.Since(b.lastBreak) > time.Duration(b.policy.CoolDownSecs)*time.Second
 	}
-	total := 0.0
-	for _, v := range b.positions {
-		total += abs(v)
-	}
+	total := computeTotalAbsPosition(b.positions)
 	posCopy := make(map[string]float64, len(b.positions))
 	for k, v := range b.positions {
 		posCopy[k] = v
@@ -220,7 +215,7 @@ func (b *Breaker) Halted() bool {
 	return b.halted
 }
 
-// Reset clears all breaker state.
+// Reset clears all breaker state including timestamps.
 func (b *Breaker) Reset() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -229,6 +224,8 @@ func (b *Breaker) Reset() {
 	b.consecutiveErrs = 0
 	b.dailyLoss = 0
 	b.positions = make(map[string]float64)
+	b.dailyLossReset = time.Time{}
+	b.lastBreak = time.Time{}
 }
 
 // checkDailyResetLocked resets daily loss if we've crossed the configured UTC reset hour.
@@ -242,13 +239,30 @@ func (b *Breaker) checkDailyResetLocked() {
 		b.dailyLossReset = now
 		return
 	}
-	lastReset := b.dailyLossReset
-	if now.Day() != lastReset.Day() || now.Month() != lastReset.Month() || now.Year() != lastReset.Year() {
-		if now.Hour() >= b.policy.DailyPnLResetHour {
-			b.dailyLoss = 0
-			b.dailyLossReset = now
-		}
+	if shouldResetDailyLoss(now, b.dailyLossReset, b.policy.DailyPnLResetHour) {
+		b.dailyLoss = 0
+		b.dailyLossReset = now
 	}
+}
+
+// clampNonNegative returns 0 if v is negative, otherwise v.
+// RecordLoss should not accept negative values since it tracks losses, not net PnL.
+func clampNonNegative(v float64) float64 {
+	if v < 0 {
+		return 0
+	}
+	return v
+}
+
+// shouldResetDailyLoss returns true when enough calendar time has passed since lastReset
+// that the daily loss counter should be cleared. Reset triggers when:
+//  1. now and lastReset are on different calendar days, AND
+//  2. now.Hour() >= resetHour (e.g., reset happens at or after the configured UTC hour)
+func shouldResetDailyLoss(now time.Time, lastReset time.Time, resetHour int) bool {
+	if now.Year() != lastReset.Year() || now.Month() != lastReset.Month() || now.Day() != lastReset.Day() {
+		return now.Hour() >= resetHour
+	}
+	return false
 }
 
 func abs(v float64) float64 {
@@ -256,4 +270,23 @@ func abs(v float64) float64 {
 		return -v
 	}
 	return v
+}
+
+// computeTotalAbsPosition returns sum of abs values of all tracked positions.
+func computeTotalAbsPosition(positions map[string]float64) float64 {
+	total := 0.0
+	for _, v := range positions {
+		total += abs(v)
+	}
+	return total
+}
+
+// shouldTripPerMarket returns true if size exceeds maxPerMarket (strictly greater).
+func shouldTripPerMarket(size float64, maxPerMarket float64) bool {
+	return maxPerMarket > 0 && abs(size) > maxPerMarket
+}
+
+// shouldTripTotalPosition returns true if total exceeds maxTotal (strictly greater).
+func shouldTripTotalPosition(total float64, maxTotal float64) bool {
+	return maxTotal > 0 && total > maxTotal
 }
