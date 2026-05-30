@@ -54,20 +54,10 @@ func (r *BalanceAllowanceResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// jsonStringOrNumber unwraps a JSON value that may be a string or a number,
-// returning the underlying lexical text without quotes.
+// jsonStringOrNumber delegates to jsonx.StringOrNumber to unwrap a JSON
+// value that may be a string or a number. Avoids float64 precision loss.
 func jsonStringOrNumber(raw json.RawMessage) string {
-	s := strings.TrimSpace(string(raw))
-	if s == "" || s == "null" {
-		return ""
-	}
-	if s[0] == '"' {
-		var v string
-		if err := json.Unmarshal(raw, &v); err == nil {
-			return v
-		}
-	}
-	return s
+	return jsonx.StringOrNumber(raw)
 }
 
 // CreateOrderParams is the public input to CreateLimitOrder.
@@ -213,12 +203,7 @@ func rawStringList(raw []json.RawMessage) []string {
 }
 
 func firstNonEmptyRaw(values ...json.RawMessage) json.RawMessage {
-	for _, value := range values {
-		if jsonStringOrNumber(value) != "" {
-			return value
-		}
-	}
-	return nil
+	return jsonx.FirstRaw(values...)
 }
 
 func jsonIntOrNumberString(raw json.RawMessage) int {

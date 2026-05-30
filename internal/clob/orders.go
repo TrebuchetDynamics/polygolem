@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/ethereum/go-ethereum/common"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
@@ -177,12 +178,7 @@ func rawStringList(raw []json.RawMessage) []string {
 }
 
 func firstNonEmptyRaw(values ...json.RawMessage) json.RawMessage {
-	for _, value := range values {
-		if jsonStringOrNumber(value) != "" {
-			return value
-		}
-	}
-	return nil
+	return jsonx.FirstRaw(values...)
 }
 
 // BatchOrderResponse is returned by CreateBatchOrders.
@@ -355,21 +351,10 @@ func (t *TradeRecord) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// jsonStringOrNumber unwraps a JSON value that may be a string or a number,
-// returning the underlying lexical text without quotes. Used for fields the
-// CLOB serves inconsistently as either type.
+// jsonStringOrNumber delegates to jsonx.StringOrNumber to unwrap a JSON
+// value that may be a string or a number. Avoids float64 precision loss.
 func jsonStringOrNumber(raw json.RawMessage) string {
-	s := strings.TrimSpace(string(raw))
-	if s == "" || s == "null" {
-		return ""
-	}
-	if s[0] == '"' {
-		var v string
-		if err := json.Unmarshal(raw, &v); err == nil {
-			return v
-		}
-	}
-	return s
+	return jsonx.StringOrNumber(raw)
 }
 
 func jsonIntOrNumberString(raw json.RawMessage) int {

@@ -5,34 +5,30 @@ package jsonx
 
 import (
 	"encoding/json"
-	"strconv"
 	"strings"
 )
 
 // StringOrNumber decodes a JSON scalar into its stable string representation.
+//
+// Preserves the raw text for numeric values to avoid float64 precision loss
+// on large integers (e.g., uint256 token IDs that exceed 2^53). Strings are
+// properly unquoted via json.Unmarshal to handle escape sequences.
 func StringOrNumber(raw json.RawMessage) string {
-	if len(raw) == 0 {
+	s := strings.TrimSpace(string(raw))
+	if s == "" || s == "null" {
 		return ""
 	}
-	var value any
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return ""
-	}
-	switch v := value.(type) {
-	case nil:
-		return ""
-	case string:
-		return strings.TrimSpace(v)
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case bool:
-		if v {
-			return "true"
+	if s[0] == '"' {
+		// Properly unquote JSON string (handles escape sequences)
+		var v string
+		if err := json.Unmarshal(raw, &v); err != nil {
+			return ""
 		}
-		return "false"
-	default:
-		return strings.TrimSpace(string(raw))
+		return strings.TrimSpace(v)
 	}
+	// Preserve raw text for numbers and booleans — avoids float64
+	// precision loss that would occur via json.Unmarshal into any.
+	return s
 }
 
 // FirstString returns the first non-empty string value.

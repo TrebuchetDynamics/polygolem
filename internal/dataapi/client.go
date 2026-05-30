@@ -851,6 +851,7 @@ func firstRaw(values ...json.RawMessage) json.RawMessage {
 	return jsonx.FirstRaw(values...)
 }
 
+
 func jsonFloatOrZero(raw json.RawMessage) (float64, error) {
 	value := jsonStringOrNumber(raw)
 	if value == "" {
@@ -885,17 +886,7 @@ func jsonBoolOrFalse(raw json.RawMessage) bool {
 }
 
 func jsonStringOrNumber(raw json.RawMessage) string {
-	s := strings.TrimSpace(string(raw))
-	if s == "" || s == "null" {
-		return ""
-	}
-	if s[0] == '"' {
-		var v string
-		if err := json.Unmarshal(raw, &v); err == nil {
-			return v
-		}
-	}
-	return s
+	return jsonx.StringOrNumber(raw)
 }
 
 func (c *Client) LiveVolume(ctx context.Context, eventID int) (*LiveVolumeResponse, error) {
