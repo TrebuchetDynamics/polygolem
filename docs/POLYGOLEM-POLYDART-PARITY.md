@@ -3,7 +3,7 @@
 <!-- GENERATED FILE: do not edit directly. Run `node scripts/generate-parity-docs.mjs`. -->
 
 Source: `docs/parity/polydart-polygolem.yaml`
-Generated: 2026-05-25
+Generated: 2026-05-30
 
 Status vocabulary: `implemented`, `partial`, `missing`, `intentional`, `safety_gated`, `not_applicable`.
 
