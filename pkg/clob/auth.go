@@ -9,6 +9,7 @@ import (
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
 	internalclob "github.com/TrebuchetDynamics/polygolem/internal/clob"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 )
 
 // APIKey is a Polymarket CLOB L2 credential.
@@ -717,12 +718,7 @@ func orderRecordValueFromInternal(row internalclob.OrderRecord) OrderRecord {
 }
 
 func firstNonEmptyString(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstString(values...)
 }
 
 func tradeRecordsFromInternal(rows []internalclob.TradeRecord) []TradeRecord {

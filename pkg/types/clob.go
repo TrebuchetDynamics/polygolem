@@ -3,7 +3,8 @@ package types
 import (
 	"encoding/json"
 	"strconv"
-	"strings"
+
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 )
 
 // CLOBServerTime is the CLOB server-time response.
@@ -184,57 +185,19 @@ type CLOBMarket struct {
 }
 
 func clobStringOrNumber(raw json.RawMessage) string {
-	if len(raw) == 0 {
-		return ""
-	}
-	var value any
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return ""
-	}
-	switch v := value.(type) {
-	case nil:
-		return ""
-	case string:
-		return strings.TrimSpace(v)
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case bool:
-		if v {
-			return "true"
-		}
-		return "false"
-	default:
-		return strings.TrimSpace(string(raw))
-	}
+	return jsonx.StringOrNumber(raw)
 }
 
 func firstNonEmptyClobString(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstString(values...)
 }
 
 func firstNonEmptyClobRaw(values ...json.RawMessage) json.RawMessage {
-	for _, value := range values {
-		text := strings.TrimSpace(string(value))
-		if len(value) == 0 || text == "" || text == "null" {
-			continue
-		}
-		return value
-	}
-	return nil
+	return jsonx.FirstRaw(values...)
 }
 
 func clobBoolOrFalse(raw json.RawMessage) bool {
-	switch strings.ToLower(clobStringOrNumber(raw)) {
-	case "true", "1":
-		return true
-	default:
-		return false
-	}
+	return jsonx.BoolOrFalse(raw)
 }
 
 func (m *CLOBMarket) UnmarshalJSON(b []byte) error {

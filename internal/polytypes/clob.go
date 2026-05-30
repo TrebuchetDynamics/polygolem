@@ -3,7 +3,8 @@ package polytypes
 import (
 	"encoding/json"
 	"strconv"
-	"strings"
+
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 )
 
 // OrderBookLevel is a single price level in the order book.
@@ -348,17 +349,7 @@ type Token struct {
 type NumericString string
 
 func (s *NumericString) UnmarshalJSON(b []byte) error {
-	raw := strings.TrimSpace(string(b))
-	if raw == "" || raw == "null" {
-		*s = ""
-		return nil
-	}
-	var asString string
-	if err := json.Unmarshal(b, &asString); err == nil {
-		*s = NumericString(strings.TrimSpace(asString))
-		return nil
-	}
-	*s = NumericString(raw)
+	*s = NumericString(jsonx.StringOrNumber(b))
 	return nil
 }
 
@@ -367,27 +358,15 @@ func (s NumericString) MarshalJSON() ([]byte, error) {
 }
 
 func firstNonEmptyString(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstString(values...)
 }
 
 func firstNonEmptyRaw(values ...json.RawMessage) json.RawMessage {
-	for _, value := range values {
-		if len(value) == 0 || strings.TrimSpace(string(value)) == "null" || strings.TrimSpace(string(value)) == "" {
-			continue
-		}
-		return value
-	}
-	return nil
+	return jsonx.FirstRaw(values...)
 }
 
 func jsonBoolOrFalse(raw json.RawMessage) bool {
-	text := strings.Trim(strings.ToLower(strings.TrimSpace(string(raw))), "\"")
-	return text == "true" || text == "1"
+	return jsonx.BoolOrFalse(raw)
 }
 
 // CLOBPaginatedMarkets represents cursor-paginated CLOB markets.

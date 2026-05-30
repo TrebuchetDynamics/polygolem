@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/TrebuchetDynamics/polygolem/pkg/data"
 	"github.com/TrebuchetDynamics/polygolem/pkg/settlement"
 )
@@ -163,10 +163,5 @@ func ownerAndWallet(privateKey string) (string, string, error) {
 }
 
 func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if trimmed := strings.TrimSpace(value); trimmed != "" {
-			return trimmed
-		}
-	}
-	return ""
+	return jsonx.FirstTrimmedString(values...)
 }

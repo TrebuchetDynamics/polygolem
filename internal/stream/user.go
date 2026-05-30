@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/gorilla/websocket"
 )
 
@@ -225,10 +226,5 @@ func (uc *UserClient) Close() {
 func (uc *UserClient) IsConnected() bool { return uc.connected.Load() }
 
 func firstNonEmpty(values ...string) string {
-	for _, v := range values {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
+	return jsonx.FirstString(values...)
 }

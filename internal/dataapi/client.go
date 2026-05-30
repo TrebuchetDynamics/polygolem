@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/TrebuchetDynamics/polygolem/internal/transport"
 )
 
@@ -843,25 +844,11 @@ func parseLeaderboardRank(raw json.RawMessage) (int, error) {
 }
 
 func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstString(values...)
 }
 
 func firstRaw(values ...json.RawMessage) json.RawMessage {
-	for _, value := range values {
-		if len(value) == 0 {
-			continue
-		}
-		if strings.TrimSpace(string(value)) == "" || strings.TrimSpace(string(value)) == "null" {
-			continue
-		}
-		return value
-	}
-	return nil
+	return jsonx.FirstRaw(values...)
 }
 
 func jsonFloatOrZero(raw json.RawMessage) (float64, error) {

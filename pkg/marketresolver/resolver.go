@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/gamma"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 )
 
@@ -303,12 +304,7 @@ func firstAcceptingMarket(asset, timeframe string, markets []CryptoMarket) (Reso
 }
 
 func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	return ""
+	return jsonx.FirstTrimmedString(values...)
 }
 
 func findUpDownTokenIDs(outcomes []string, tokenIDs []string) (string, string) {

@@ -3,7 +3,8 @@ package relayer
 import (
 	"encoding/json"
 	"strconv"
-	"strings"
+
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 )
 
 // RelayerError is a structured error returned by the relayer API.
@@ -134,54 +135,20 @@ func (r *RelayerTransaction) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	r.TransactionID = firstNonEmptyRawString(raw.TransactionIDCamel, raw.TransactionIDSnake)
-	r.TransactionHash = firstNonEmptyRawString(raw.TransactionHashCamel, raw.TransactionHashSnake)
-	r.From = rawStringOrNumber(raw.From)
-	r.To = rawStringOrNumber(raw.To)
-	r.ProxyAddress = firstNonEmptyRawString(raw.ProxyAddressCamel, raw.ProxyAddressSnake)
-	r.Data = rawStringOrNumber(raw.Data)
-	r.Nonce = rawStringOrNumber(raw.Nonce)
-	r.Value = rawStringOrNumber(raw.Value)
-	r.State = rawStringOrNumber(raw.State)
-	r.Type = rawStringOrNumber(raw.Type)
-	r.Metadata = rawStringOrNumber(raw.Metadata)
-	r.CreatedAt = firstNonEmptyRawString(raw.CreatedAtCamel, raw.CreatedAtSnake)
-	r.UpdatedAt = firstNonEmptyRawString(raw.UpdatedAtCamel, raw.UpdatedAtSnake)
+	r.TransactionID = jsonx.FirstStringOrNumber(raw.TransactionIDCamel, raw.TransactionIDSnake)
+	r.TransactionHash = jsonx.FirstStringOrNumber(raw.TransactionHashCamel, raw.TransactionHashSnake)
+	r.From = jsonx.StringOrNumber(raw.From)
+	r.To = jsonx.StringOrNumber(raw.To)
+	r.ProxyAddress = jsonx.FirstStringOrNumber(raw.ProxyAddressCamel, raw.ProxyAddressSnake)
+	r.Data = jsonx.StringOrNumber(raw.Data)
+	r.Nonce = jsonx.StringOrNumber(raw.Nonce)
+	r.Value = jsonx.StringOrNumber(raw.Value)
+	r.State = jsonx.StringOrNumber(raw.State)
+	r.Type = jsonx.StringOrNumber(raw.Type)
+	r.Metadata = jsonx.StringOrNumber(raw.Metadata)
+	r.CreatedAt = jsonx.FirstStringOrNumber(raw.CreatedAtCamel, raw.CreatedAtSnake)
+	r.UpdatedAt = jsonx.FirstStringOrNumber(raw.UpdatedAtCamel, raw.UpdatedAtSnake)
 	return nil
-}
-
-func firstNonEmptyRawString(values ...json.RawMessage) string {
-	for _, value := range values {
-		if decoded := rawStringOrNumber(value); decoded != "" {
-			return decoded
-		}
-	}
-	return ""
-}
-
-func rawStringOrNumber(raw json.RawMessage) string {
-	if len(raw) == 0 {
-		return ""
-	}
-	var value any
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return ""
-	}
-	switch v := value.(type) {
-	case nil:
-		return ""
-	case string:
-		return v
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case bool:
-		if v {
-			return "true"
-		}
-		return "false"
-	default:
-		return strings.TrimSpace(string(raw))
-	}
 }
 
 // NonceResponse is the response from GET /nonce?address=...&type=WALLET.
@@ -196,7 +163,7 @@ func (r *NonceResponse) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	r.Nonce = rawStringOrNumber(raw.Nonce)
+	r.Nonce = jsonx.StringOrNumber(raw.Nonce)
 	return nil
 }
 
@@ -214,18 +181,9 @@ func (r *DeployedResponse) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	r.Deployed = rawBoolOrFalse(raw.Deployed)
-	r.Address = rawStringOrNumber(raw.Address)
+	r.Deployed = jsonx.BoolOrFalse(raw.Deployed)
+	r.Address = jsonx.StringOrNumber(raw.Address)
 	return nil
-}
-
-func rawBoolOrFalse(raw json.RawMessage) bool {
-	switch strings.ToLower(rawStringOrNumber(raw)) {
-	case "true", "1":
-		return true
-	default:
-		return false
-	}
 }
 
 // WalletCreateResponse is returned when WALLET-CREATE is accepted by the relayer.

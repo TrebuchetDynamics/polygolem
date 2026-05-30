@@ -4,8 +4,8 @@
 > **Date:** 2026-05-07
 > **Owner:** TrebuchetDynamics
 > **License:** MIT (public)
-> **Companion:** [polygolem docs/ONBOARDING.md](./docs/ONBOARDING.md) — reference pipeline
-> **Companion:** [polygolem docs/CONTRACTS.md](./docs/CONTRACTS.md) — contract research
+> **Companion:** [polygolem docs/ONBOARDING.md](./ONBOARDING.md) — reference pipeline
+> **Companion:** [polygolem docs/CONTRACTS.md](./CONTRACTS.md) — contract research
 
 ---
 

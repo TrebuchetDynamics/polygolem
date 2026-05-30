@@ -7,6 +7,7 @@ import (
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
 	"github.com/TrebuchetDynamics/polygolem/internal/clob"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 )
 
 // PrivateKeyLoader loads POLYMARKET_PRIVATE_KEY from the caller's environment.
@@ -173,10 +174,5 @@ func ownerAndWallet(privateKey string) (string, string, error) {
 }
 
 func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstString(values...)
 }

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
 	"github.com/TrebuchetDynamics/polygolem/pkg/types"
 )
@@ -509,12 +510,7 @@ func emptyCLOBTrade(trade sdkclob.TradeRecord) bool {
 }
 
 func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstNonBlankString(values...)
 }
 
 func firstNonZero(values ...float64) float64 {

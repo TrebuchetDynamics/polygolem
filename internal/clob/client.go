@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/TrebuchetDynamics/polygolem/internal/transport"
 )
@@ -490,11 +491,8 @@ func decodeNumericString(raw json.RawMessage) (string, bool) {
 	if trimmed == "" || trimmed == "null" || strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") {
 		return "", false
 	}
-	var value polytypes.NumericString
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return "", false
-	}
-	return string(value), true
+	value := jsonx.StringOrNumber(raw)
+	return value, value != ""
 }
 
 // Markets lists CLOB markets with cursor pagination.

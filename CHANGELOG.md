@@ -220,7 +220,7 @@ the May 2026 deposit-wallet migration and the documentation overhaul.
   Contracts, POLY_1271 Deposit Wallets, Secrets, Markets/Events/Tokens,
   Safety, Architecture), Reference (CLI, Go SDK Contracts, Protocol Types,
   Internal Packages, Gamma/CLOB/Data/Stream APIs, Coverage Matrix).
-- **Polydart PRD.** `PRD_POLYDART.md` — companion Dart SDK design for
+- **Polydart PRD.** `docs/PRD_POLYDART.md` — companion Dart SDK design for
   Arenaton Flutter with Reown/WalletConnect, server proxy, confirmed
   pipeline.
 - **Test coverage.** Added tests for `internal/errors`,

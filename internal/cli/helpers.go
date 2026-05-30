@@ -10,6 +10,7 @@ import (
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
 	"github.com/TrebuchetDynamics/polygolem/internal/clob"
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/spf13/cobra"
 )
 
@@ -96,13 +97,7 @@ func parseBatchOrderParams(r io.Reader) ([]clob.CreateOrderParams, error) {
 }
 
 func firstNonEmptyCLI(values ...string) string {
-	for _, value := range values {
-		value = strings.TrimSpace(value)
-		if value != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstTrimmedString(values...)
 }
 
 func builderCodeFromFlagOrEnv(flagValue string) string {

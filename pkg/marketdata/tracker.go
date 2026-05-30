@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/TrebuchetDynamics/polygolem/pkg/stream"
 )
 
@@ -280,10 +281,5 @@ func parsePrice(value string) (float64, bool) {
 }
 
 func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-	return ""
+	return jsonx.FirstNonBlankString(values...)
 }
