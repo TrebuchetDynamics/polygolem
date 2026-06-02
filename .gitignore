@@ -30,3 +30,5 @@ CLAUDE.md
 indexer_probe.pid
 indexer_probe.state.json
 indexer_probe.log
+
+.refactorignore
