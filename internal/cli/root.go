@@ -105,6 +105,7 @@ func NewRootCommand(opts Options) *cobra.Command {
 	root.AddCommand(orderbookCmd(jsonOutput))
 	root.AddCommand(clobCmd(jsonOutput))
 	root.AddCommand(dataCmd(jsonOutput))
+	root.AddCommand(intelCmd(jsonOutput))
 	root.AddCommand(healthCmd(jsonOutput))
 	root.AddCommand(eventsCmd(jsonOutput))
 	root.AddCommand(bridgeCmd(jsonOutput))

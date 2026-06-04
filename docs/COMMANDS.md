@@ -125,6 +125,11 @@ polygolem - Safe Polymarket SDK and CLI for Go
   events - List Polymarket events
     list - List events
   health - Check Gamma and CLOB API reachability
+  intel - Read-only wallet intelligence
+    alerts - List user-scoped wallet dossier alerts
+    leaderboard - List Data-API-ranked wallet intelligence rows
+    market-flow - Summarize read-only market holder, trade, and open-interest flow
+    wallet - Build a read-only wallet intelligence dossier
   live - Inspect live gate status
     status
   marketdata - Live CLOB orderbook and share-price snapshots
@@ -180,6 +185,7 @@ polygolem [flags]
 | `polygolem discover` | Market discovery via Polymarket Gamma API |
 | `polygolem events` | List Polymarket events |
 | `polygolem health` | Check Gamma and CLOB API reachability |
+| `polygolem intel` | Read-only wallet intelligence |
 | `polygolem live` | Inspect live gate status |
 | `polygolem marketdata` | Live CLOB orderbook and share-price snapshots |
 | `polygolem orderbook` | Read CLOB order book data |
@@ -2107,6 +2113,107 @@ polygolem health [flags]
 |---|---|---|---|
 | `-h, --help` | `bool` | `false` | help for health |
 | `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem intel
+
+Read-only wallet intelligence
+
+**Usage:**
+
+```bash
+polygolem intel [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem intel alerts` | List user-scoped wallet dossier alerts |
+| `polygolem intel leaderboard` | List Data-API-ranked wallet intelligence rows |
+| `polygolem intel market-flow` | Summarize read-only market holder, trade, and open-interest flow |
+| `polygolem intel wallet` | Build a read-only wallet intelligence dossier |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for intel |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem intel alerts
+
+List user-scoped wallet dossier alerts
+
+**Usage:**
+
+```bash
+polygolem intel alerts [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for alerts |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `100` | max source rows per Data API read |
+| `--min-score` | `int` | `70` | minimum candidate score |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem intel leaderboard
+
+List Data-API-ranked wallet intelligence rows
+
+**Usage:**
+
+```bash
+polygolem intel leaderboard [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for leaderboard |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max leaderboard rows |
+| `--sort` | `string` | `data-api-rank` | sort mode (data-api-rank) |
+
+### polygolem intel market-flow
+
+Summarize read-only market holder, trade, and open-interest flow
+
+**Usage:**
+
+```bash
+polygolem intel market-flow <market-or-token-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for market-flow |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `100` | max holder/trade rows |
+
+### polygolem intel wallet
+
+Build a read-only wallet intelligence dossier
+
+**Usage:**
+
+```bash
+polygolem intel wallet <wallet> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for wallet |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `100` | max source rows per Data API read |
 
 ### polygolem live
 
