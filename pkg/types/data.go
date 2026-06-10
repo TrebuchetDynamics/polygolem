@@ -63,6 +63,25 @@ type ClosedPosition struct {
 	EndDate         string  `json:"endDate,omitempty"`
 }
 
+// SmartWallet identifies one public smart wallet to query as a read-only signal source.
+type SmartWallet struct {
+	Address string `json:"address"`
+	Label   string `json:"label,omitempty"`
+}
+
+// SmartWalletTradesQuery configures read-only public trade collection for watched wallets.
+type SmartWalletTradesQuery struct {
+	Wallets        []SmartWallet `json:"wallets"`
+	LimitPerWallet int           `json:"limit_per_wallet,omitempty"`
+}
+
+// SmartWalletTrade is a public trade annotated with watched-wallet source metadata.
+type SmartWalletTrade struct {
+	WalletAddress string `json:"wallet_address"`
+	WalletLabel   string `json:"wallet_label,omitempty"`
+	Trade         Trade  `json:"trade"`
+}
+
 // Trade is a Data API trade row.
 type Trade struct {
 	ID              string  `json:"id"`

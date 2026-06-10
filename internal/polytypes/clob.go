@@ -423,3 +423,20 @@ type EnrichedMarket struct {
 	Midpoint  string     `json:"midpoint,omitempty"`
 	Spread    string     `json:"spread,omitempty"`
 }
+
+// CLOBMarketOutcomeStatus describes the resolution state of a CLOB market.
+type CLOBMarketOutcomeStatus string
+
+const (
+	CLOBOutcomeUnresolved CLOBMarketOutcomeStatus = "unresolved"
+	CLOBOutcomeResolved   CLOBMarketOutcomeStatus = "resolved"
+)
+
+// CLOBMarketOutcome is the result of resolving a market's outcome.
+type CLOBMarketOutcome struct {
+	Status         CLOBMarketOutcomeStatus `json:"status"`
+	ConditionID    string                  `json:"condition_id"`
+	WinningTokenID string                  `json:"winning_token_id,omitempty"`
+	Closed         bool                    `json:"closed"`
+	Source         string                  `json:"source"`
+}

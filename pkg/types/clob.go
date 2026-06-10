@@ -380,3 +380,20 @@ type CLOBPriceHistoryParams struct {
 	StartTS  int64  `json:"start_ts,omitempty"`
 	EndTS    int64  `json:"end_ts,omitempty"`
 }
+
+// CLOBMarketOutcomeStatus describes the resolution state of a CLOB market.
+type CLOBMarketOutcomeStatus string
+
+const (
+	CLOBOutcomeResolved   CLOBMarketOutcomeStatus = "resolved"
+	CLOBOutcomeUnresolved CLOBMarketOutcomeStatus = "unresolved"
+)
+
+// CLOBMarketOutcome is the result of resolving a market's outcome.
+type CLOBMarketOutcome struct {
+	Status         CLOBMarketOutcomeStatus `json:"status"`
+	ConditionID    string                  `json:"condition_id"`
+	WinningTokenID string                  `json:"winning_token_id,omitempty"`
+	Closed         bool                    `json:"closed"`
+	Source         string                  `json:"source"`
+}

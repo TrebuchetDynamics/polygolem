@@ -3,6 +3,7 @@ package data
 
 import (
 	"context"
+	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/dataapi"
 	"github.com/TrebuchetDynamics/polygolem/pkg/types"
@@ -73,6 +74,36 @@ func (c *Client) Trades(ctx context.Context, user string, limit int) ([]types.Tr
 		return nil, err
 	}
 	return tradesFromInternal(rows), nil
+}
+
+// SmartWalletTrades returns public trades annotated with watched-wallet source metadata.
+func (c *Client) SmartWalletTrades(ctx context.Context, query types.SmartWalletTradesQuery) ([]types.SmartWalletTrade, error) {
+	limit := query.LimitPerWallet
+	out := make([]types.SmartWalletTrade, 0)
+	seen := map[string]struct{}{}
+	for _, wallet := range query.Wallets {
+		address := strings.TrimSpace(wallet.Address)
+		if address == "" {
+			continue
+		}
+		rows, err := c.Trades(ctx, address, limit)
+		if err != nil {
+			return nil, err
+		}
+		label := strings.TrimSpace(wallet.Label)
+		for _, row := range rows {
+			key := row.ID
+			if key == "" {
+				key = strings.Join([]string{address, row.TransactionHash, row.Market, row.AssetID, row.Side, row.CreatedAt}, "\x00")
+			}
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			out = append(out, types.SmartWalletTrade{WalletAddress: address, WalletLabel: label, Trade: row})
+		}
+	}
+	return out, nil
 }
 
 // MarketTrades returns public trades for a market condition ID.

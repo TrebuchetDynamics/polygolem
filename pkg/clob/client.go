@@ -85,6 +85,27 @@ func (c *Client) Market(ctx context.Context, conditionID string) (*types.CLOBMar
 	return marketFromInternal(row), nil
 }
 
+// MarketOutcome resolves a market's outcome by condition ID. It queries the
+// CLOB API first. If the CLOB market is not resolved, it falls back to the
+// Gamma API when gammaBaseURL is non-empty. The outcome carries the winning
+// token ID only when CLOB confirms the market as closed with a winner.
+func (c *Client) MarketOutcome(ctx context.Context, conditionID, gammaBaseURL string) (*types.CLOBMarketOutcome, error) {
+	row, err := c.inner.MarketOutcome(ctx, conditionID, gammaBaseURL)
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, nil
+	}
+	return &types.CLOBMarketOutcome{
+		Status:         types.CLOBMarketOutcomeStatus(row.Status),
+		ConditionID:    row.ConditionID,
+		WinningTokenID: row.WinningTokenID,
+		Closed:         row.Closed,
+		Source:         row.Source,
+	}, nil
+}
+
 // MarketByToken resolves a token ID to its parent CLOB market IDs.
 func (c *Client) MarketByToken(ctx context.Context, tokenID string) (*types.CLOBMarketByTokenResponse, error) {
 	row, err := c.inner.MarketByToken(ctx, tokenID)

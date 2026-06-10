@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
+	"github.com/TrebuchetDynamics/polygolem/internal/gamma"
 	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/TrebuchetDynamics/polygolem/internal/transport"
@@ -518,6 +519,102 @@ func (c *Client) Market(ctx context.Context, conditionID string) (*polytypes.CLO
 		result.ConditionID = conditionID
 	}
 	return &result, nil
+}
+
+// winningTokenID scans the market tokens and returns the token ID marked as
+// winner, or empty string if no token has Winner=true or there are multiple.
+func winningTokenID(market *polytypes.CLOBMarket) string {
+	if market == nil {
+		return ""
+	}
+	var winner string
+	winnerCount := 0
+	for _, token := range market.Tokens {
+		if token.Winner {
+			winner = token.TokenID
+			winnerCount++
+		}
+	}
+	if winnerCount == 1 {
+		return winner
+	}
+	return ""
+}
+
+// MarketOutcome tries to resolve a market's outcome. It first queries the
+// CLOB API by condition ID. If CLOB returns the market as closed with a
+// winning token, the outcome is resolved. If CLOB cannot find the market
+// (e.g. the market is archived or does not appear on the CLOB), it falls
+// back to the Polymarket Gamma API to check whether the market has resolved.
+//
+// The gammaBaseURL parameter is optional; when empty, no Gamma fallback is
+// attempted and a CLOB-not-found result returns an error as before.
+func (c *Client) MarketOutcome(ctx context.Context, conditionID string, gammaBaseURL string) (*polytypes.CLOBMarketOutcome, error) {
+	conditionID = strings.TrimSpace(conditionID)
+	if conditionID == "" {
+		return nil, fmt.Errorf("clob: conditionID is required")
+	}
+
+	// First try CLOB.
+	market, err := c.Market(ctx, conditionID)
+	if err == nil && market != nil {
+		winner := winningTokenID(market)
+		if market.Closed && winner != "" {
+			return &polytypes.CLOBMarketOutcome{
+				Status:         polytypes.CLOBOutcomeResolved,
+				ConditionID:    conditionID,
+				WinningTokenID: winner,
+				Closed:         true,
+				Source:         "clob:/markets/" + conditionID,
+			}, nil
+		}
+		// CLOB knows the market but it is not yet closed or has no winner.
+		return &polytypes.CLOBMarketOutcome{
+			Status:      polytypes.CLOBOutcomeUnresolved,
+			ConditionID: conditionID,
+			Closed:      market.Closed,
+			Source:      "clob:/markets/" + conditionID + ":not_closed_or_no_winner",
+		}, nil
+	}
+
+	// Fall back to Gamma when CLOB returned an error (e.g. 404).
+	gammaBaseURL = strings.TrimSpace(gammaBaseURL)
+	if gammaBaseURL == "" {
+		// No Gamma fallback configured — return the CLOB error.
+		return nil, err
+	}
+	outcome, gammaErr := resolveViaGamma(ctx, gammaBaseURL, conditionID)
+	if gammaErr == nil && outcome != nil {
+		return outcome, nil
+	}
+	// Both CLOB and Gamma failed — return original CLOB error.
+	return nil, err
+}
+
+// resolveViaGamma queries the Gamma API for a market by condition ID.
+func resolveViaGamma(ctx context.Context, gammaBaseURL, conditionID string) (*polytypes.CLOBMarketOutcome, error) {
+	g := newGammaClient(gammaBaseURL)
+	markets, err := g.Markets(ctx, &polytypes.GetMarketsParams{ConditionIDs: []string{conditionID}})
+	if err != nil {
+		return nil, fmt.Errorf("gamma: markets query: %w", err)
+	}
+	for _, m := range markets {
+		if !m.Closed {
+			continue
+		}
+		return &polytypes.CLOBMarketOutcome{
+			Status:      polytypes.CLOBOutcomeUnresolved,
+			ConditionID: conditionID,
+			Closed:      true,
+			Source:      fmt.Sprintf("gamma:closed_condition_id=%s", conditionID),
+		}, nil
+	}
+	return nil, fmt.Errorf("gamma: no closed market found for condition_id=%s", conditionID)
+}
+
+// newGammaClient creates a Gamma API client for the given base URL.
+func newGammaClient(gammaBaseURL string) *gamma.Client {
+	return gamma.NewClient(gammaBaseURL, nil)
 }
 
 // MarketByToken returns the parent CLOB market identifiers for a token ID.
