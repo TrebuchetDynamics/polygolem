@@ -18,6 +18,9 @@ package bridge
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -274,6 +277,41 @@ type QuoteResponse struct {
 	QuoteID            string       `json:"quoteId"`
 }
 
+// ErrWithdrawSubmitUnsupported is returned by Withdraw until the upstream
+// withdrawal/offramp endpoint shape and custody constraints have been captured.
+// Use BuildWithdrawDryRun to validate and preview the payload operators intend
+// to submit.
+var ErrWithdrawSubmitUnsupported = errors.New("bridge withdrawal submit is not supported; use BuildWithdrawDryRun until endpoint shape and custody risk are verified")
+
+// WithdrawRequest describes a proposed Bridge withdrawal/offramp. It is kept
+// explicit rather than reusing QuoteRequest because withdrawals have different
+// custody and recipient-risk semantics than deposits.
+type WithdrawRequest struct {
+	FromChainID        string `json:"fromChainId"`
+	FromTokenAddress   string `json:"fromTokenAddress"`
+	FromAmountBaseUnit string `json:"fromAmountBaseUnit"`
+	ToChainID          string `json:"toChainId"`
+	ToTokenAddress     string `json:"toTokenAddress"`
+	RecipientAddress   string `json:"recipientAddress"`
+	QuoteID            string `json:"quoteId,omitempty"`
+}
+
+// WithdrawDryRun is the safe preview artifact for a proposed withdrawal. It is
+// intentionally not submitted to the Bridge API.
+type WithdrawDryRun struct {
+	Request        WithdrawRequest `json:"request"`
+	ReadyToSubmit  bool            `json:"readyToSubmit"`
+	Unsupported    bool            `json:"unsupported"`
+	SafetyWarnings []string        `json:"safetyWarnings"`
+}
+
+// WithdrawResponse is reserved for the future live submit response shape.
+type WithdrawResponse struct {
+	QuoteID string `json:"quoteId,omitempty"`
+	TxHash  string `json:"txHash,omitempty"`
+	Status  string `json:"status,omitempty"`
+}
+
 func (q *QuoteResponse) UnmarshalJSON(data []byte) error {
 	var raw struct {
 		EstCheckoutTimeMs  json.RawMessage `json:"estCheckoutTimeMs"`
@@ -296,6 +334,61 @@ func (q *QuoteResponse) UnmarshalJSON(data []byte) error {
 }
 
 // --- Methods ---
+
+// BuildWithdrawDryRun validates and previews a withdrawal/offramp request
+// without submitting it. This is the only supported withdrawal path until the
+// live endpoint contract is captured in fixtures and safety docs.
+func BuildWithdrawDryRun(req WithdrawRequest) (*WithdrawDryRun, error) {
+	if err := req.validate(); err != nil {
+		return nil, err
+	}
+	return &WithdrawDryRun{
+		Request:       req,
+		ReadyToSubmit: false,
+		Unsupported:   true,
+		SafetyWarnings: []string{
+			"bridge withdrawal/offramp live submission is intentionally disabled",
+			"verify recipient address, token, chain, quote, and custody route before any future submit path",
+			"use explicit operator confirmation before moving funds",
+		},
+	}, nil
+}
+
+// Withdraw is a guarded placeholder for future live withdrawal submission. It
+// always returns ErrWithdrawSubmitUnsupported after validating the request so
+// callers can wire safe UX without accidentally moving funds.
+func (c *Client) Withdraw(ctx context.Context, req WithdrawRequest) (*WithdrawResponse, error) {
+	if _, err := BuildWithdrawDryRun(req); err != nil {
+		return nil, err
+	}
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+	return nil, ErrWithdrawSubmitUnsupported
+}
+
+func (req WithdrawRequest) validate() error {
+	checks := map[string]string{
+		"fromChainId":        req.FromChainID,
+		"fromTokenAddress":   req.FromTokenAddress,
+		"fromAmountBaseUnit": req.FromAmountBaseUnit,
+		"toChainId":          req.ToChainID,
+		"toTokenAddress":     req.ToTokenAddress,
+		"recipientAddress":   req.RecipientAddress,
+	}
+	for field, value := range checks {
+		if strings.TrimSpace(value) == "" {
+			return fmt.Errorf("%s is required", field)
+		}
+	}
+	amount, ok := new(big.Int).SetString(strings.TrimSpace(req.FromAmountBaseUnit), 10)
+	if !ok || amount.Sign() <= 0 {
+		return fmt.Errorf("fromAmountBaseUnit must be a positive base-10 integer")
+	}
+	return nil
+}
 
 // CreateDepositAddress requests the Bridge mint a deposit address for the
 // given Polymarket-side address. The Bridge returns a per-chain address

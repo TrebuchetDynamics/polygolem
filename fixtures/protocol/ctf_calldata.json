@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "family": "ctf-calldata-selectors",
+  "source": {
+    "reference_paths": [
+      "pkg/ctf/ctf.go",
+      "opensource-projects/repos/ctf-exchange-v2"
+    ],
+    "notes": "Function selectors are the first 4 bytes of keccak256(signature). They pin the CTF split/merge/redeem ABI entrypoints used by high-level dry-runs and redeem settlement calls."
+  },
+  "vectors": [
+    {
+      "name": "split_position",
+      "signature": "splitPosition(address,bytes32,bytes32,uint256[],uint256)",
+      "expected_selector": "0x72ce4275"
+    },
+    {
+      "name": "merge_positions",
+      "signature": "mergePositions(address,bytes32,bytes32,uint256[],uint256)",
+      "expected_selector": "0x9e7212ad"
+    },
+    {
+      "name": "redeem_positions",
+      "signature": "redeemPositions(address,bytes32,bytes32,uint256[])",
+      "expected_selector": "0x01b7037c"
+    }
+  ]
+}

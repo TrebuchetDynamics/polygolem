@@ -30,15 +30,23 @@ import (
 	"context"
 	"testing"
 
+	"github.com/TrebuchetDynamics/polygolem/pkg/bridge"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
+	"github.com/TrebuchetDynamics/polygolem/pkg/ctf"
 	"github.com/TrebuchetDynamics/polygolem/pkg/data"
 	"github.com/TrebuchetDynamics/polygolem/pkg/gamma"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketdata"
+	"github.com/TrebuchetDynamics/polygolem/pkg/openapi"
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderbook"
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderresults"
 	"github.com/TrebuchetDynamics/polygolem/pkg/relayer"
+	"github.com/TrebuchetDynamics/polygolem/pkg/rfq"
 	"github.com/TrebuchetDynamics/polygolem/pkg/settlement"
+	"github.com/TrebuchetDynamics/polygolem/pkg/signers"
+	httpsigner "github.com/TrebuchetDynamics/polygolem/pkg/signers/http"
+	kmssigner "github.com/TrebuchetDynamics/polygolem/pkg/signers/kms"
+	turnkeysigner "github.com/TrebuchetDynamics/polygolem/pkg/signers/turnkey"
 	sdkstream "github.com/TrebuchetDynamics/polygolem/pkg/stream"
 	"github.com/TrebuchetDynamics/polygolem/pkg/types"
 	"github.com/TrebuchetDynamics/polygolem/pkg/universal"
@@ -48,6 +56,11 @@ import (
 )
 
 func TestPublicSDKSignatures(t *testing.T) {
+	var bridgeClient *bridge.Client = bridge.NewClient("", nil)
+	var bridgeWithdrawRequest bridge.WithdrawRequest
+	var bridgeWithdrawDryRun *bridge.WithdrawDryRun
+	var bridgeBuildWithdrawDryRun func(bridge.WithdrawRequest) (*bridge.WithdrawDryRun, error) = bridge.BuildWithdrawDryRun
+	var bridgeWithdraw func(*bridge.Client, context.Context, bridge.WithdrawRequest) (*bridge.WithdrawResponse, error) = (*bridge.Client).Withdraw
 	var clobClient *sdkclob.Client = sdkclob.NewClient(sdkclob.Config{})
 	var clobConfig sdkclob.Config = sdkclob.Config{BuilderCode: "0x1111111111111111111111111111111111111111111111111111111111111111"}
 	var clobMarkets func(*sdkclob.Client, context.Context, string) (*types.CLOBPaginatedMarkets, error) = (*sdkclob.Client).Markets
@@ -89,6 +102,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var marketDataSnapshot marketdata.Snapshot
 	var marketDataBestBidAsk func(*marketdata.Tracker, sdkstream.BestBidAskMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyBestBidAsk
 	var marketDataTickSize func(*marketdata.Tracker, sdkstream.TickSizeChangeMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyTickSizeChange
+	var openAPISpec map[string]any = openapi.Spec()
 	var orderbookReader orderbook.Reader = orderbook.NewReader("")
 	var orderbookSnapshot orderbook.OrderBook
 	var orderbookLevel orderbook.Level
@@ -96,11 +110,24 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var orderResultsReport *orderresults.Report
 	var orderResultsOptions orderresults.Options
 	var orderResultsBuild func(context.Context, orderresults.DataReader, string, orderresults.Options) (*orderresults.Report, error) = orderresults.BuildReport
+	var ctfOperationRequest ctf.OperationRequest
+	var ctfOperationDryRun *ctf.OperationDryRun
+	var ctfReadinessGate ctf.ReadinessGate
+	var ctfSubmitPlan *ctf.OperationSubmitPlan
+	var ctfBuildDryRun func(ctf.OperationRequest) (*ctf.OperationDryRun, error) = ctf.BuildOperationDryRun
+	var ctfBuildSubmitPlan func(ctf.OperationRequest, ctf.ReadinessGate) (*ctf.OperationSubmitPlan, error) = ctf.BuildOperationSubmitPlan
+	var ctfBuildSplit func(ctf.OperationRequest) (relayer.DepositWalletCall, error) = ctf.BuildSplitCall
+	var ctfBuildMerge func(ctf.OperationRequest) (relayer.DepositWalletCall, error) = ctf.BuildMergeCall
 	var contractsRegistry contracts.Registry = contracts.PolygonMainnet()
 	var contractStatus contracts.DeploymentStatus
 	var contractDeployed func(context.Context, string, string) (contracts.DeploymentStatus, error) = contracts.ContractDeployed
 	var depositWalletDeployed func(context.Context, string, string) (contracts.DeploymentStatus, error) = contracts.DepositWalletDeployed
 	var redeemAdapterFor func(bool) string = contracts.RedeemAdapterFor
+	var rfqClient *rfq.Client = rfq.NewClient()
+	var rfqRequest rfq.Request
+	var rfqQuote rfq.Quote
+	var rfqValidate func(rfq.Request) error = rfq.ValidateRequest
+	var rfqSubmit func(*rfq.Client, rfq.Request) (*rfq.Response, error) = (*rfq.Client).Submit
 	var settlementPosition settlement.RedeemablePosition
 	var settlementResult *settlement.RedeemResult
 	var settlementReadiness *settlement.Readiness
@@ -110,6 +137,19 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var settlementBuild func(settlement.RedeemablePosition) (relayer.DepositWalletCall, error) = settlement.BuildRedeemCall
 	var settlementSubmit func(context.Context, *relayer.Client, string, []settlement.RedeemablePosition, int) (*settlement.RedeemResult, error) = settlement.SubmitRedeem
 	var settlementCheck func(context.Context, *data.Client, string, string, settlement.ReadinessOptions) (*settlement.Readiness, error) = settlement.CheckReadiness
+	var localSigner *signers.LocalSigner
+	var signerInterface signers.Signer
+	var newLocalSigner func(string, int64) (*signers.LocalSigner, error) = signers.NewLocalSigner
+	var redactSecret func(string) string = signers.RedactSecret
+	var httpSigner *httpsigner.Signer
+	var httpSignerConfig httpsigner.Config
+	var newHTTPSigner func(httpsigner.Config) (*httpsigner.Signer, error) = httpsigner.New
+	var kmsSigner *kmssigner.Signer
+	var kmsSignerConfig kmssigner.Config
+	var newKMSSigner func(kmssigner.Config) (*kmssigner.Signer, error) = kmssigner.New
+	var turnkeySigner *turnkeysigner.Signer
+	var turnkeySignerConfig turnkeysigner.Config
+	var newTurnkeySigner func(turnkeysigner.Config) (*turnkeysigner.Signer, error) = turnkeysigner.New
 	var relayerClient *relayer.Client
 	var relayerV2Key relayer.V2APIKey
 	var relayerOnboardOptions relayer.OnboardOptions
@@ -145,15 +185,22 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var universalStream func(*universal.Client) *sdkstream.MarketClient = (*universal.Client).StreamClient
 	var universalStreamWithConfig func(*universal.Client, sdkstream.Config) *sdkstream.MarketClient = (*universal.Client).StreamClientWithConfig
 
+	_, _, _, _, _ = bridgeClient, bridgeWithdrawRequest, bridgeWithdrawDryRun, bridgeBuildWithdrawDryRun, bridgeWithdraw
 	_, _, _, _, _, _, _, _, _ = clobClient, clobConfig, clobMarkets, clobMarket, clobMarketByToken, clobOrderBook, clobOrderBooks, clobTickSize, clobPriceHistory
 	_, _, _, _, _, _, _, _, _, _ = clobAPIKey, clobDeriveAPIKey, clobBalanceParams, clobBalance, clobOrders, clobOrder, clobTrades, clobCancel, clobCancelMarketParams, clobCancelMarket
 	_, _, _, _ = clobCreateParams, clobCreate, clobMarketOrderParams, clobMarketOrder
 	_, _, _, _, _, _, _, _, _, _ = streamClient, streamConfig, streamConnect, streamSubscribe, streamClose, streamConnected, streamBook, streamPriceChange, streamLastTrade, streamTickSize
 	_, _, _, _, _, _ = streamBestBidAsk, streamNewMarket, streamMarketResolved, streamDeduplicator, marketDataTracker, marketDataSnapshot
 	_, _ = marketDataBestBidAsk, marketDataTickSize
+	_ = openAPISpec
 	_, _, _, _, _, _, _ = orderbookReader, orderbookSnapshot, orderbookLevel, orderResultsSource, orderResultsReport, orderResultsOptions, orderResultsBuild
+	_, _, _, _, _, _, _, _ = ctfOperationRequest, ctfOperationDryRun, ctfReadinessGate, ctfSubmitPlan, ctfBuildDryRun, ctfBuildSubmitPlan, ctfBuildSplit, ctfBuildMerge
 	_, _, _, _, _ = contractsRegistry, contractStatus, contractDeployed, depositWalletDeployed, redeemAdapterFor
+	_, _, _, _, _ = rfqClient, rfqRequest, rfqQuote, rfqValidate, rfqSubmit
 	_, _, _, _, _, _, _, _, _ = settlementPosition, settlementResult, settlementReadiness, settlementReadinessOptions, settlementAdapterApproval, settlementFind, settlementBuild, settlementSubmit, settlementCheck
+	_, _, _, _, _, _, _ = localSigner, signerInterface, newLocalSigner, redactSecret, httpSigner, httpSignerConfig, newHTTPSigner
+	_, _, _ = kmsSigner, kmsSignerConfig, newKMSSigner
+	_, _, _ = turnkeySigner, turnkeySignerConfig, newTurnkeySigner
 	_, _, _, _, _ = relayerClient, relayerV2Key, relayerOnboardOptions, relayerOnboard, relayerNewV2
 	_, _, _, _ = dataPositions, universalPositions, dataLeaderboard, universalLiveVolume
 	_, _, _, _, _, _, _ = gammaMarkets, gammaSearch, gammaComments, universalMarkets, universalSearch, universalComments, universalConfig

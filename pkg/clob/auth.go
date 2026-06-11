@@ -417,9 +417,10 @@ func (c *Client) CreateOrDeriveAPIKey(ctx context.Context, privateKey string) (A
 	return apiKeyFromInternal(key), nil
 }
 
-// CreateOrDeriveAPIKeyForAddress creates or derives CLOB L2 credentials for
-// a deposit/smart wallet address while signing L1 auth with the controlling
-// EOA private key.
+// CreateOrDeriveAPIKeyForAddress creates or derives CLOB L2 credentials using
+// EOA-bound L1 auth. ownerAddress is retained for source compatibility but is
+// ignored by the validated V2 path; deposit-wallet identity is carried by
+// POLY_1271 order fields, not by CLOB auth headers.
 func (c *Client) CreateOrDeriveAPIKeyForAddress(ctx context.Context, privateKey, ownerAddress string) (APIKey, error) {
 	key, err := c.inner.CreateOrDeriveAPIKeyForAddress(ctx, privateKey, ownerAddress)
 	if err != nil {
@@ -428,8 +429,8 @@ func (c *Client) CreateOrDeriveAPIKeyForAddress(ctx context.Context, privateKey,
 	return apiKeyFromInternal(key), nil
 }
 
-// CreateAPIKeyForAddress creates CLOB L2 credentials for a deposit/smart
-// wallet address while signing L1 auth with the controlling EOA private key.
+// CreateAPIKeyForAddress creates CLOB L2 credentials using EOA-bound L1 auth.
+// ownerAddress is retained for source compatibility but ignored.
 func (c *Client) CreateAPIKeyForAddress(ctx context.Context, privateKey, ownerAddress string) (APIKey, error) {
 	key, err := c.inner.CreateAPIKeyForAddress(ctx, privateKey, ownerAddress)
 	if err != nil {
@@ -438,9 +439,8 @@ func (c *Client) CreateAPIKeyForAddress(ctx context.Context, privateKey, ownerAd
 	return apiKeyFromInternal(key), nil
 }
 
-// DeriveAPIKeyForAddress derives existing CLOB L2 credentials for a
-// deposit/smart wallet address while signing L1 auth with the controlling EOA
-// private key.
+// DeriveAPIKeyForAddress derives existing CLOB L2 credentials using EOA-bound
+// L1 auth. ownerAddress is retained for source compatibility but ignored.
 func (c *Client) DeriveAPIKeyForAddress(ctx context.Context, privateKey, ownerAddress string) (APIKey, error) {
 	key, err := c.inner.DeriveAPIKeyForAddress(ctx, privateKey, ownerAddress)
 	if err != nil {

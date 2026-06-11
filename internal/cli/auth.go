@@ -24,12 +24,12 @@ func newAuthStatusCommand(jsonOut bool) *cobra.Command {
 		Long: `Inspects the current POLYMARKET_PRIVATE_KEY and reports:
   - EOA address and deposit wallet address
   - Whether the deposit wallet is deployed
-  - Whether EOA-owned and deposit-wallet-owned API keys exist
-  - Whether the setup is ready for trading
+  - Whether EOA-bound CLOB credentials are present
+  - Whether the setup is ready for deposit-wallet trading
 
-Use --check-deposit-key to test whether the deposit-wallet-owned API key
-is functional (makes a live network call). Without this flag, the check
-is faster but may report a stale key as existing.`,
+Use --check-deposit-key to test whether the configured CLOB key works for
+trading-readiness checks (makes a live network call). Without this flag, the
+check is faster but may report a stale key as existing.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			result, err := authstatus.New(authstatus.Config{
@@ -47,7 +47,7 @@ is faster but may report a stale key as existing.`,
 		},
 	}
 
-	cmd.Flags().BoolVar(&checkDepositKey, "check-deposit-key", false, "make a live network call to verify the deposit-wallet API key exists")
+	cmd.Flags().BoolVar(&checkDepositKey, "check-deposit-key", false, "make a live network call to verify configured CLOB credentials")
 	return cmd
 }
 

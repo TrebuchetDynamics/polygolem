@@ -22,11 +22,12 @@
 ## Contents
 
 - [Quick Start](#quick-start)
-- [What's New in v0.1.1](#whats-new-in-v011)
+- [Try It — No Credentials Needed](#try-it--no-credentials-needed)
+- [Installation](#installation)
+- [What's New](#whats-new)
 - [Who This Is For](#who-this-is-for)
 - [The Problem We Solve](#the-problem-we-solve)
 - [Production Validation](#production-validation)
-- [Installation](#installation)
 - [Features](#features)
 - [Go SDK](#go-sdk)
 - [Crypto Market Discovery](#crypto-market-discovery)
@@ -53,17 +54,67 @@ polygolem health
 ```
 
 No credentials needed. Read-only is the default for everything until you set
-`POLYMARKET_PRIVATE_KEY`.
+`POLYMARKET_PRIVATE_KEY`. For a quick tour with zero setup, see
+[Try It — No Credentials Needed](#try-it--no-credentials-needed) below.
 
 ---
 
-## What's New in v0.1.1
+## Try It — No Credentials Needed
 
-- **Crypto-5m discovery** — resolve all 7 active 5-minute crypto markets (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE) in one command
-- **Deterministic window resolution** — `crypto-window` hits the exact current window by slug, bypassing search index lag
-- **Paper trading** — simulate orders against live CLOB data with one-command workflow
-- **V2 settlement readiness gate** — `deposit-wallet settlement-status` checks adapter approvals before redeem
-- **7 Go-specific bugs fixed** — credential redaction, hex parsing, WebSocket races, version negotiation
+You installed polygolem. Now try three things with zero setup:
+
+```bash
+# 1. Check API reachability (no credentials)
+polygolem health --json
+
+# 2. Search active markets
+polygolem discover search --query "Will BTC" --limit 5 --json
+
+# 3. Read a real order book
+polygolem orderbook get --token-id 71321045679252249115448234976983616835904229510371422584850212744998471172014 --json
+```
+
+Every command accepts `--json` and returns a stable envelope: `{"ok": true, "version": "1", "data": ..., "meta": ...}`.
+Full JSON contract at [docs/JSON-CONTRACT.md](docs/JSON-CONTRACT.md).
+
+When you're ready to trade, see [Trade in Four Commands](#trade-in-four-commands).
+
+---
+
+## Installation
+
+### go install (recommended)
+
+```bash
+go install github.com/TrebuchetDynamics/polygolem/cmd/polygolem@latest
+```
+
+### Build from source
+
+```bash
+git clone https://github.com/TrebuchetDynamics/polygolem
+cd polygolem && go build -o polygolem ./cmd/polygolem
+```
+
+### Requirements
+
+- Go 1.22+
+- No other dependencies — single static binary
+
+---
+
+## What's New
+
+- **Read-only MCP server** — expose health, discovery, data positions, orderbook, and marketdata snapshot tools through the Model Context Protocol for AI agent integration (`pkg/mcp`, `cmd/polygolem_mcp`)
+- **Read-only OpenAPI spec** — emit a minimal OpenAPI 3.1 document for local proxy/tooling experiments (`pkg/openapi`, `cmd/polygolem_openapi`)
+- **Public signer adapters** — stable `Signer` interface with local, HTTP remote, KMS-style, and Turnkey-style adapters (`pkg/signers`)
+- **Polygolem diag** — redacted local diagnostics, endpoint configuration, and preflight state (`polygolem diag`)
+- **Bridge withdrawal dry-run** — typed withdrawal DTOs, validation, and explicit unsupported-submit guard (`pkg/bridge`)
+- **RFQ typed models** — request/quote/response DTOs, positive-decimal validation, and unsupported-submit guard (`pkg/rfq`)
+- **CTF split/merge/redeem dry-runs** — high-level operation previews with readiness-gated submit-plan artifacts (`pkg/ctf`)
+- **Protocol conformance fixtures** — golden vectors for CLOB auth, HMAC headers, V2 order EIP-712 hashes, CTF calldata, and deposit-wallet batch typed-data (`fixtures/protocol/`)
+- **JSON schema fixtures** — checked-in schemas for CLI envelope, RFQ, bridge-withdrawal, and CTF operation requests (`fixtures/schemas/`)
+- **Auth model correction** — CLOB L1/L2 auth confirmed EOA-bound; deposit-wallet identity belongs in POLY_1271 order fields, not ClobAuth headers
 
 See [CHANGELOG.md](CHANGELOG.md) for full details.
 
@@ -127,28 +178,6 @@ Core trading flows validated today:
 
 ---
 
-## Installation
-
-### go install (recommended)
-
-```bash
-go install github.com/TrebuchetDynamics/polygolem/cmd/polygolem@latest
-```
-
-### Build from source
-
-```bash
-git clone https://github.com/TrebuchetDynamics/polygolem
-cd polygolem && go build -o polygolem ./cmd/polygolem
-```
-
-### Requirements
-
-- Go 1.22+
-- No other dependencies — single static binary
-
----
-
 ## Features
 
 - **Market discovery** — Search, filter, and enrich Polymarket markets via Gamma + CLOB APIs
@@ -177,6 +206,16 @@ Every CLI subcommand is a thin wrapper around importable `pkg/` packages:
 | [`pkg/marketdata`](pkg/marketdata) | Live share-price snapshots from stream events |
 | [`pkg/relayer`](pkg/relayer) | V2 Relayer client — WALLET-CREATE, batch, nonce |
 | [`pkg/settlement`](pkg/settlement) | V2 winner redemption planning, adapter calls, readiness gates |
+| [`pkg/bridge`](pkg/bridge) | Bridge deposits, status, quotes, and guarded withdrawal/offramp dry-runs |
+| [`pkg/ctf`](pkg/ctf) | CTF split/merge/redeem calldata, high-level dry-runs, readiness-gated submit plans |
+| [`pkg/rfq`](pkg/rfq) | Typed RFQ request/quote/response models with positive-decimal validation |
+| [`pkg/signers`](pkg/signers) | Public signing seam with local, HTTP remote, KMS, and Turnkey adapters |
+| [`pkg/orderbook`](pkg/orderbook) | Order book reader interface |
+| [`pkg/builder`](pkg/builder) | Builder header signing — local EIP-712 and remote HTTP |
+| [`pkg/enabletrading`](pkg/enabletrading) | Headless enable-trading: ClobAuth and token-approval typed-data signing |
+| [`pkg/intel`](pkg/intel) | Wallet intelligence scoring — dossier alerts, shrinkage win rate, co-positioning signals |
+| [`pkg/mcp`](pkg/mcp) | Read-only Model Context Protocol server and SDK handler wiring |
+| [`pkg/openapi`](pkg/openapi) | Minimal read-only OpenAPI 3.1 spec generation |
 | [`pkg/marketresolver`](pkg/marketresolver) | Deterministic crypto window resolution (BTC/ETH/SOL/XRP/BNB/DOGE/HYPE) |
 
 ```go
@@ -386,6 +425,7 @@ gofmt -w .
 | [Commands](docs/COMMANDS.md) | Auto-generated CLI reference |
 | [Deposit Wallet Migration](docs/DEPOSIT-WALLET-MIGRATION.md) | V1→V2 survival guide |
 | [polygolem.trebuchetdynamics.com](https://polygolem.trebuchetdynamics.com) | Searchable docs site |
+| [SKILL.md](SKILL.md) | AI agent skill manifest — every command, env var, safety rule, and JSON contract |
 
 ---
 

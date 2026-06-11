@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "family": "polymarket-hmac-headers",
+  "source": {
+    "formula": "base64url(HMAC-SHA256(base64decode(secret), timestamp + method + path + body))",
+    "reference_paths": [
+      "internal/auth/l2.go",
+      "opensource-projects/repos/go-builder-signing-sdk"
+    ],
+    "notes": "Synthetic credentials only. Values pin canonical body/path/timestamp signing for L2 CLOB auth and builder attribution headers. The external builder SDK is the cross-check target for future imported vectors."
+  },
+  "vectors": [
+    {
+      "name": "clob_l2_get_book_no_body",
+      "kind": "l2",
+      "api_key": "key-1",
+      "secret": "c2VjcmV0",
+      "passphrase": "pass-1",
+      "timestamp": 1700000000,
+      "method": "GET",
+      "path": "/book",
+      "body": null,
+      "expected_headers": {
+        "POLY_API_KEY": "key-1",
+        "POLY_PASSPHRASE": "pass-1",
+        "POLY_TIMESTAMP": "1700000000",
+        "POLY_SIGNATURE": "sGnIqIS0w73jlTVhz44U7ULfi9vy6WvUM6twuXXWi-o="
+      }
+    },
+    {
+      "name": "clob_l2_post_order_compact_body",
+      "kind": "l2",
+      "api_key": "key-1",
+      "secret": "c2VjcmV0",
+      "passphrase": "pass-1",
+      "timestamp": 1700000000,
+      "method": "POST",
+      "path": "/order",
+      "body": "{\"token_id\":\"123\"}",
+      "expected_headers": {
+        "POLY_API_KEY": "key-1",
+        "POLY_PASSPHRASE": "pass-1",
+        "POLY_TIMESTAMP": "1700000000",
+        "POLY_SIGNATURE": "DlLZ3_8yQ4of4tSILTf0hIMwQ6sqtPF_YOGQu0B7wIQ="
+      }
+    },
+    {
+      "name": "builder_post_order_compact_body",
+      "kind": "builder",
+      "api_key": "builder-key-1",
+      "secret": "c2VjcmV0",
+      "passphrase": "builder-pass-1",
+      "timestamp": 1700000000,
+      "method": "POST",
+      "path": "/order",
+      "body": "{\"token_id\":\"123\"}",
+      "expected_headers": {
+        "POLY_BUILDER_API_KEY": "builder-key-1",
+        "POLY_BUILDER_PASSPHRASE": "builder-pass-1",
+        "POLY_BUILDER_TIMESTAMP": "1700000000",
+        "POLY_BUILDER_SIGNATURE": "DlLZ3_8yQ4of4tSILTf0hIMwQ6sqtPF_YOGQu0B7wIQ="
+      }
+    }
+  ]
+}

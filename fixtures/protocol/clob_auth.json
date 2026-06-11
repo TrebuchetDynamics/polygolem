@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "family": "clob-auth-l1-headers",
+  "source": {
+    "reference_paths": [
+      "internal/auth/l1.go",
+      "internal/clob/client.go",
+      "docs/POLY_1271-SIGNING.md"
+    ],
+    "notes": "Pins the validated EOA-bound ClobAuth path for CLOB API-key creation/derivation. Deposit-wallet identity belongs in POLY_1271 order fields, not in deposit-wallet-bound ClobAuth headers. Synthetic test key only."
+  },
+  "vectors": [
+    {
+      "name": "eoa_bound_clob_auth",
+      "private_key": "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+      "chain_id": 137,
+      "timestamp": 1700000000,
+      "nonce": 0,
+      "expected_headers": {
+        "POLY_ADDRESS": "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23",
+        "POLY_SIGNATURE": "0xaa541ee28fab54d848c37e4d6c69ce3bca78c3c67bbfe102e9736de2589f18573619c82c113a99cbd31a576b4166a9b2964de7a6845770dc4beb1ad757c4ae1d1b",
+        "POLY_TIMESTAMP": "1700000000",
+        "POLY_NONCE": "0"
+      }
+    }
+  ]
+}

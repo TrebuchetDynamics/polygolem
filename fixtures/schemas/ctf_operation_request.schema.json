@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trebuchetdynamics.github.io/polygolem/schemas/ctf_operation_request.schema.json",
+  "title": "Polygolem CTF Operation Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["operation", "collateralToken", "conditionId", "partition", "amountBaseUnits"],
+  "properties": {
+    "operation": { "type": "string", "enum": ["split", "merge"] },
+    "collateralToken": { "type": "string" },
+    "parentCollectionId": { "type": "string" },
+    "conditionId": { "type": "string" },
+    "partition": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "amountBaseUnits": { "type": "string" }
+  }
+}

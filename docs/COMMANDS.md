@@ -111,6 +111,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
     settlement-status - Check whether the deposit wallet is ready to redeem V2 winners
     status - Check deposit wallet deployment status or transaction state
     swap-pol-pusd - Swap native POL into an exact amount of pUSD via Uniswap V3
+  diag - Print redacted local diagnostics
   discover - Market discovery via Polymarket Gamma API
     comments - List or fetch public Gamma comments
     crypto - Discover active crypto prediction markets
@@ -182,6 +183,7 @@ polygolem [flags]
 | `polygolem clob` | CLOB market data and authenticated account commands |
 | `polygolem data` | Polymarket Data API analytics |
 | `polygolem deposit-wallet` | Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status) |
+| `polygolem diag` | Print redacted local diagnostics |
 | `polygolem discover` | Market discovery via Polymarket Gamma API |
 | `polygolem events` | List Polymarket events |
 | `polygolem health` | Check Gamma and CLOB API reachability |
@@ -366,12 +368,12 @@ Check authentication readiness and API key status
 Inspects the current POLYMARKET_PRIVATE_KEY and reports:
   - EOA address and deposit wallet address
   - Whether the deposit wallet is deployed
-  - Whether EOA-owned and deposit-wallet-owned API keys exist
-  - Whether the setup is ready for trading
+  - Whether EOA-bound CLOB credentials are present
+  - Whether the setup is ready for deposit-wallet trading
 
-Use --check-deposit-key to test whether the deposit-wallet-owned API key
-is functional (makes a live network call). Without this flag, the check
-is faster but may report a stale key as existing.
+Use --check-deposit-key to test whether the configured CLOB key works for
+trading-readiness checks (makes a live network call). Without this flag, the
+check is faster but may report a stale key as existing.
 
 **Usage:**
 
@@ -383,7 +385,7 @@ polygolem auth status [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--check-deposit-key` | `bool` | `false` | make a live network call to verify the deposit-wallet API key exists |
+| `--check-deposit-key` | `bool` | `false` | make a live network call to verify configured CLOB credentials |
 | `-h, --help` | `bool` | `false` | help for status |
 | `--json` | `bool` | `false` | emit JSON output |
 
@@ -1789,6 +1791,23 @@ polygolem deposit-wallet swap-pol-pusd [flags]
 | `--max-pol-in` | `string` | `""` | max POL the router may consume (e.g. 10) |
 | `--out-pusd` | `string` | `""` | exact pUSD amount to receive (e.g. 0.72) |
 | `--rpc-url` | `string` | `""` | Polygon RPC URL (default: public node) |
+
+### polygolem diag
+
+Print redacted local diagnostics
+
+**Usage:**
+
+```bash
+polygolem diag [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for diag |
+| `--json` | `bool` | `false` | emit JSON output |
 
 ### polygolem discover
 

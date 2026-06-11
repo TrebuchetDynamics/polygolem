@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "family": "deposit-wallet-batch-typed-data",
+  "source": {
+    "reference_paths": [
+      "cmd/parity_walletbatch/main.go",
+      "pkg/relayer/relayer.go",
+      "internal/relayer"
+    ],
+    "notes": "Canonical DepositWallet.Batch EIP-712 sample used for cross-runtime parity. Values are emitted by go run ./cmd/parity_walletbatch and pinned here as protocol conformance fixtures."
+  },
+  "input": {
+    "walletAddress": "0xfd5041047be8c192c725a66228f141196fa3cf9c",
+    "chainId": 137,
+    "nonce": "7",
+    "deadline": "1750000000",
+    "calls": [
+      {
+        "target": "0x6c030c5cc283f791b26816f325b9c632d964f8a1",
+        "value": "0",
+        "data": "0xa9059cbb000000000000000000000000000000000000000000000000000000000000bee0000000000000000000000000000000000000000000000000000000000000000a"
+      },
+      {
+        "target": "0x4f9b03a3c34e9ff7c20de0f5d5b4a9b3a82a8ac4",
+        "value": "1000000",
+        "data": "0x"
+      }
+    ]
+  },
+  "expected": {
+    "domainSeparator": "1165737db0ee184e3a626411f82652d3d11a66bd90bf2545984b9a9aaaa0421f",
+    "batchStructHash": "0115f95fd7e5bcae493a5450871fff32b5c2442e3e97affcd655dbd7a763f337",
+    "finalDigest": "317201613b73892fbf48a990ec09ab9bbf041f70f4dab174da7cb18653f6ec8f",
+    "callHash0": "9151fb68bd2997e4f96685aacd0aa246fbcce1dfa5e5d7ef20c6868174ce7cbb",
+    "callHash1": "f84aba7eed9f05e31b571126d197ba87edd2b3dadd1ca207d74abe1cb2834afd"
+  }
+}

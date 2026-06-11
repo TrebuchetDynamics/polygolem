@@ -133,15 +133,15 @@ the upstream "omit both filters" behavior.
 | `UserRewardsByMarket` | `GET /rewards/markets` | Public | Rewards grouped by market |
 | `RebatedFees` | `GET /rebates` | Public | Maker rebate rows |
 | `CreateOrDeriveAPIKey` | `POST /auth/api-key`, then `GET /auth/derive-api-key` fallback | L1 | Returns EOA/bootstrap L2 `{ apiKey, secret, passphrase }` |
-| `CreateOrDeriveAPIKeyForAddress` / `DeriveAPIKeyForAddress` | `POST /auth/api-key` / `GET /auth/derive-api-key` with owner override | L1 + ERC-1271 owner | Creates or derives L2 credentials owned by a deployed deposit/smart wallet |
-| `CreateAPIKeyForAddress` | `POST /auth/api-key` with owner override | L1 + ERC-1271 owner | Creates L2 credentials owned by a deployed deposit/smart wallet |
+| `CreateOrDeriveAPIKeyForAddress` / `DeriveAPIKeyForAddress` | `POST /auth/api-key` / `GET /auth/derive-api-key` using EOA-bound auth | L1 | Source-compatible helpers; `ownerAddress` is ignored in the validated V2 path |
+| `CreateAPIKeyForAddress` | `POST /auth/api-key` using EOA-bound auth | L1 | Source-compatible helper; `ownerAddress` is ignored in the validated V2 path |
 | `CreateBuilderFeeKey` | `POST /auth/builder-api-key` | L2 | Mints a builder fee key for V2 order attribution |
 | `ListBuilderFeeKeys` | `GET /auth/builder-api-keys` | L2 | Lists existing builder fee keys |
 | `RevokeBuilderFeeKey` | `DELETE /auth/builder-api-key/{key}` | L2 | Deletes one builder fee key |
-| `BalanceAllowance` | `GET /balance-allowance` | L2 | Uses `signature_type=3` and deposit-wallet-owned L2 headers |
-| `UpdateBalanceAllowance` | `GET /balance-allowance/update` | L2 | Refreshes CLOB balance cache with deposit-wallet-owned L2 headers |
-| `CreateLimitOrder` / `CreateMarketOrder` | `POST /order` | L2 + order signature | Signs V2 order locally, then posts with deposit-wallet-owned L2 headers |
-| `CreateBatchOrders` | `POST /orders` | L2 + order signatures | Signs up to 15 V2 limit orders locally, then posts with deposit-wallet-owned L2 headers |
+| `BalanceAllowance` | `GET /balance-allowance` | L2 | Uses `signature_type=3` with EOA-bound L2 headers |
+| `UpdateBalanceAllowance` | `GET /balance-allowance/update` | L2 | Refreshes CLOB balance cache with EOA-bound L2 headers |
+| `CreateLimitOrder` / `CreateMarketOrder` | `POST /order` | L2 + order signature | Signs V2 order locally, then posts with EOA-bound L2 headers |
+| `CreateBatchOrders` | `POST /orders` | L2 + order signatures | Signs up to 15 V2 limit orders locally, then posts with EOA-bound L2 headers |
 | `Heartbeat` / `AutoHeartbeat` | `POST /v1/heartbeats` | L2 | Keepalive support for open-order heartbeat workflows |
 | `Order` | `GET /order/{id}` | L2 | One authenticated order |
 | `ListOrders` | `GET /data/orders` | L2 | Open orders for the API key owner |

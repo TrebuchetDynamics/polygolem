@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trebuchetdynamics.github.io/polygolem/schemas/cli_envelope.schema.json",
+  "title": "Polygolem CLI JSON Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ok", "version", "meta"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "version": { "type": "string", "const": "1" },
+    "data": true,
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "category": { "type": "string" },
+        "message": { "type": "string" },
+        "hint": { "type": "string" },
+        "details": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "ts", "duration_ms"],
+      "properties": {
+        "command": { "type": "string" },
+        "ts": { "type": "string", "format": "date-time" },
+        "duration_ms": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "ok": { "const": true } }, "required": ["ok"] },
+      "then": { "not": { "required": ["error"] } }
+    },
+    {
+      "if": { "properties": { "ok": { "const": false } }, "required": ["ok"] },
+      "then": { "required": ["error"] }
+    }
+  ]
+}

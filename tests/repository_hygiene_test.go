@@ -75,6 +75,12 @@ func TestRepositoryHygiene(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(root, "pkg/stream")); err != nil {
 		t.Fatalf("pkg/stream public boundary is missing: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(root, "pkg/signers")); err != nil {
+		t.Fatalf("pkg/signers public boundary is missing: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "pkg/rfq")); err != nil {
+		t.Fatalf("pkg/rfq public boundary is missing: %v", err)
+	}
 }
 
 func TestRepositoryDoesNotPublishResolvedRemoteBlocker(t *testing.T) {

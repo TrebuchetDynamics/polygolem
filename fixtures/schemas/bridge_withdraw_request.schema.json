@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trebuchetdynamics.github.io/polygolem/schemas/bridge_withdraw_request.schema.json",
+  "title": "Polygolem Bridge Withdraw Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fromChainId",
+    "fromTokenAddress",
+    "fromAmountBaseUnit",
+    "toChainId",
+    "toTokenAddress",
+    "recipientAddress"
+  ],
+  "properties": {
+    "fromChainId": { "type": "string" },
+    "fromTokenAddress": { "type": "string" },
+    "fromAmountBaseUnit": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+    "toChainId": { "type": "string" },
+    "toTokenAddress": { "type": "string" },
+    "recipientAddress": { "type": "string" },
+    "quoteId": { "type": "string" }
+  }
+}

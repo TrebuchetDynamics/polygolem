@@ -13,6 +13,9 @@ This directory contains the canonical documentation for polygolem. For a single 
 | See all CLI commands | [COMMANDS.md](./COMMANDS.md) |
 | Understand the architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | Review safety and risk features | [SAFETY.md](./SAFETY.md) |
+| Use read-only MCP/OpenAPI agent surfaces | [MCP-OPENAPI.md](./MCP-OPENAPI.md) |
+| Use the AI agent/SDK skill manifest | [../SKILL.md](../SKILL.md) |
+| Review the open-source reinforcement roadmap | [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) |
 
 ## Canonical Docs (Single Source of Truth)
 
@@ -33,6 +36,21 @@ This directory contains the canonical documentation for polygolem. For a single 
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Package boundaries, dependency direction, design decisions. | **Canonical** |
 | [CONTRACTS.md](./CONTRACTS.md) | All smart contract addresses, factory ABI, CREATE2 derivation. | **Canonical** |
 | [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md) | How POLY_1271 / deposit wallet signing works. | **Canonical** |
+| [POLYMARKET-COVERAGE-MATRIX.md](./POLYMARKET-COVERAGE-MATRIX.md) | Conservative SDK/CLI/docs/test coverage across Polymarket surfaces. | **Canonical** |
+
+### AI Agent Interface
+
+| Doc | What It Covers | Status |
+|-----|---------------|--------|
+| [SKILL.md](../SKILL.md) | CLI skill manifest for agentic consumers — every command, env var, safety rule, and JSON contract. | **Canonical** |
+| [MCP-OPENAPI.md](./MCP-OPENAPI.md) | Read-only MCP/OpenAPI deployment notes and excluded mutating surfaces. | **Canonical** |
+
+### Planning
+
+| Doc | What It Covers | Status |
+|-----|---------------|--------|
+| [POLYGOLEM-ROADMAP-MATRIX.md](./POLYGOLEM-ROADMAP-MATRIX.md) | Polygolem disposition for every capability in the open-source feature matrix. | **Planning** |
+| [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) | Executed reinforcement plan comparing polygolem to open-source Polymarket projects. | **Planning** |
 
 ### Research & Findings
 

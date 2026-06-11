@@ -154,12 +154,12 @@ func run() error {
 	}
 
 	// Hypothesis B: forward the SIWE polymarketsession cookie to clob.polymarket.com
-	// alongside the wrapped L1 headers. The browser's fetch sends *.polymarket.com
-	// cookies cross-subdomain.
-	fmt.Println("[probe] minting CLOB L2 API key — wrapped L1 + SIWE cookies forwarded ...")
-	wrappedHeaders, err := auth.BuildL1HeadersForDepositWallet(keyHex, 137, time.Now().Unix(), 0, depositWallet)
+	// alongside the validated EOA-bound L1 headers. The browser's fetch sends
+	// *.polymarket.com cookies cross-subdomain.
+	fmt.Println("[probe] minting CLOB L2 API key — EOA-bound L1 + SIWE cookies forwarded ...")
+	l1Headers, err := auth.BuildL1HeadersFromPrivateKey(keyHex, 137, time.Now().Unix(), 0)
 	if err != nil {
-		return fmt.Errorf("BuildL1HeadersForDepositWallet: %w", err)
+		return fmt.Errorf("BuildL1HeadersFromPrivateKey: %w", err)
 	}
 	gammaCookies := session.CookiesFor("https://gamma-api.polymarket.com/")
 	cookieHeader := buildCookieHeader(gammaCookies)
@@ -168,7 +168,7 @@ func run() error {
 	mintReq, _ := http.NewRequestWithContext(ctx, http.MethodPost, "https://clob.polymarket.com/auth/api-key", bytes.NewReader([]byte("")))
 	mintReq.Header.Set("Accept", "application/json")
 	mintReq.Header.Set("Content-Type", "application/json")
-	for k, v := range wrappedHeaders {
+	for k, v := range l1Headers {
 		mintReq.Header.Set(k, v)
 	}
 	if cookieHeader != "" {
@@ -184,14 +184,14 @@ func run() error {
 
 	if mintResp.StatusCode < 200 || mintResp.StatusCode > 299 {
 		// Fallback: try without forwarding cookies (proves whether cookies were the missing piece)
-		fmt.Println("[probe] FALLBACK — minting without cookies (existing wrapped path) ...")
+		fmt.Println("[probe] FALLBACK — minting without cookies (EOA-bound path) ...")
 		clobClient := clob.NewClient("https://clob.polymarket.com", nil)
-		clobKey, err := clobClient.CreateAPIKeyForAddress(ctx, keyHex, depositWallet)
+		clobKey, err := clobClient.CreateOrDeriveAPIKey(ctx, keyHex)
 		if err != nil {
-			fmt.Printf("[probe] no-cookie mint also failed: %v\n", err)
-			return fmt.Errorf("CreateAPIKeyForAddress: %w", err)
+			fmt.Printf("[probe] no-cookie mint/derive also failed: %v\n", err)
+			return fmt.Errorf("CreateOrDeriveAPIKey: %w", err)
 		}
-		fmt.Printf("[probe] no-cookie deposit-bound key: %s — but cookied path was supposed to work\n", clobKey.Key)
+		fmt.Printf("[probe] no-cookie EOA-bound key: %s — but cookied path was supposed to work\n", clobKey.Key)
 	}
 	// If we reach here either the cookie path succeeded or fallback returned creds.
 	// Best-effort: parse a key from the response we got.

@@ -1,0 +1,45 @@
+# Polygolem Roadmap Matrix
+
+Date: 2026-06-10
+
+This companion matrix gives polygolem a durable disposition for every capability
+listed in `opensource-projects/FEATURE-MATRIX.md`. It is intentionally scoped to
+roadmap planning: current state, evidence, next reinforcement, and explicit
+non-goals.
+
+Legend:
+
+- `✅` first-class in SDK/CLI/docs/tests.
+- `◐` partial, narrow, SDK-only, or intentionally constrained.
+- `—` not implemented or not a current product goal.
+
+| Capability | Current polygolem state | Evidence | Next reinforcement | Explicit non-goal |
+|---|---:|---|---|---|
+| CLOB REST market data | ✅ | `docs/POLYMARKET-COVERAGE-MATRIX.md` lists order book, price, midpoint, spread, tick size, fee rate, last trade, price history, market list, condition lookup, and token lookup across SDK/CLI/docs/tests. | Add schema-drift fixtures using live/reference payloads and keep table-driven tests for every read shape. | None; public read-only CLOB remains core. |
+| CLOB order placement/cancel/query | ✅ | `docs/V2-PARITY.md` marks V2 limit/market orders and cancel one/batch/all as SDK, CLI, and test wired. | Add an order lifecycle conformance server covering create, batch create, query, cancel, cancel-market, heartbeat, and idempotency. | Do not add ungated live trading paths or bypass safety preflight. |
+| V2 CTF Exchange order signing | ✅ | `docs/V2-PARITY.md` defines V2 around Exchange V2 contracts, V2 order payload schema, and V2 relayer client; `internal/clob/orders.go` owns signing. | Add byte-for-byte golden vectors against `ctf-exchange-v2`, TS CLOB V2, and `Polymarket-golang`. | Do not support stale V1/EOA maker signing for new production accounts. |
+| EIP-712 signing | ✅ | `internal/auth.Signer` exposes typed-data signing and deposit-wallet batch/order flows use it; `pkg/signers` publishes the stable SDK seam, local adapter, and optional HTTP remote adapter. | Add optional KMS and later Turnkey adapters behind the public signer seam. | Do not require remote signers or cloud KMS for the default binary. |
+| L2 HMAC/API-key auth | ✅ | Coverage matrix lists create/derive API keys and EOA-bound key derivation (owner address ignored in validated V2 path); CLOB account reads are SDK/CLI/test wired. | Add auth canonicalization fixtures for timestamp, compact JSON body, path, and HMAC headers. | Do not log secrets or full auth headers. |
+| Builder attribution/auth headers | ✅ | `pkg/builder` has local/remote builder-header signers and placement supports builder attribution. | Add cross-repo builder golden vectors from `go-builder-signing-sdk` and TS vendor references. | Do not put builder keys in command output or logs. |
+| RFQ | ◐ typed models only | `pkg/rfq` now exposes request/quote/response DTOs, validation, and an explicit unsupported-submit client; no CLI/live endpoint is surfaced in `docs/POLYMARKET-COVERAGE-MATRIX.md`. | Add mock endpoint tests and authenticated calls after Python/Rust payload capture. | Do not implement live RFQ posting without captured upstream behavior and safety docs. |
+| WebSocket market/user streams | ✅ | Coverage matrix lists market stream and authenticated user stream with `pkg/stream.UserClient`, CLI commands, docs, and tests. | Add chaos/reconnect tests, lifecycle state metrics, and dropped/deduped counters. | Do not make user stream credentials optional for authenticated channels. |
+| Gamma market/event metadata | ✅ | Coverage matrix lists Gamma markets, taxonomy, tags/categories, series, and comments. | Add opportunity scanners inspired by `polymarket-go-gamma-client`: wide spread, low liquidity/high volume, new markets, related/negative-risk, and soon-closing markets. | Do not duplicate Gamma data into a separate cache layer unless an operator need appears. |
+| Data API / positions/activity | ✅ | Coverage matrix lists positions, closed positions, trades, activity, holders, value, markets traded, open interest, leaderboard, and live volume. | Capture all-market open-interest response shape and add typed helpers if upstream supports it. | Do not guess undocumented response shapes. |
+| Bridge/deposits | ✅ deposits/quotes/status; ◐ withdrawal dry-run | `pkg/bridge` supports supported assets, deposit address creation, deposit status, quotes, and guarded withdrawal dry-run/unsupported-submit types; coverage matrix maps deposit/quote/status to CLI/docs/tests. | Capture withdrawal endpoint payloads and custody constraints before any live submit implementation. | Do not auto-submit bridge withdrawals or hide custody/routing risk. |
+| CTF split/merge/redeem client ops | ✅ calldata + redeem flow; ◐ readiness-gated split/merge plan | `pkg/ctf` encodes split/merge/redeem calldata and exposes high-level split/merge dry-runs plus readiness-gated submit-plan artifacts; coverage matrix lists collateral adapters and redeem flows. | Add live submit helpers only after explicit operator-confirm gates are designed. | Do not submit CTF mutations without explicit calldata preview and live confirmation. |
+| Collateral wrap/onramp/offramp | ◐ | Settlement/redeem and bridge deposit/quote/status exist; withdrawal/offramp now has dry-run and explicit unsupported-submit errors, but no live submit. | Add pUSD wrap/offramp runbooks and captured endpoint fixtures before implementation. | Do not invent wrap/offramp endpoints without protocol verification. |
+| Rewards/rebates | ✅ | `pkg/universal` exposes reward config, raw rewards, earnings, percentages, user rewards, rebated fees, order scoring, and builder trades. | Audit CLI/docs parity for rewards endpoints that may still be SDK-only. | Do not treat reward estimates as guaranteed payouts. |
+| Relayer/Safe support | ✅ deposit wallet relayer; Safe not target | Coverage matrix lists deposit-wallet derive, deploy, status, nonce, batch, approve, fund, onboard, and transaction lookup. | Keep deposit-wallet relayer tests and docs current; document Safe/EOA boundaries explicitly. | Do not add default EOA/Safe live trading unless product scope changes. |
+| Turnkey wallet integration | ◐ provider-neutral signer seam | `pkg/signers/turnkey` exposes a Turnkey-style backend adapter without importing the Turnkey SDK; no CLI/live custody flow is implemented. | Add provider-specific examples only behind optional dependencies/build tags after operator demand. | Do not pull Turnkey into the default dependency graph. |
+| AWS KMS / remote signer | ◐ builder remote signer + HTTP/KMS-style signer seams | `pkg/builder.RemoteSigner` signs builder headers; `pkg/signers/http` exposes an optional timeout-bound HTTP adapter; `pkg/signers/kms` and `pkg/signers/turnkey` expose provider-neutral backend seams without cloud/custody SDK dependencies. | Add provider-specific examples only behind optional dependencies/build tags. | Do not weaken the local-signing default or store wallet secrets. |
+| Proxy server / OpenAPI | ◐ read-only OpenAPI spec | `pkg/openapi` and `cmd/polygolem_openapi` emit a minimal OpenAPI 3.1 spec for read-only health, diag, discovery, data positions, orderbook, and marketdata snapshot paths; `docs/MCP-OPENAPI.md` documents usage. | Add a local proxy only after MCP/agent demand is proven. | Do not add a permanent hosted proxy service to core polygolem. |
+| MCP server / AI tooling | ✅ read-only MCP manifest + SDK handler seam | The repo has a single binary, JSON CLI, `SKILL.md`, `pkg/mcp`, `cmd/polygolem_mcp`, timeout-bound SDK handlers, marketdata snapshots, and `docs/MCP-OPENAPI.md` deployment notes. | Expand examples as users adopt the surface. | Do not expose live trading, signing, approvals, or withdrawals through MCP v1. |
+| CLI binary | ✅ | README positions polygolem as a single static binary; coverage matrix maps core surfaces to CLI commands; `polygolem diag` now emits redacted local diagnostics and generated CLI docs are refreshed. | Keep `docs/COMMANDS.md` generated and enforce command/JSON-envelope drift tests. | Do not reintroduce Python/npm runtime requirements. |
+| Strong type/runtime validation | ✅ Go types; ◐ runtime validation | Public Go DTOs cover broad SDK surfaces; checked-in schemas now pin CLI envelopes plus RFQ, bridge-withdraw, and CTF operation request DTOs, with tests validating schema coverage. | Generate JSON Schema for more public DTOs and validate CLI payload fixtures against checked-in schemas. | Do not replace Go types with a dynamic schema-first runtime. |
+
+## Immediate execution order
+
+1. Keep this matrix and `opensource-projects/FEATURE-MATRIX.md` in sync with a repository test.
+2. Start protocol conformance fixtures for signing/auth/calldata before adding new live-mutating features.
+3. Add missing surfaces in safety order: withdrawal dry-run/types, RFQ models, high-level CTF split/merge helpers, analytics scanners, then read-only MCP.
+4. Add optional signer adapters only after the public signer seam is stable and covered by redaction/timeout tests.

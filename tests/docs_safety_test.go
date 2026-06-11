@@ -14,6 +14,10 @@ func TestDocumentationSafety(t *testing.T) {
 		"docs/ARCHITECTURE.md",
 		"docs/COMMANDS.md",
 		"docs/SAFETY.md",
+		"docs/MCP-OPENAPI.md",
+		"docs/POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md",
+		"docs/POLYGOLEM-ROADMAP-MATRIX.md",
+		"docs/POLYMARKET-COVERAGE-MATRIX.md",
 		"docs/history/REFERENCE-RUST-CLI.md",
 	}
 	for _, requiredDoc := range requiredDocs {
@@ -118,6 +122,74 @@ func TestDocumentationSafety(t *testing.T) {
 		}
 	}
 
+	coverage := readRepositoryFile(t, root, "docs/POLYMARKET-COVERAGE-MATRIX.md")
+	for _, required := range []string{
+		"RFQ | Typed RFQ request/quote/response models",
+		"Public signer adapters",
+		"Agent/OpenAPI surfaces",
+		"CTF split/merge/redeem helpers",
+	} {
+		if !strings.Contains(coverage, required) {
+			t.Fatalf("docs/POLYMARKET-COVERAGE-MATRIX.md must include new reinforcement surface %q", required)
+		}
+	}
+
+	planningDocs := []string{
+		"docs/POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md",
+		"docs/POLYGOLEM-ROADMAP-MATRIX.md",
+	}
+	for _, relativePath := range planningDocs {
+		content := readRepositoryFile(t, root, relativePath)
+		if strings.Contains(content, "owner-scoped") {
+			t.Fatalf("%s contains stale auth claim %q (should be EOA-bound)", relativePath, "owner-scoped")
+		}
+	}
+
+	contextMD := readRepositoryFile(t, root, "CONTEXT.md")
+	for _, required := range []string{
+		"EOA-Bound CLOB Auth",
+		"POLY_1271 Order Signing",
+		"ERC-7739 Wrapped Order Signature",
+		"Safety-First Mutating Surface",
+		"Read-Only by Default",
+	} {
+		if !strings.Contains(contextMD, required) {
+			t.Fatalf("CONTEXT.md must include core domain term %q", required)
+		}
+	}
+	// Check that disallowed terms only appear in _Avoid_ lines, not as active definitions.
+	for _, line := range strings.Split(contextMD, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.Contains(trimmed, "_Avoid_") {
+			continue // _Avoid_ lines list exactly these phrases intentionally
+		}
+		if strings.Contains(trimmed, "deposit-wallet-owned API key") ||
+			strings.Contains(trimmed, "deposit-wallet-owned L2 headers") {
+			t.Fatalf("CONTEXT.md line %q contains disallowed active definition phrasing", trimmed)
+		}
+	}
+
+	poly1271Docs := []string{
+		"docs/POLY_1271-SIGNING.md",
+		"docs-site/src/content/docs/docs/concepts/poly-1271-signing.mdx",
+		"docs-site/src/content/docs/docs/guides/universal-client.mdx",
+		"docs-site/src/content/docs/docs/reference/clob-api.mdx",
+	}
+	for _, relativePath := range poly1271Docs {
+		content := readRepositoryFile(t, root, relativePath)
+		for _, blocked := range []string{
+			"POLY_SIGNATURE = ERC-7739 wrapped ClobAuth",
+			"L2 key must be bound to the **deposit wallet address**",
+			"deposit-wallet-owned CLOB key",
+			"deposit-wallet-owned L2 headers",
+			"L1 + ERC-1271 owner",
+		} {
+			if strings.Contains(content, blocked) {
+				t.Fatalf("%s contains stale POLY_1271 auth claim %q", relativePath, blocked)
+			}
+		}
+	}
+
 	commands := readRepositoryFile(t, root, "docs/COMMANDS.md")
 	for _, required := range []string{
 		"--json",
@@ -127,6 +199,40 @@ func TestDocumentationSafety(t *testing.T) {
 	} {
 		if !strings.Contains(commands, required) {
 			t.Fatalf("docs/COMMANDS.md must include command automation guidance %q", required)
+		}
+	}
+
+	docsIndex := readRepositoryFile(t, root, "docs/README.md")
+	for _, required := range []string{
+		"MCP-OPENAPI.md",
+		"POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md",
+		"POLYGOLEM-ROADMAP-MATRIX.md",
+		"POLYMARKET-COVERAGE-MATRIX.md",
+	} {
+		if !strings.Contains(docsIndex, required) {
+			t.Fatalf("docs/README.md must index reinforcement doc %q", required)
+		}
+	}
+
+	mcpOpenAPI := readRepositoryFile(t, root, "docs/MCP-OPENAPI.md")
+	for _, required := range []string{
+		"MCP and OpenAPI v1 are read-only only",
+		"go run ./cmd/polygolem_mcp",
+		"go run ./cmd/polygolem_openapi",
+		"pkg/mcp.NewSDKReadOnlyHandlers",
+	} {
+		if !strings.Contains(mcpOpenAPI, required) {
+			t.Fatalf("docs/MCP-OPENAPI.md must include read-only integration guidance %q", required)
+		}
+	}
+	for _, blocked := range []string{
+		"live order placement or cancellation;",
+		"private-key signing;",
+		"token approvals;",
+		"bridge withdrawals;",
+	} {
+		if !strings.Contains(mcpOpenAPI, blocked) {
+			t.Fatalf("docs/MCP-OPENAPI.md must document excluded mutating surface %q", blocked)
 		}
 	}
 
