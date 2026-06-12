@@ -479,9 +479,9 @@ commit or print them.
 | `docs/SAFETY.md` | Deposit wallet required for all trading |
 | `docs/PRD.md` | Deposit wallet is the only supported mode |
 | `opensource-projects/README.md` | Deposit wallet repos, mark V1 as deprecated |
-| `docs-site/src/content/docs/concepts/deposit-wallets.mdx` | Full signature type reference |
-| `docs-site/src/content/docs/concepts/secrets-management.mdx` | Secrets tiers |
-| `docs-site/src/content/docs/guides/deposit-wallet-lifecycle.mdx` | Lifecycle + recovery |
+| `docs/docs-site/src/content/docs/docs/concepts/deposit-wallets.mdx` | Full signature type reference |
+| `docs/docs-site/src/content/docs/docs/concepts/secrets-management.mdx` | Secrets tiers |
+| `docs/docs-site/src/content/docs/docs/guides/deposit-wallet-lifecycle.mdx` | Lifecycle + recovery |
 
 ## Post-hardening operator verification (procedure)
 

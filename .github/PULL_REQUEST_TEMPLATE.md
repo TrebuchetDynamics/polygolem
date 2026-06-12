@@ -16,7 +16,7 @@ One or two sentences describing what this PR does and why.
       identifiers in `internal/`).
 - [ ] `CHANGELOG.md` `## [Unreleased]` section updated with a one-line
       entry.
-- [ ] Doc surfaces (`README.md`, `docs/*.md`, `docs-site/`, `SKILL.md`)
+- [ ] Doc surfaces (`README.md`, `docs/*.md`, `docs/docs-site/`, `SKILL.md`)
       updated where this change affects them.
 - [ ] No secrets, private keys, builder credentials, or `.env` files
       committed.

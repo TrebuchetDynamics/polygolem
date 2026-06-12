@@ -15,6 +15,7 @@ This directory contains the canonical documentation for polygolem. For a single 
 | Review safety and risk features | [SAFETY.md](./SAFETY.md) |
 | Use read-only MCP/OpenAPI agent surfaces | [MCP-OPENAPI.md](./MCP-OPENAPI.md) |
 | Use the AI agent/SDK skill manifest | [../SKILL.md](../SKILL.md) |
+| Build or deploy the public docs website | [docs-site/](./docs-site/) |
 | Review the open-source reinforcement roadmap | [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) |
 
 ## Canonical Docs (Single Source of Truth)

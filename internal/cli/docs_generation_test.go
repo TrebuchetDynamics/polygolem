@@ -24,11 +24,11 @@ func TestCommandsReferenceMatchesGeneratedOutput(t *testing.T) {
 
 func TestAstroCLIReferenceMatchesGeneratedOutput(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	want := readRepoFileForTest(t, "docs-site/src/content/docs/docs/reference/cli.mdx")
+	want := readRepoFileForTest(t, "docs/docs-site/src/content/docs/docs/reference/cli.mdx")
 	got := GenerateCLIReferenceMDX(root)
 
 	if got != want {
-		t.Fatalf("docs-site CLI reference is stale; run go run ./cmd/polygolem_docs\n%s", firstDiffForTest(want, got))
+		t.Fatalf("docs/docs-site CLI reference is stale; run go run ./cmd/polygolem_docs\n%s", firstDiffForTest(want, got))
 	}
 }
 

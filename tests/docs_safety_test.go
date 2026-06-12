@@ -65,8 +65,8 @@ func TestDocumentationSafety(t *testing.T) {
 		"README.md",
 		"docs/ONBOARDING.md",
 		"docs/BROWSER-SETUP.md",
-		"docs-site/src/content/docs/docs/guides/deposit-wallet-lifecycle.mdx",
-		"docs-site/src/content/docs/docs/guides/builder-auto.mdx",
+		"docs/docs-site/src/content/docs/docs/guides/deposit-wallet-lifecycle.mdx",
+		"docs/docs-site/src/content/docs/docs/guides/builder-auto.mdx",
 	}
 	for _, relativePath := range loginDocs {
 		content := readRepositoryFile(t, root, relativePath)
@@ -171,9 +171,9 @@ func TestDocumentationSafety(t *testing.T) {
 
 	poly1271Docs := []string{
 		"docs/POLY_1271-SIGNING.md",
-		"docs-site/src/content/docs/docs/concepts/poly-1271-signing.mdx",
-		"docs-site/src/content/docs/docs/guides/universal-client.mdx",
-		"docs-site/src/content/docs/docs/reference/clob-api.mdx",
+		"docs/docs-site/src/content/docs/docs/concepts/poly-1271-signing.mdx",
+		"docs/docs-site/src/content/docs/docs/guides/universal-client.mdx",
+		"docs/docs-site/src/content/docs/docs/reference/clob-api.mdx",
 	}
 	for _, relativePath := range poly1271Docs {
 		content := readRepositoryFile(t, root, relativePath)

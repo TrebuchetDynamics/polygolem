@@ -23,7 +23,7 @@ Other shapes you thought about and why this one is better.
 ## Scope
 
 - Mode: read-only / paper / live (or N/A).
-- Surfaces touched: README / docs / docs-site / SKILL.md / godoc / CLI
+- Surfaces touched: README / docs / docs/docs-site / SKILL.md / godoc / CLI
   / package API.
 - Backwards-compat impact: none / additive / breaking.
 

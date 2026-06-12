@@ -43,13 +43,13 @@ update the surfaces that lose accuracy:
 |---|---|---|
 | `README.md` | Drive-by readers, install + headline pitch. | Repo root. |
 | `docs/*.md` | Operators and integrators (architecture, commands, safety, PRD). | `docs/`. |
-| Astro docs site | Long-form web docs, search-indexed. | `docs-site/`. |
+| Astro docs site | Long-form web docs, search-indexed. | `docs/docs-site/`. |
 | `SKILL.md` | Agentic consumers (Claude Code skill manifest). | Repo root. |
 | Godoc comments | Go SDK consumers (`pkg/`) and contributors (`internal/`). | Inline in `.go` files. |
 
 A change to a CLI flag typically touches `README.md`, `docs/COMMANDS.md`,
-the docs-site equivalent, and `SKILL.md`. A change to a `pkg/` API touches
-godoc and the docs-site reference.
+the docs-site equivalent under `docs/docs-site/`, and `SKILL.md`. A change
+to a `pkg/` API touches godoc and the docs-site reference.
 
 ## Filing an issue
 

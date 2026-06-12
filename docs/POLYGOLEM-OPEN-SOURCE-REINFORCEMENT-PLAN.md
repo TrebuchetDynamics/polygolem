@@ -204,7 +204,7 @@ Tasks:
 
 1. Generate JSON Schema for public request/response DTOs from Go types.
 2. Add fixture validation for CLI JSON envelopes.
-3. Add schema examples to docs-site.
+3. Add schema examples to `docs/docs-site/`.
 4. Add a compatibility test that prevents accidental field removals or envelope shape changes.
 
 Acceptance criteria:
