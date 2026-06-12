@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "family": "clob-auth-v2",
+  "source": {
+    "reference_repos": [
+      "opensource-projects/repos/Polymarket-golang",
+      "opensource-projects/repos/polymarket-kit/vendors/clob-client-v2",
+      "opensource-projects/repos/go-builder-signing-sdk"
+    ],
+    "reference_paths": [
+      "internal/auth/l1.go",
+      "internal/auth/l2.go",
+      "internal/clob/client.go",
+      "docs/POLY_1271-SIGNING.md"
+    ],
+    "notes": "Synthetic vectors pin V2 EOA-bound ClobAuth L1 EIP-712 headers and L2 HMAC canonicalization. Deposit-wallet identity belongs in POLY_1271 order fields, not in ClobAuth headers. No live credentials."
+  },
+  "l1_vectors": [
+    {
+      "name": "eoa_bound_clob_auth",
+      "private_key": "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+      "chain_id": 137,
+      "timestamp": 1700000000,
+      "nonce": 0,
+      "expected_headers": {
+        "POLY_ADDRESS": "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23",
+        "POLY_SIGNATURE": "0xaa541ee28fab54d848c37e4d6c69ce3bca78c3c67bbfe102e9736de2589f18573619c82c113a99cbd31a576b4166a9b2964de7a6845770dc4beb1ad757c4ae1d1b",
+        "POLY_TIMESTAMP": "1700000000",
+        "POLY_NONCE": "0"
+      }
+    }
+  ],
+  "l2_vectors": [
+    {
+      "name": "clob_l2_get_book_no_body",
+      "api_key": "key-1",
+      "secret": "c2VjcmV0",
+      "passphrase": "pass-1",
+      "timestamp": 1700000000,
+      "method": "GET",
+      "path": "/book",
+      "body": null,
+      "expected_headers": {
+        "POLY_API_KEY": "key-1",
+        "POLY_PASSPHRASE": "pass-1",
+        "POLY_TIMESTAMP": "1700000000",
+        "POLY_SIGNATURE": "sGnIqIS0w73jlTVhz44U7ULfi9vy6WvUM6twuXXWi-o="
+      }
+    },
+    {
+      "name": "clob_l2_post_order_compact_body",
+      "api_key": "key-1",
+      "secret": "c2VjcmV0",
+      "passphrase": "pass-1",
+      "timestamp": 1700000000,
+      "method": "POST",
+      "path": "/order",
+      "body": "{\"token_id\":\"123\"}",
+      "expected_headers": {
+        "POLY_API_KEY": "key-1",
+        "POLY_PASSPHRASE": "pass-1",
+        "POLY_TIMESTAMP": "1700000000",
+        "POLY_SIGNATURE": "DlLZ3_8yQ4of4tSILTf0hIMwQ6sqtPF_YOGQu0B7wIQ="
+      }
+    }
+  ]
+}

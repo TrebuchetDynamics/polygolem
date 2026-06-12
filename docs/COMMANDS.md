@@ -120,6 +120,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
     enrich - Enrich market with CLOB data
     market - Get market details
     markets - List Gamma markets
+    opportunities - Scan read-only market opportunity candidates
     search - Search markets and events
     series - List or fetch Gamma series
     tags - List or fetch Gamma tags/categories
@@ -1830,6 +1831,7 @@ polygolem discover [flags]
 | `polygolem discover enrich` | Enrich market with CLOB data |
 | `polygolem discover market` | Get market details |
 | `polygolem discover markets` | List Gamma markets |
+| `polygolem discover opportunities` | Scan read-only market opportunity candidates |
 | `polygolem discover search` | Search markets and events |
 | `polygolem discover series` | List or fetch Gamma series |
 | `polygolem discover tags` | List or fetch Gamma tags/categories |
@@ -2014,6 +2016,43 @@ polygolem discover markets [flags]
 | `--offset` | `int` | `0` | pagination offset |
 | `--order` | `string` | `""` | Gamma order field |
 | `--tag-id` | `int` | `0` | filter by tag id |
+
+### polygolem discover opportunities
+
+Scan read-only market opportunity candidates
+
+Scan public Polymarket data for read-only research candidates.
+
+Scanner types:
+  wide-spread
+  low-liquidity-high-volume
+  new-markets
+  closing-soon
+  negative-risk
+  crypto-5m
+
+Examples:
+  polygolem discover opportunities --type wide-spread --limit 20
+  polygolem discover opportunities --type closing-soon --hours 6
+  polygolem discover opportunities --type low-liquidity-high-volume
+  polygolem discover opportunities --type crypto-5m --asset BTC
+
+**Usage:**
+
+```bash
+polygolem discover opportunities [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset` | `string` | `""` | crypto asset for crypto-5m scanner (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE) |
+| `-h, --help` | `bool` | `false` | help for opportunities |
+| `--hours` | `int` | `24` | closing-soon lookahead window in hours |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max opportunities |
+| `--type` | `string` | `wide-spread` | scanner type: wide-spread, low-liquidity-high-volume, new-markets, closing-soon, negative-risk, crypto-5m |
 
 ### polygolem discover search
 
@@ -2776,6 +2815,7 @@ polygolem stream crypto [flags]
 | `--interval` | `string` | `""` | interval filter (5m, 15m, 1h) |
 | `--json` | `bool` | `false` | emit JSON output |
 | `--max-messages` | `int` | `0` | stop after this many messages; 0 streams until interrupted |
+| `--stats` | `bool` | `false` | emit stream lifecycle and message counters when the stream exits |
 
 ### polygolem stream market
 
@@ -2797,6 +2837,7 @@ polygolem stream market [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--level` | `int` | `0` | optional Polymarket market-stream subscription level |
 | `--max-messages` | `int` | `0` | stop after this many messages; 0 streams until interrupted |
+| `--stats` | `bool` | `false` | emit stream lifecycle and message counters when the stream exits |
 | `--url` | `string` | `wss://ws-subscriptions-clob.polymarket.com/ws/market` | WebSocket URL |
 
 ### polygolem stream user
@@ -2823,6 +2864,7 @@ polygolem stream user [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--markets` | `string` | `""` | optional comma-separated market condition IDs |
 | `--max-messages` | `int` | `0` | stop after this many messages; 0 streams until interrupted |
+| `--stats` | `bool` | `false` | emit stream lifecycle and message counters when the stream exits |
 | `--url` | `string` | `wss://ws-subscriptions-clob.polymarket.com/ws/user` | WebSocket URL |
 
 ### polygolem version

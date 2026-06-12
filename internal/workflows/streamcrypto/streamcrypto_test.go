@@ -54,6 +54,9 @@ func (f *fakeStreamer) Wait(ctx context.Context, done <-chan struct{}) error {
 	return f.waitErr
 }
 func (f *fakeStreamer) Close() { f.closed = true }
+func (f *fakeStreamer) Stats() stream.StreamStatsSnapshot {
+	return stream.StreamStatsSnapshot{Type: "stream_stats", Stream: "market", State: "connected", AssetIDs: append([]string(nil), f.subscribedTo...)}
+}
 
 func TestRunnerDiscoversTokensEmitsStatusAndStreamsUntilMaxMessages(t *testing.T) {
 	searcher := &fakeSearcher{resp: &polytypes.SearchResponse{Events: []polytypes.Event{
@@ -150,6 +153,35 @@ func TestRunnerDiscoversTokensEmitsStatusAndStreamsUntilMaxMessages(t *testing.T
 	book, ok := emitted[1].(stream.BookMessage)
 	if !ok || book.AssetID != "btc-up" {
 		t.Fatalf("unexpected event: %#v", emitted[1])
+	}
+}
+
+func TestRunnerEmitsStatsFromMarketStreamerWhenRequested(t *testing.T) {
+	searcher := &fakeSearcher{resp: &polytypes.SearchResponse{Events: []polytypes.Event{{
+		Title:  "BTC 5m event",
+		Active: true,
+		Markets: []polytypes.Market{{
+			Question:     "BTC up or down in 5m?",
+			Active:       true,
+			ClobTokenIDs: `["btc-up"]`,
+		}},
+	}}}}
+	fake := &fakeStreamer{onSubscribe: func(s *fakeStreamer) {
+		s.handlers.OnBook(stream.BookMessage{EventType: "book", AssetID: "btc-up"})
+	}}
+	var emitted []interface{}
+
+	err := New(searcher, func(config StreamConfig) Streamer { return fake }).Run(context.Background(), Request{MaxMessages: 1, Stats: true}, func(v interface{}) {
+		emitted = append(emitted, v)
+	}, nil)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if len(emitted) != 3 {
+		t.Fatalf("emitted=%d, want status, event, stats: %+v", len(emitted), emitted)
+	}
+	if _, ok := emitted[2].(stream.StreamStatsSnapshot); !ok {
+		t.Fatalf("third emission type %T, want stats", emitted[2])
 	}
 }
 

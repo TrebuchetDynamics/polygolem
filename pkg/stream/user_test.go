@@ -115,6 +115,10 @@ func TestUserClientSubscribeAndDispatchesUserDTOs(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("timed out waiting for trade event")
 	}
+	stats := client.Stats()
+	if stats.Stream != "user" || stats.MessagesReceived < 2 || len(stats.Markets) != 1 || stats.Markets[0] != "condition-1" {
+		t.Fatalf("unexpected stats: %+v", stats)
+	}
 }
 
 func TestUserClientRejectsMissingCredentials(t *testing.T) {

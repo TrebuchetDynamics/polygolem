@@ -18,6 +18,7 @@ type Request struct {
 	MarketsRaw  string
 	URL         string
 	MaxMessages int
+	Stats       bool
 	Credentials auth.APIKey
 }
 
@@ -40,6 +41,7 @@ type Streamer interface {
 	SubscribeUser(ctx context.Context, markets []string) error
 	Wait(ctx context.Context, done <-chan struct{}) error
 	Close()
+	Stats() stream.StreamStatsSnapshot
 }
 
 // StreamFactory creates a stream adapter for one run.
@@ -105,7 +107,11 @@ func (r *Runner) Run(ctx context.Context, req Request, emit EmitFunc, reportErro
 	if err := streamer.SubscribeUser(ctx, req.markets()); err != nil {
 		return err
 	}
-	return streamer.Wait(ctx, done)
+	err := streamer.Wait(ctx, done)
+	if req.Stats {
+		emit(streamer.Stats())
+	}
+	return err
 }
 
 func (r Request) markets() []string {
@@ -163,4 +169,8 @@ func (s *internalStreamer) Wait(ctx context.Context, done <-chan struct{}) error
 
 func (s *internalStreamer) Close() {
 	s.client.Close()
+}
+
+func (s *internalStreamer) Stats() stream.StreamStatsSnapshot {
+	return s.client.Stats()
 }

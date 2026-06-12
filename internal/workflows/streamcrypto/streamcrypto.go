@@ -24,6 +24,7 @@ type Request struct {
 	URL            string
 	MaxMessages    int
 	CustomFeatures bool
+	Stats          bool
 }
 
 // Status is emitted before connecting to the market stream.
@@ -93,6 +94,7 @@ func (r *Runner) Run(ctx context.Context, req Request, emit EmitFunc, reportErro
 		URL:            req.URL,
 		MaxMessages:    req.MaxMessages,
 		CustomFeatures: req.CustomFeatures,
+		Stats:          req.Stats,
 	}, emit, reportError)
 }
 

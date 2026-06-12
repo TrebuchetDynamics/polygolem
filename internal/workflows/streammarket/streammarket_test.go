@@ -42,6 +42,9 @@ func (f *fakeStreamer) Wait(ctx context.Context, done <-chan struct{}) error {
 	return f.waitErr
 }
 func (f *fakeStreamer) Close() { f.closed = true }
+func (f *fakeStreamer) Stats() stream.StreamStatsSnapshot {
+	return stream.StreamStatsSnapshot{Stream: "market", State: "connected", MessagesReceived: int64(len(f.subscribedTo)), AssetIDs: append([]string(nil), f.subscribedTo...)}
+}
 
 func TestRunnerParsesAssetsConfiguresStreamAndStopsAfterMaxMessages(t *testing.T) {
 	fake := &fakeStreamer{onSubscribe: func(s *fakeStreamer) {
@@ -100,6 +103,32 @@ func TestRunnerUsesExplicitAssetIDs(t *testing.T) {
 	}
 	if len(emitted) != 1 {
 		t.Fatalf("emitted=%d, want 1", len(emitted))
+	}
+}
+
+func TestRunnerEmitsFinalStatsWhenRequested(t *testing.T) {
+	fake := &fakeStreamer{onSubscribe: func(s *fakeStreamer) {
+		s.handlers.OnBook(stream.BookMessage{EventType: "book", AssetID: "tok"})
+	}}
+	var emitted []interface{}
+
+	err := New(func(config StreamConfig) Streamer { return fake }).Run(context.Background(), Request{
+		AssetIDs:    []string{"tok"},
+		MaxMessages: 1,
+		Stats:       true,
+	}, func(v interface{}) { emitted = append(emitted, v) }, nil)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if len(emitted) != 2 {
+		t.Fatalf("emitted=%d, want event plus stats: %+v", len(emitted), emitted)
+	}
+	snap, ok := emitted[1].(stream.StreamStatsSnapshot)
+	if !ok {
+		t.Fatalf("second emission type %T, want StreamStatsSnapshot", emitted[1])
+	}
+	if snap.Stream != "market" || snap.AssetIDs[0] != "tok" {
+		t.Fatalf("unexpected stats: %+v", snap)
 	}
 }
 

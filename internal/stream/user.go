@@ -74,6 +74,7 @@ type UserClient struct {
 	cancel      context.CancelFunc
 	connected   atomic.Bool
 	markets     []string
+	stats       *StreamStats
 
 	OnOrder func(UserOrderMessage)
 	OnTrade func(UserTradeMessage)
@@ -82,7 +83,7 @@ type UserClient struct {
 
 // NewUserClient creates an authenticated user-stream client.
 func NewUserClient(config Config, credentials auth.APIKey) *UserClient {
-	return &UserClient{config: config, credentials: userCredentialsFromAPIKey(credentials)}
+	return &UserClient{config: config, credentials: userCredentialsFromAPIKey(credentials), stats: NewStreamStats("user")}
 }
 
 // Connect establishes the WebSocket connection.
@@ -98,6 +99,7 @@ func (uc *UserClient) Connect(ctx context.Context) error {
 	uc.mu.Lock()
 	uc.conn = conn
 	uc.connected.Store(true)
+	uc.stats.MarkConnected(time.Now())
 	uc.mu.Unlock()
 	go uc.readLoop()
 	go uc.pingLoop()
@@ -137,6 +139,7 @@ func (uc *UserClient) dispatch(msg []byte) {
 		Type      string `json:"type"`
 	}
 	if err := json.Unmarshal(msg, &envelope); err != nil {
+		uc.stats.RecordInvalid()
 		if uc.OnError != nil {
 			uc.OnError(err)
 		}
@@ -149,7 +152,10 @@ func (uc *UserClient) dispatch(msg []byte) {
 			var order UserOrderMessage
 			if err := json.Unmarshal(msg, &order); err == nil {
 				order.EventType = eventType
+				uc.stats.RecordMessage(time.Now())
 				uc.OnOrder(order)
+			} else {
+				uc.stats.RecordInvalid()
 			}
 		}
 	case "trade":
@@ -157,7 +163,10 @@ func (uc *UserClient) dispatch(msg []byte) {
 			var trade UserTradeMessage
 			if err := json.Unmarshal(msg, &trade); err == nil {
 				trade.EventType = eventType
+				uc.stats.RecordMessage(time.Now())
 				uc.OnTrade(trade)
+			} else {
+				uc.stats.RecordInvalid()
 			}
 		}
 	}
@@ -208,6 +217,7 @@ func (uc *UserClient) SubscribeUser(ctx context.Context, markets []string) error
 		return err
 	}
 	uc.markets = append([]string(nil), markets...)
+	uc.stats.SetSubscriptions(nil, markets)
 	_ = ctx
 	return nil
 }
@@ -220,10 +230,13 @@ func (uc *UserClient) Close() {
 	if uc.conn != nil {
 		_ = uc.conn.Close()
 	}
+	uc.stats.MarkDisconnected(time.Now())
 	uc.mu.Unlock()
 }
 
 func (uc *UserClient) IsConnected() bool { return uc.connected.Load() }
+
+func (uc *UserClient) Stats() StreamStatsSnapshot { return uc.stats.Snapshot() }
 
 func firstNonEmpty(values ...string) string {
 	return jsonx.FirstString(values...)

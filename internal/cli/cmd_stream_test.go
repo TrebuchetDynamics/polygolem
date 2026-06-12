@@ -11,7 +11,7 @@ func TestStreamMarketCommandKeepsStreamFlags(t *testing.T) {
 	if cmd == nil {
 		t.Fatal("stream market command missing")
 	}
-	for _, name := range []string{"asset-ids", "url", "max-messages", "custom-features", "level"} {
+	for _, name := range []string{"asset-ids", "url", "max-messages", "custom-features", "level", "stats"} {
 		if flag := cmd.Flags().Lookup(name); flag == nil {
 			t.Fatalf("%s flag missing", name)
 		}
@@ -27,7 +27,7 @@ func TestStreamUserCommandKeepsAuthStreamFlags(t *testing.T) {
 	if cmd == nil {
 		t.Fatal("stream user command missing")
 	}
-	for _, name := range []string{"markets", "url", "max-messages"} {
+	for _, name := range []string{"markets", "url", "max-messages", "stats"} {
 		if flag := cmd.Flags().Lookup(name); flag == nil {
 			t.Fatalf("%s flag missing", name)
 		}
@@ -43,7 +43,7 @@ func TestStreamCryptoCommandKeepsDiscoveryAndStreamFlags(t *testing.T) {
 	if cmd == nil {
 		t.Fatal("stream crypto command missing")
 	}
-	for _, name := range []string{"asset", "interval", "max-messages", "custom-features"} {
+	for _, name := range []string{"asset", "interval", "max-messages", "custom-features", "stats"} {
 		if flag := cmd.Flags().Lookup(name); flag == nil {
 			t.Fatalf("%s flag missing", name)
 		}

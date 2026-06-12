@@ -96,6 +96,10 @@ func TestMarketClientSubscribeAndDispatchesPublicDTOs(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("timed out waiting for price change")
 	}
+	stats := client.Stats()
+	if stats.Stream != "market" || stats.MessagesReceived == 0 || len(stats.AssetIDs) != 1 || stats.AssetIDs[0] != "token-1" {
+		t.Fatalf("unexpected stats: %+v", stats)
+	}
 }
 
 func TestMarketClientSubscribeWithCustomFeaturesAndDispatchesV2MarketEvents(t *testing.T) {

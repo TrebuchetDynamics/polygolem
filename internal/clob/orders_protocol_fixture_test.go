@@ -38,12 +38,12 @@ type orderProtocolFixture struct {
 	} `json:"vectors"`
 }
 
-func TestProtocolFixtureV2OrderSigning(t *testing.T) {
+func TestGoldenConformanceV2OrderSigning(t *testing.T) {
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw, err := os.ReadFile(filepath.Join(wd, "..", "..", "fixtures", "protocol", "eip712_orders.json"))
+	raw, err := os.ReadFile(filepath.Join(wd, "..", "..", "fixtures", "conformance", "order_v2_poly1271.json"))
 	if err != nil {
 		t.Fatalf("read order fixture: %v", err)
 	}

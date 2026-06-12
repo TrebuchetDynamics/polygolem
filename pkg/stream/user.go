@@ -83,3 +83,6 @@ func (c *UserClient) SubscribeUser(ctx context.Context, markets []string) error 
 func (c *UserClient) Close() { c.inner.Close() }
 
 func (c *UserClient) IsConnected() bool { return c.inner.IsConnected() }
+
+// Stats returns lifecycle and message counters for this authenticated stream client.
+func (c *UserClient) Stats() StreamStatsSnapshot { return c.inner.Stats() }

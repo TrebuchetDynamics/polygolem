@@ -7,6 +7,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/cryptowindow"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/discovercrypto"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/discoverreads"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/opportunities"
 	"github.com/spf13/cobra"
 )
 
@@ -261,6 +262,47 @@ Use --enrich to fetch live CLOB prices and spreads (slower).`,
 	}
 	fiveMinCmd.Flags().BoolVar(&fiveMinEnrich, "enrich", false, "enrich with CLOB price and spread")
 	cmd.AddCommand(fiveMinCmd)
+
+	var opportunityType, opportunityAsset string
+	var opportunityLimit, opportunityHours int
+	opportunitiesCmd := &cobra.Command{
+		Use:   "opportunities",
+		Short: "Scan read-only market opportunity candidates",
+		Long: `Scan public Polymarket data for read-only research candidates.
+
+Scanner types:
+  wide-spread
+  low-liquidity-high-volume
+  new-markets
+  closing-soon
+  negative-risk
+  crypto-5m
+
+Examples:
+  polygolem discover opportunities --type wide-spread --limit 20
+  polygolem discover opportunities --type closing-soon --hours 6
+  polygolem discover opportunities --type low-liquidity-high-volume
+  polygolem discover opportunities --type crypto-5m --asset BTC`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			runner := opportunities.New(opportunities.Config{Gamma: w.gamma, Pricer: w.clob})
+			result, err := runner.Run(cmd.Context(), opportunities.Request{
+				Type:  opportunities.Type(opportunityType),
+				Limit: opportunityLimit,
+				Hours: opportunityHours,
+				Asset: opportunityAsset,
+			})
+			if err != nil {
+				return err
+			}
+			return writeCommandJSON(cmd, result)
+		},
+	}
+	opportunitiesCmd.Flags().StringVar(&opportunityType, "type", string(opportunities.TypeWideSpread), "scanner type: wide-spread, low-liquidity-high-volume, new-markets, closing-soon, negative-risk, crypto-5m")
+	opportunitiesCmd.Flags().IntVar(&opportunityLimit, "limit", 20, "max opportunities")
+	opportunitiesCmd.Flags().IntVar(&opportunityHours, "hours", 24, "closing-soon lookahead window in hours")
+	opportunitiesCmd.Flags().StringVar(&opportunityAsset, "asset", "", "crypto asset for crypto-5m scanner (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE)")
+	cmd.AddCommand(opportunitiesCmd)
 
 	return cmd
 }

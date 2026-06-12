@@ -18,6 +18,7 @@ func streamCmd(jsonOut bool) *cobra.Command {
 	var maxMessages int
 	var customFeatures bool
 	var level int
+	var stats bool
 	marketCmd := &cobra.Command{Use: "market", Short: "Stream public CLOB market events", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return streammarket.New(streammarket.NewInternalStreamer).Run(
@@ -28,6 +29,7 @@ func streamCmd(jsonOut bool) *cobra.Command {
 					MaxMessages:    maxMessages,
 					CustomFeatures: customFeatures,
 					Level:          level,
+					Stats:          stats,
 				},
 				func(v interface{}) { _ = w.printJSON(cmd, v) },
 				func(err error) { _, _ = fmt.Fprintf(cmd.ErrOrStderr(), "stream error: %v\n", err) },
@@ -39,6 +41,7 @@ func streamCmd(jsonOut bool) *cobra.Command {
 	marketCmd.Flags().IntVar(&maxMessages, "max-messages", 0, "stop after this many messages; 0 streams until interrupted")
 	marketCmd.Flags().BoolVar(&customFeatures, "custom-features", false, "request best-bid-ask and market lifecycle events")
 	marketCmd.Flags().IntVar(&level, "level", 0, "optional Polymarket market-stream subscription level")
+	marketCmd.Flags().BoolVar(&stats, "stats", false, "emit stream lifecycle and message counters when the stream exits")
 	cmd.AddCommand(marketCmd)
 
 	var cryptoStreamAsset string
@@ -66,6 +69,7 @@ Examples:
 					URL:            url,
 					MaxMessages:    cryptoStreamMaxMsgs,
 					CustomFeatures: customFeatures,
+					Stats:          stats,
 				},
 				func(v interface{}) { _ = w.printJSON(cmd, v) },
 				func(err error) { _, _ = fmt.Fprintf(cmd.ErrOrStderr(), "stream error: %v\n", err) },
@@ -76,11 +80,13 @@ Examples:
 	cryptoCmd.Flags().StringVar(&cryptoStreamInterval, "interval", "", "interval filter (5m, 15m, 1h)")
 	cryptoCmd.Flags().IntVar(&cryptoStreamMaxMsgs, "max-messages", 0, "stop after this many messages; 0 streams until interrupted")
 	cryptoCmd.Flags().BoolVar(&customFeatures, "custom-features", false, "request best-bid-ask and market lifecycle events")
+	cryptoCmd.Flags().BoolVar(&stats, "stats", false, "emit stream lifecycle and message counters when the stream exits")
 	cmd.AddCommand(cryptoCmd)
 
 	var userMarketsRaw string
 	var userURL string
 	var userMaxMessages int
+	var userStats bool
 	userCmd := &cobra.Command{
 		Use:   "user",
 		Short: "Stream authenticated CLOB user order/trade events",
@@ -101,6 +107,7 @@ aliases are also accepted). Emits typed order and trade events as JSON.`,
 					MarketsRaw:  userMarketsRaw,
 					URL:         userURL,
 					MaxMessages: userMaxMessages,
+					Stats:       userStats,
 					Credentials: credentials,
 				},
 				func(v interface{}) { _ = w.printJSON(cmd, v) },
@@ -111,6 +118,7 @@ aliases are also accepted). Emits typed order and trade events as JSON.`,
 	userCmd.Flags().StringVar(&userMarketsRaw, "markets", "", "optional comma-separated market condition IDs")
 	userCmd.Flags().StringVar(&userURL, "url", userStreamBaseURL, "WebSocket URL")
 	userCmd.Flags().IntVar(&userMaxMessages, "max-messages", 0, "stop after this many messages; 0 streams until interrupted")
+	userCmd.Flags().BoolVar(&userStats, "stats", false, "emit stream lifecycle and message counters when the stream exits")
 	cmd.AddCommand(userCmd)
 
 	return cmd

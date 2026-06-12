@@ -1,12 +1,12 @@
 <h1 align="center">polygolem</h1>
 
 <p align="center">
-  <b>Production-safe Polymarket infrastructure for Go developers</b>
+  <b>Production-safe Polymarket CLI and Go SDK</b>
 </p>
 
 <p align="center">
-  A single binary + Go SDK for trading on Polymarket V2 through deposit wallets.<br>
-  No Python. No npm. No opaque wrappers.
+  Discover markets, paper trade, and trade on Polymarket V2 through deposit wallets.<br>
+  One binary. No Python. No npm. No opaque wrappers.
 </p>
 
 <p align="center">
@@ -23,6 +23,7 @@
 
 - [Quick Start](#quick-start)
 - [Try It — No Credentials Needed](#try-it--no-credentials-needed)
+- [5-Minute Crypto Markets Demo](#5-minute-crypto-markets-demo)
 - [Installation](#installation)
 - [What's New](#whats-new)
 - [Who This Is For](#who-this-is-for)
@@ -81,6 +82,30 @@ When you're ready to trade, see [Trade in Four Commands](#trade-in-four-commands
 
 ---
 
+## 5-Minute Crypto Markets Demo
+
+This is the fastest end-user tour: find the live crypto up/down markets, inspect
+one window, and paper trade it without connecting a wallet.
+
+```bash
+# 1. List the current 5-minute markets for every supported asset
+polygolem discover crypto-5m --enrich --json
+
+# 2. Focus on the current BTC 5-minute window
+polygolem discover crypto-window --asset BTC --interval 5m --enrich --json
+
+# 3. Start with a clean paper account, then simulate an UP trade
+polygolem paper reset --cash 100 --json
+polygolem paper trade --asset BTC --interval 5m --side up --size 1 --json
+polygolem paper positions --json
+```
+
+Look for `data.markets[].token_ids`, `outcomes`, `price`, and `spread` in the
+JSON output. If a window is not available yet, wait for the next 5-minute UTC
+boundary and retry. Full walkthrough: [POLYGOLEM-5M-CRYPTO-GUIDE.md](POLYGOLEM-5M-CRYPTO-GUIDE.md).
+
+---
+
 ## Installation
 
 ### go install (recommended)
@@ -122,6 +147,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full details.
 
 ## Who This Is For
 
+- **End users** who want a credential-free CLI to inspect and paper trade fast crypto markets before funding an account
 - **Bot developers** building automated trading strategies in Go
 - **Quant developers** who want deterministic, compiled infrastructure with type safety
 - **Operators** running headless trading systems that need auditability and local signing
@@ -415,6 +441,7 @@ gofmt -w .
 
 | Document | What it covers |
 |---|---|
+| [5-Minute Crypto Markets Guide](POLYGOLEM-5M-CRYPTO-GUIDE.md) | End-user demo for discovering and paper trading 5m crypto markets |
 | [Live Trade Walkthrough](docs/LIVE-TRADE-WALKTHROUGH.md) | End-to-end reference run: every tx, gas figure, and pUSD movement |
 | [Onboarding](docs/ONBOARDING.md) | Complete deposit wallet flow, troubleshooting |
 | [Headless Enable Trading](docs/ENABLE-TRADING-HEADLESS.md) | SDK for UI ClobAuth and token-approval signing |

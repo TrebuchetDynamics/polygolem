@@ -155,6 +155,8 @@ type MarketClient struct {
 	connected  atomic.Bool
 	reconnects int32
 	assets     []string
+	stats      *StreamStats
+	dedup      *Deduplicator
 
 	// Callbacks
 	OnBook           func(BookMessage)
@@ -169,7 +171,7 @@ type MarketClient struct {
 
 // NewMarketClient creates a public market WebSocket client.
 func NewMarketClient(config Config) *MarketClient {
-	return &MarketClient{config: config}
+	return &MarketClient{config: config, stats: NewStreamStats("market"), dedup: NewDeduplicator(4096, 2*time.Minute)}
 }
 
 // Connect establishes the WebSocket connection.
@@ -186,6 +188,7 @@ func (mc *MarketClient) dial() error {
 	mc.mu.Lock()
 	mc.conn = conn
 	mc.connected.Store(true)
+	mc.stats.MarkConnected(time.Now())
 	mc.mu.Unlock()
 	conn.SetPongHandler(func(string) error {
 		mc.mu.Lock()
@@ -231,8 +234,16 @@ func (mc *MarketClient) readLoop() {
 			mc.reconnect()
 			return
 		}
-		mc.dispatch(msg)
+		mc.processMessage(msg)
 	}
+}
+
+func (mc *MarketClient) processMessage(msg []byte) {
+	if mc.dedup != nil && !mc.dedup.Process(msg) {
+		mc.stats.RecordDuplicate()
+		return
+	}
+	mc.dispatch(msg)
 }
 
 func (mc *MarketClient) dispatch(msg []byte) {
@@ -240,6 +251,7 @@ func (mc *MarketClient) dispatch(msg []byte) {
 	if mc.OnBook != nil {
 		var book BookMessage
 		if json.Unmarshal(msg, &book) == nil && book.EventType == "book" {
+			mc.stats.RecordMessage(time.Now())
 			mc.OnBook(book)
 			return
 		}
@@ -247,6 +259,7 @@ func (mc *MarketClient) dispatch(msg []byte) {
 	if mc.OnPriceChange != nil {
 		var pc PriceChangeMessage
 		if json.Unmarshal(msg, &pc) == nil && pc.EventType == "price_change" {
+			mc.stats.RecordMessage(time.Now())
 			mc.OnPriceChange(pc)
 			return
 		}
@@ -254,6 +267,7 @@ func (mc *MarketClient) dispatch(msg []byte) {
 	if mc.OnLastTrade != nil {
 		var lt LastTradeMessage
 		if json.Unmarshal(msg, &lt) == nil && lt.EventType == "last_trade_price" {
+			mc.stats.RecordMessage(time.Now())
 			mc.OnLastTrade(lt)
 			return
 		}
@@ -261,6 +275,7 @@ func (mc *MarketClient) dispatch(msg []byte) {
 	if mc.OnTickSizeChange != nil {
 		var tick TickSizeChangeMessage
 		if json.Unmarshal(msg, &tick) == nil && tick.EventType == "tick_size_change" {
+			mc.stats.RecordMessage(time.Now())
 			mc.OnTickSizeChange(tick)
 			return
 		}
@@ -268,6 +283,7 @@ func (mc *MarketClient) dispatch(msg []byte) {
 	if mc.OnBestBidAsk != nil {
 		var best BestBidAskMessage
 		if json.Unmarshal(msg, &best) == nil && best.EventType == "best_bid_ask" {
+			mc.stats.RecordMessage(time.Now())
 			mc.OnBestBidAsk(best)
 			return
 		}
@@ -275,6 +291,7 @@ func (mc *MarketClient) dispatch(msg []byte) {
 	if mc.OnNewMarket != nil {
 		var market NewMarketMessage
 		if json.Unmarshal(msg, &market) == nil && market.EventType == "new_market" {
+			mc.stats.RecordMessage(time.Now())
 			mc.OnNewMarket(market)
 			return
 		}
@@ -282,10 +299,12 @@ func (mc *MarketClient) dispatch(msg []byte) {
 	if mc.OnMarketResolved != nil {
 		var resolved MarketResolvedMessage
 		if json.Unmarshal(msg, &resolved) == nil && resolved.EventType == "market_resolved" {
+			mc.stats.RecordMessage(time.Now())
 			mc.OnMarketResolved(resolved)
 			return
 		}
 	}
+	mc.stats.RecordInvalid()
 }
 
 func (mc *MarketClient) pingLoop() {
@@ -310,6 +329,7 @@ func (mc *MarketClient) reconnect() {
 		return
 	}
 	atomic.AddInt32(&mc.reconnects, 1)
+	mc.stats.RecordReconnect(time.Now())
 	delay := mc.config.ReconnectDelay
 	for i := int32(0); i < atomic.LoadInt32(&mc.reconnects); i++ {
 		delay *= 2
@@ -340,6 +360,7 @@ func (mc *MarketClient) SubscribeAssets(ctx context.Context, assetIDs []string) 
 		return err
 	}
 	mc.assets = append([]string(nil), assetIDs...)
+	mc.stats.SetSubscriptions(assetIDs, nil)
 	return nil
 }
 
@@ -378,10 +399,16 @@ func (mc *MarketClient) Close() {
 	if mc.conn != nil {
 		mc.conn.Close()
 	}
+	mc.stats.MarkDisconnected(time.Now())
 	mc.mu.Unlock()
 }
 
 // IsConnected returns the current connection state.
 func (mc *MarketClient) IsConnected() bool {
 	return mc.connected.Load()
+}
+
+// Stats returns a snapshot of stream lifecycle and message counters.
+func (mc *MarketClient) Stats() StreamStatsSnapshot {
+	return mc.stats.Snapshot()
 }

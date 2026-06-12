@@ -54,6 +54,34 @@ func TestRunnerConnectsSubscribesAndStopsAtMaxMessages(t *testing.T) {
 	}
 }
 
+func TestRunnerEmitsFinalStatsWhenRequested(t *testing.T) {
+	fake := &fakeStreamer{}
+	runner := New(func(cfg StreamConfig, credentials auth.APIKey) Streamer { return fake })
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	var got []interface{}
+	err := runner.Run(ctx, Request{
+		Markets:     []string{"condition-1"},
+		MaxMessages: 1,
+		Stats:       true,
+		Credentials: auth.APIKey{Key: "key", Secret: "secret", Passphrase: "pass"},
+	}, func(v interface{}) { got = append(got, v) }, nil)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("emitted=%d, want event plus stats: %+v", len(got), got)
+	}
+	snap, ok := got[1].(stream.StreamStatsSnapshot)
+	if !ok {
+		t.Fatalf("second emission type %T, want stats", got[1])
+	}
+	if snap.Stream != "user" || snap.Markets[0] != "condition-1" {
+		t.Fatalf("unexpected stats: %+v", snap)
+	}
+}
+
 func TestRunnerRejectsIncompleteCredentials(t *testing.T) {
 	err := New(func(StreamConfig, auth.APIKey) Streamer {
 		t.Fatal("streamer should not be created")
@@ -97,3 +125,6 @@ func (f *fakeStreamer) Wait(ctx context.Context, done <-chan struct{}) error {
 }
 
 func (f *fakeStreamer) Close() { f.closed = true }
+func (f *fakeStreamer) Stats() stream.StreamStatsSnapshot {
+	return stream.StreamStatsSnapshot{Type: "stream_stats", Stream: "user", State: "connected", Markets: append([]string(nil), f.markets...)}
+}

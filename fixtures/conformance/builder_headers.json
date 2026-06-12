@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "family": "builder-attribution-headers",
+  "source": {
+    "reference_repos": [
+      "opensource-projects/repos/go-builder-signing-sdk",
+      "opensource-projects/repos/polymarket-kit/vendors/builder-signing-sdk",
+      "opensource-projects/repos/Polymarket-golang"
+    ],
+    "reference_paths": [
+      "internal/auth/l2.go",
+      "pkg/builder/builder.go",
+      "opensource-projects/repos/go-builder-signing-sdk/helpers/hmac.go"
+    ],
+    "notes": "Synthetic builder credentials pin POLY_BUILDER_* HMAC canonicalization for builder attribution headers. No live builder key material."
+  },
+  "vectors": [
+    {
+      "name": "builder_post_order_compact_body",
+      "api_key": "builder-key-1",
+      "secret": "c2VjcmV0",
+      "passphrase": "builder-pass-1",
+      "timestamp": 1700000000,
+      "method": "POST",
+      "path": "/order",
+      "body": "{\"token_id\":\"123\"}",
+      "expected_headers": {
+        "POLY_BUILDER_API_KEY": "builder-key-1",
+        "POLY_BUILDER_PASSPHRASE": "builder-pass-1",
+        "POLY_BUILDER_TIMESTAMP": "1700000000",
+        "POLY_BUILDER_SIGNATURE": "DlLZ3_8yQ4of4tSILTf0hIMwQ6sqtPF_YOGQu0B7wIQ="
+      }
+    }
+  ]
+}

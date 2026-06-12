@@ -47,3 +47,19 @@ func TestDiscoverCrypto5mCommandKeepsEnrichFlag(t *testing.T) {
 		t.Fatal("enrich flag missing")
 	}
 }
+
+func TestDiscoverOpportunitiesCommandKeepsScannerFlags(t *testing.T) {
+	root := NewRootCommand(Options{Version: "test-version"})
+	cmd, _, err := root.Find([]string{"discover", "opportunities"})
+	if err != nil {
+		t.Fatalf("Find returned error: %v", err)
+	}
+	if cmd == nil {
+		t.Fatal("discover opportunities command missing")
+	}
+	for _, name := range []string{"type", "limit", "hours", "asset"} {
+		if flag := cmd.Flags().Lookup(name); flag == nil {
+			t.Fatalf("%s flag missing", name)
+		}
+	}
+}

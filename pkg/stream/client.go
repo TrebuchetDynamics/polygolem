@@ -124,6 +124,14 @@ func (c *MarketClient) IsConnected() bool {
 	return c.inner.IsConnected()
 }
 
+// StreamStatsSnapshot reports stream lifecycle and message counters.
+type StreamStatsSnapshot = internalstream.StreamStatsSnapshot
+
+// Stats returns lifecycle and message counters for this stream client.
+func (c *MarketClient) Stats() StreamStatsSnapshot {
+	return c.inner.Stats()
+}
+
 // BookMessage is a WebSocket order-book snapshot event.
 type BookMessage struct {
 	EventType string       `json:"event_type"`

@@ -493,6 +493,7 @@ func TestDocumentedSubcommandsAreRegistered(t *testing.T) {
 		{"discover", "tags"},
 		{"discover", "series"},
 		{"discover", "comments"},
+		{"discover", "opportunities"},
 		{"orderbook", "get"},
 		{"orderbook", "price"},
 		{"orderbook", "midpoint"},
@@ -845,6 +846,71 @@ func TestStreamMarketReadsFromLocalWebSocket(t *testing.T) {
 	}
 	if got.EventType != "book" || got.AssetID != "token-1" || got.Market != "market-1" {
 		t.Fatalf("unexpected stream output: %+v", got)
+	}
+}
+
+func TestStreamMarketStatsEmitsFinalStatsEnvelope(t *testing.T) {
+	upgrader := websocket.Upgrader{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			t.Errorf("upgrade websocket: %v", err)
+			return
+		}
+		defer conn.Close()
+		var sub map[string]any
+		if err := conn.ReadJSON(&sub); err != nil {
+			t.Errorf("read subscription: %v", err)
+			return
+		}
+		if err := conn.WriteJSON(map[string]any{
+			"event_type": "book",
+			"asset_id":   "token-1",
+			"market":     "market-1",
+			"timestamp":  "1",
+			"hash":       "stats-1",
+			"bids":       []map[string]string{},
+			"asks":       []map[string]string{},
+		}); err != nil {
+			t.Errorf("write stream message: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	var stdout bytes.Buffer
+	root := NewRootCommand(Options{Version: "test-version", Stdout: &stdout, Stderr: &bytes.Buffer{}})
+	root.SetArgs([]string{
+		"--json",
+		"stream", "market",
+		"--url", "ws" + strings.TrimPrefix(server.URL, "http"),
+		"--asset-ids", "token-1",
+		"--max-messages", "1",
+		"--stats",
+	})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("Execute returned error: %v", err)
+	}
+
+	dec := json.NewDecoder(strings.NewReader(stdout.String()))
+	var first, second jsonEnvelopeForTest
+	if err := dec.Decode(&first); err != nil {
+		t.Fatalf("decode first envelope: %v\nstdout:\n%s", err, stdout.String())
+	}
+	if err := dec.Decode(&second); err != nil {
+		t.Fatalf("decode stats envelope: %v\nstdout:\n%s", err, stdout.String())
+	}
+	var stats struct {
+		Type             string   `json:"type"`
+		Stream           string   `json:"stream"`
+		MessagesReceived int64    `json:"messages_received"`
+		AssetIDs         []string `json:"asset_ids"`
+	}
+	if err := json.Unmarshal(second.Data, &stats); err != nil {
+		t.Fatalf("stats data is not valid JSON: %v\nstdout:\n%s", err, stdout.String())
+	}
+	if stats.Type != "stream_stats" || stats.Stream != "market" || stats.MessagesReceived != 1 || len(stats.AssetIDs) != 1 || stats.AssetIDs[0] != "token-1" {
+		t.Fatalf("unexpected stats: %+v\nstdout:\n%s", stats, stdout.String())
 	}
 }
 
