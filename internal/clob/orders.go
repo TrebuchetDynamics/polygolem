@@ -461,6 +461,9 @@ func (c *Client) CreateLimitOrder(ctx context.Context, privateKey string, params
 // POST /orders. Each order is signed individually. Maximum batch size is
 // MaxBatchPostSize (15).
 func (c *Client) CreateBatchOrders(ctx context.Context, privateKey string, params []CreateOrderParams) (*BatchOrderResponse, error) {
+	if err := c.ensureCanTrade(); err != nil {
+		return nil, err
+	}
 	if len(params) == 0 {
 		return nil, fmt.Errorf("no orders to post")
 	}
@@ -953,6 +956,9 @@ func cleanOrderIDs(orderIDs []string) []string {
 }
 
 func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, params MarketOrderParams) (*OrderPlacementResponse, error) {
+	if err := c.ensureCanTrade(); err != nil {
+		return nil, err
+	}
 	side, err := normalizeOrderSide(params.Side)
 	if err != nil {
 		return nil, err
