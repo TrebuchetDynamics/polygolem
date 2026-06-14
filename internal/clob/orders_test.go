@@ -354,6 +354,55 @@ func TestCreateMarketOrderDiscoversSellPriceFromBids(t *testing.T) {
 	}
 }
 
+// TestCreateMarketOrderSellPriceUsesBestBidWithRealAPIOrdering guards the
+// regression where marketOrderPrice walked the book from index 0. Polymarket's
+// /book returns bids ascending (best/highest bid LAST), so a SELL must sweep
+// from the highest bid, not the lowest. Here selling 7 shares should fill 5 at
+// 0.60 then 2 at 0.55, giving a marginal limit price of 0.55 (taker = 3.85),
+// even though the bids arrive worst-first.
+func TestCreateMarketOrderSellPriceUsesBestBidWithRealAPIOrdering(t *testing.T) {
+	var posted map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/tick-size":
+			_, _ = w.Write([]byte(`{"minimum_tick_size":"0.01","minimum_order_size":"5"}`))
+		case "/book":
+			// Real Polymarket ordering: bids ascending, best (0.60) last.
+			_, _ = w.Write([]byte(`{"bids":[{"price":"0.550000","size":"3.000000"},{"price":"0.600000","size":"5.000000"}],"asks":[]}`))
+		case "/neg-risk":
+			_, _ = w.Write([]byte(`{"neg_risk":false}`))
+		case "/auth/derive-api-key":
+			_, _ = w.Write([]byte(`{"apiKey":"owner-key","secret":"c2VjcmV0","passphrase":"pass"}`))
+		case "/order":
+			if err := json.NewDecoder(r.Body).Decode(&posted); err != nil {
+				t.Fatalf("decode order body: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"success":true,"orderID":"0xsell","status":"matched"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	_, err := client.CreateMarketOrder(context.Background(), testOrderPrivateKey, MarketOrderParams{
+		TokenID:   "12345",
+		Side:      "sell",
+		Amount:    "7.000000",
+		OrderType: "FOK",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	order := posted["order"].(map[string]any)
+	if order["makerAmount"] != "7000000" || order["takerAmount"] != "3850000" {
+		t.Fatalf("amounts=%v/%v want 7000000/3850000", order["makerAmount"], order["takerAmount"])
+	}
+}
+
 func TestCreateMarketOrderUsesEOABoundAuthAndDepositMaker(t *testing.T) {
 	wantDepositWallet := "0xfd5041047be8c192c725a66228f141196fa3cf9c"
 	var deriveAddress string

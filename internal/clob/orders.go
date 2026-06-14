@@ -1233,17 +1233,27 @@ func (c *Client) marketOrderPrice(ctx context.Context, tokenID, side string, amo
 	if err != nil {
 		return nil, fmt.Errorf("book lookup failed: %w", err)
 	}
-	var levels []polytypes.OrderBookLevel
+	var rawLevels []polytypes.OrderBookLevel
 	if side == "BUY" {
-		levels = book.Asks
+		rawLevels = book.Asks
 	} else {
-		levels = book.Bids
+		rawLevels = book.Bids
 	}
-	if len(levels) == 0 {
+	if len(rawLevels) == 0 {
 		return nil, fmt.Errorf("no opposing orders")
 	}
-	sum := new(big.Rat)
-	for _, level := range levels {
+	// Polymarket's /book returns bids ascending and asks descending, i.e. the
+	// best price is the *last* element of each array, not the first. Rather
+	// than depend on that ordering, sort the opposing levels best-first so a
+	// market order sweeps from the best available price: lowest ask for a BUY,
+	// highest bid for a SELL. Walking from the wrong end overpays on BUY and
+	// undersells on SELL.
+	type bookLevel struct {
+		price *big.Rat
+		size  *big.Rat
+	}
+	levels := make([]bookLevel, 0, len(rawLevels))
+	for _, level := range rawLevels {
 		price, err := parseRat(level.Price, "level price")
 		if err != nil {
 			return nil, err
@@ -1252,19 +1262,31 @@ func (c *Client) marketOrderPrice(ctx context.Context, tokenID, side string, amo
 		if err != nil {
 			return nil, err
 		}
+		levels = append(levels, bookLevel{price: price, size: size})
+	}
+	sort.SliceStable(levels, func(i, j int) bool {
 		if side == "BUY" {
-			sum.Add(sum, new(big.Rat).Mul(size, price))
+			return levels[i].price.Cmp(levels[j].price) < 0 // lowest ask first
+		}
+		return levels[i].price.Cmp(levels[j].price) > 0 // highest bid first
+	})
+	sum := new(big.Rat)
+	for _, level := range levels {
+		if side == "BUY" {
+			sum.Add(sum, new(big.Rat).Mul(level.size, level.price))
 		} else {
-			sum.Add(sum, size)
+			sum.Add(sum, level.size)
 		}
 		if sum.Cmp(amount) >= 0 {
-			return price, nil
+			return level.price, nil
 		}
 	}
 	if orderType == "FOK" {
 		return nil, fmt.Errorf("insufficient liquidity to fill order")
 	}
-	return parseRat(levels[0].Price, "level price")
+	// Insufficient depth for a non-FOK (fill-and-kill) order: use the worst
+	// available price as the limit so the order can sweep all resting liquidity.
+	return levels[len(levels)-1].price, nil
 }
 
 func limitFixedAmounts(side string, price, size *big.Rat) (makerAmount, takerAmount string) {
