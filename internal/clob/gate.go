@@ -5,6 +5,10 @@ import "errors"
 // TradeGate decides whether new orders may be submitted. A nil gate means
 // "always allowed". *risk.Breaker satisfies this interface via its CanProceed
 // method, but any type with the same method works.
+//
+// CanProceed is consulted once per order submission and is not required to be
+// side-effect free: an implementation such as *risk.Breaker may transition out
+// of a halted state when called (e.g. auto-resuming after a cooldown elapses).
 type TradeGate interface {
 	CanProceed() bool
 }

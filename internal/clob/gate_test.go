@@ -112,3 +112,32 @@ func TestCancelOrdersNotBlockedWhenGateHalted(t *testing.T) {
 		t.Fatalf("res = %+v", res)
 	}
 }
+
+// An allowing gate must not block submission: the order proceeds past the gate
+// and reaches the server (failing later for unrelated reasons), proving the
+// gate did not short-circuit the allowed branch.
+func TestCreateLimitOrderProceedsWhenGateAllows(t *testing.T) {
+	var reached bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reached = true
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc, WithTradeGate(fakeGate{ok: true}))
+
+	_, err := client.CreateLimitOrder(context.Background(), testOrderPrivateKey, CreateOrderParams{
+		TokenID: "12345",
+		Side:    "BUY",
+		Price:   "0.5",
+		Size:    "10",
+	})
+	if errors.Is(err, ErrTradingHalted) {
+		t.Fatalf("allowing gate must not return ErrTradingHalted, got %v", err)
+	}
+	if !reached {
+		t.Fatal("expected the order request to reach the server when the gate allows")
+	}
+}
