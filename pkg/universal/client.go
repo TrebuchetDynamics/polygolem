@@ -42,6 +42,16 @@ const (
 	defaultStreamURL    = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
 )
 
+// TradeGate decides whether new orders may be submitted. Attach one via
+// Config.TradeGate to make order submission respect a halt decision. A
+// *risk.Breaker (internal/risk) satisfies this interface.
+type TradeGate = sdkclob.TradeGate
+
+// ErrTradingHalted is returned by order-creation methods when an attached
+// TradeGate reports trading is halted. Detect it with errors.Is. Cancellation
+// is never blocked.
+var ErrTradingHalted = sdkclob.ErrTradingHalted
+
 // Client queries all Polymarket public data APIs through one surface.
 // Methods are safe for concurrent use; each call is independent.
 type Client struct {
@@ -65,6 +75,9 @@ type Config struct {
 	// authenticated CLOB account and trading calls. When set, the client does
 	// not call /auth/derive-api-key before those operations.
 	CLOBCredentials sdkclob.APIKey
+	// TradeGate, when set, blocks order submission while it reports trading is
+	// halted (CanProceed()==false). Cancellation is never blocked. Nil = no gate.
+	TradeGate TradeGate
 }
 
 // DefaultConfig returns production defaults.
@@ -96,6 +109,7 @@ func NewClient(cfg Config) *Client {
 		BaseURL:     cfg.CLOBBaseURL,
 		BuilderCode: cfg.BuilderCode,
 		Credentials: cfg.CLOBCredentials,
+		TradeGate:   cfg.TradeGate,
 	})
 	dc := sdkdata.NewClient(sdkdata.Config{BaseURL: cfg.DataBaseURL})
 
