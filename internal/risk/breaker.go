@@ -35,8 +35,6 @@ func (r TripReason) String() string {
 
 // Policy defines risk limits for trading.
 type Policy struct {
-	MaxOrderUSD          float64 `json:"max_order_usd"`
-	MaxOpenOrders        int     `json:"max_open_orders"`
 	DailyLossLimitUSD    float64 `json:"daily_loss_limit_usd"`
 	DailyPnLResetHour    int     `json:"daily_pnl_reset_hour"`
 	MaxConsecutiveErrs   int     `json:"max_consecutive_errors"`
@@ -48,8 +46,6 @@ type Policy struct {
 // DefaultPolicy returns conservative defaults.
 func DefaultPolicy() Policy {
 	return Policy{
-		MaxOrderUSD:          10.0,
-		MaxOpenOrders:        5,
 		DailyLossLimitUSD:    100.0,
 		DailyPnLResetHour:    0,
 		MaxConsecutiveErrs:   5,
