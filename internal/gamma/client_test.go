@@ -4,7 +4,9 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/TrebuchetDynamics/polygolem/internal/transport"
@@ -175,5 +177,89 @@ func TestCommentsUsesCurrentParentEntityQuery(t *testing.T) {
 		Limit:      3,
 	}); err != nil {
 		t.Fatalf("Comments returned error: %v", err)
+	}
+}
+
+// TestMarketsSerializesPreviouslyDroppedFilters guards the regression where
+// buildQueryPath silently omitted several declared GetMarketsParams filters,
+// returning unfiltered results without error.
+func TestMarketsSerializesPreviouslyDroppedFilters(t *testing.T) {
+	var got url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	related := true
+	rewards := 12.5
+	startMin := polytypes.NormalizedTime(time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC))
+	_, err := client.Markets(context.Background(), &polytypes.GetMarketsParams{
+		ID:             []int{101, 102},
+		RelatedTags:    &related,
+		RewardsMinSize: &rewards,
+		GameID:         "game-7",
+		StartDateMin:   &startMin,
+	})
+	if err != nil {
+		t.Fatalf("Markets returned error: %v", err)
+	}
+	if ids := got["id"]; len(ids) != 2 || ids[0] != "101" || ids[1] != "102" {
+		t.Fatalf("id = %v, want [101 102]", ids)
+	}
+	if got.Get("related_tags") != "true" {
+		t.Fatalf("related_tags = %q, want true", got.Get("related_tags"))
+	}
+	if got.Get("rewards_min_size") != "12.5" {
+		t.Fatalf("rewards_min_size = %q, want 12.5", got.Get("rewards_min_size"))
+	}
+	if got.Get("game_id") != "game-7" {
+		t.Fatalf("game_id = %q, want game-7", got.Get("game_id"))
+	}
+	if got.Get("start_date_min") != "2026-01-02T03:04:05Z" {
+		t.Fatalf("start_date_min = %q, want 2026-01-02T03:04:05Z", got.Get("start_date_min"))
+	}
+}
+
+// TestEventsSerializesPreviouslyDroppedFilters guards the same regression for
+// GetEventsParams (featured, recurrence, and date filters were dropped).
+func TestEventsSerializesPreviouslyDroppedFilters(t *testing.T) {
+	var got url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	featured := true
+	endMax := polytypes.NormalizedTime(time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC))
+	_, err := client.Events(context.Background(), &polytypes.GetEventsParams{
+		ID:         []int{5},
+		Featured:   &featured,
+		Recurrence: "weekly",
+		EndDateMax: &endMax,
+	})
+	if err != nil {
+		t.Fatalf("Events returned error: %v", err)
+	}
+	if got.Get("featured") != "true" {
+		t.Fatalf("featured = %q, want true", got.Get("featured"))
+	}
+	if got.Get("recurrence") != "weekly" {
+		t.Fatalf("recurrence = %q, want weekly", got.Get("recurrence"))
+	}
+	if ids := got["id"]; len(ids) != 1 || ids[0] != "5" {
+		t.Fatalf("id = %v, want [5]", ids)
+	}
+	if got.Get("end_date_max") != "2026-06-01T00:00:00Z" {
+		t.Fatalf("end_date_max = %q, want 2026-06-01T00:00:00Z", got.Get("end_date_max"))
 	}
 }

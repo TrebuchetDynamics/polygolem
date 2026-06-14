@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/TrebuchetDynamics/polygolem/internal/transport"
@@ -216,6 +217,15 @@ func (c *Client) SportsMetadata(ctx context.Context) ([]polytypes.SportMetadata,
 	return result, nil
 }
 
+// setNormalizedTime adds a date filter in RFC3339 form when t is non-nil and
+// non-zero, matching NormalizedTime's JSON marshaling.
+func setNormalizedTime(q url.Values, key string, t *polytypes.NormalizedTime) {
+	if t == nil || t.IsZero() {
+		return
+	}
+	q.Set(key, t.Time().Format(time.RFC3339))
+}
+
 // buildQueryPath serializes a params struct to URL query parameters using reflection.
 // For simple cases, the caller builds the path directly.
 // This version handles the most common field types.
@@ -244,11 +254,17 @@ func buildQueryPath(basePath string, params interface{}) (string, error) {
 		if p.TagID != nil {
 			q.Set("tag_id", strconv.Itoa(*p.TagID))
 		}
+		if p.RelatedTags != nil {
+			q.Set("related_tags", strconv.FormatBool(*p.RelatedTags))
+		}
 		if p.Order != "" {
 			q.Set("order", p.Order)
 		}
 		if p.Ascending != nil {
 			q.Set("ascending", strconv.FormatBool(*p.Ascending))
+		}
+		for _, id := range p.ID {
+			q.Add("id", strconv.Itoa(id))
 		}
 		for _, s := range p.Slug {
 			q.Add("slug", s)
@@ -271,8 +287,18 @@ func buildQueryPath(basePath string, params interface{}) (string, error) {
 		if p.VolumeNumMax != nil {
 			q.Set("volume_num_max", strconv.FormatFloat(*p.VolumeNumMax, 'f', -1, 64))
 		}
+		setNormalizedTime(q, "start_date_min", p.StartDateMin)
+		setNormalizedTime(q, "start_date_max", p.StartDateMax)
+		setNormalizedTime(q, "end_date_min", p.EndDateMin)
+		setNormalizedTime(q, "end_date_max", p.EndDateMax)
+		if p.RewardsMinSize != nil {
+			q.Set("rewards_min_size", strconv.FormatFloat(*p.RewardsMinSize, 'f', -1, 64))
+		}
 		for _, smt := range p.SportsMarketTypes {
 			q.Add("sports_market_types", smt)
+		}
+		if p.GameID != "" {
+			q.Set("game_id", p.GameID)
 		}
 
 	case *polytypes.GetEventsParams:
@@ -288,14 +314,30 @@ func buildQueryPath(basePath string, params interface{}) (string, error) {
 		if p.TagID != nil {
 			q.Set("tag_id", strconv.Itoa(*p.TagID))
 		}
+		if p.RelatedTags != nil {
+			q.Set("related_tags", strconv.FormatBool(*p.RelatedTags))
+		}
+		if p.Featured != nil {
+			q.Set("featured", strconv.FormatBool(*p.Featured))
+		}
 		if p.Order != "" {
 			q.Set("order", p.Order)
 		}
 		if p.Ascending != nil {
 			q.Set("ascending", strconv.FormatBool(*p.Ascending))
 		}
+		for _, id := range p.ID {
+			q.Add("id", strconv.Itoa(id))
+		}
 		for _, s := range p.Slug {
 			q.Add("slug", s)
+		}
+		setNormalizedTime(q, "start_date_min", p.StartDateMin)
+		setNormalizedTime(q, "start_date_max", p.StartDateMax)
+		setNormalizedTime(q, "end_date_min", p.EndDateMin)
+		setNormalizedTime(q, "end_date_max", p.EndDateMax)
+		if p.Recurrence != "" {
+			q.Set("recurrence", p.Recurrence)
 		}
 
 	case *polytypes.GetSeriesParams:
@@ -314,6 +356,9 @@ func buildQueryPath(basePath string, params interface{}) (string, error) {
 		if p.Ascending != nil {
 			q.Set("ascending", strconv.FormatBool(*p.Ascending))
 		}
+		for _, s := range p.Slug {
+			q.Add("slug", s)
+		}
 
 	case *polytypes.SearchParams:
 		q.Set("q", p.Q)
@@ -331,6 +376,9 @@ func buildQueryPath(basePath string, params interface{}) (string, error) {
 		}
 		if p.Sort != "" {
 			q.Set("sort", p.Sort)
+		}
+		if p.SearchProfiles != nil {
+			q.Set("search_profiles", strconv.FormatBool(*p.SearchProfiles))
 		}
 		for _, tag := range p.EventsTag {
 			q.Add("events_tag", tag)
@@ -368,6 +416,9 @@ func buildQueryPath(basePath string, params interface{}) (string, error) {
 		}
 		for _, n := range p.Name {
 			q.Add("name", n)
+		}
+		for _, a := range p.Abbreviation {
+			q.Add("abbreviation", a)
 		}
 
 	default:
