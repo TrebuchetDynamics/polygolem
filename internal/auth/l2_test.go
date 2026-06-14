@@ -23,3 +23,25 @@ func TestSignHMACDecodesURLSafeBase64Secrets(t *testing.T) {
 		t.Fatalf("signature=%q, want %q", got, want)
 	}
 }
+
+// TestCompactJSONPreservesSpacesInsideStrings guards the regression where the
+// hand-rolled scanner desynced on escaped quotes and stripped legitimate spaces
+// inside JSON string values, making the HMAC-signed body differ from the bytes
+// actually sent.
+func TestCompactJSONPreservesSpacesInsideStrings(t *testing.T) {
+	cases := map[string]string{
+		`{"a": 1, "b": 2}`:            `{"a":1,"b":2}`,
+		`{"msg":"a \"b c\" d"}`:       `{"msg":"a \"b c\" d"}`,
+		`{ "orderID" : "0xAbC 123" }`: `{"orderID":"0xAbC 123"}`,
+		`{"orderIDs":["a b","c d"]}`:  `{"orderIDs":["a b","c d"]}`,
+	}
+	for in, want := range cases {
+		if got := CompactJSON(in); got != want {
+			t.Fatalf("CompactJSON(%q)=%q want %q", in, got, want)
+		}
+	}
+	// Invalid JSON is returned unchanged rather than corrupted.
+	if got := CompactJSON("not json"); got != "not json" {
+		t.Fatalf("CompactJSON(invalid)=%q want unchanged", got)
+	}
+}

@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -75,19 +77,15 @@ func BuildBuilderHeaders(bc *BuilderConfig, timestamp int64, method, path string
 	}, nil
 }
 
-// CompactJSON removes all whitespace from a JSON string for HMAC body signing.
+// CompactJSON removes insignificant whitespace from a JSON string for HMAC
+// body signing. It uses the escape-aware encoding/json.Compact so that spaces
+// inside string values (including those preceded by escaped quotes) are
+// preserved; the signed body therefore matches the bytes that are actually
+// sent. If the input is not valid JSON it is returned unchanged.
 func CompactJSON(s string) string {
-	var result strings.Builder
-	inString := false
-	for _, ch := range s {
-		if ch == '"' {
-			inString = !inString
-			result.WriteRune(ch)
-		} else if inString {
-			result.WriteRune(ch)
-		} else if ch != ' ' && ch != '\n' && ch != '\r' && ch != '\t' {
-			result.WriteRune(ch)
-		}
+	var buf bytes.Buffer
+	if err := json.Compact(&buf, []byte(s)); err != nil {
+		return s
 	}
-	return result.String()
+	return buf.String()
 }
