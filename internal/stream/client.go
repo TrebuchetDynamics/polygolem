@@ -194,11 +194,18 @@ func (mc *MarketClient) dial() error {
 		mc.mu.Lock()
 		c := mc.conn
 		mc.mu.Unlock()
-		if c != nil {
+		if c != nil && mc.config.PongTimeout > 0 {
 			c.SetReadDeadline(time.Now().Add(mc.config.PongTimeout))
 		}
 		return nil
 	})
+	// Set an initial read deadline so a server that goes silent (never sending
+	// a pong) is detected: without this the deadline is only ever set inside the
+	// pong handler, so a dead-but-open connection would block ReadMessage forever
+	// and the reconnect machinery would never fire.
+	if mc.config.PongTimeout > 0 {
+		conn.SetReadDeadline(time.Now().Add(mc.config.PongTimeout))
+	}
 	go mc.readLoop()
 	go mc.pingLoop()
 	return nil
@@ -350,6 +357,11 @@ func (mc *MarketClient) reconnect() {
 	if err := mc.resubscribe(); err != nil && mc.OnError != nil {
 		mc.OnError(err)
 	}
+	// Reconnect succeeded; reset the attempt counter so a later transient drop
+	// gets the full ReconnectMax budget again. Without this the client would
+	// permanently stop reconnecting after ReconnectMax cumulative drops over
+	// its whole lifetime, even with healthy periods in between.
+	atomic.StoreInt32(&mc.reconnects, 0)
 }
 
 // SubscribeAssets subscribes to order book updates for given token IDs.

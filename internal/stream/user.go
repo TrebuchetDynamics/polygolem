@@ -101,6 +101,21 @@ func (uc *UserClient) Connect(ctx context.Context) error {
 	uc.connected.Store(true)
 	uc.stats.MarkConnected(time.Now())
 	uc.mu.Unlock()
+	// Detect a server that goes silent: each pong extends the read deadline, and
+	// the initial deadline ensures a dead-but-open connection eventually fails
+	// the read instead of blocking forever (which would silently kill the stream).
+	if uc.config.PongTimeout > 0 {
+		conn.SetPongHandler(func(string) error {
+			uc.mu.Lock()
+			c := uc.conn
+			uc.mu.Unlock()
+			if c != nil {
+				c.SetReadDeadline(time.Now().Add(uc.config.PongTimeout))
+			}
+			return nil
+		})
+		conn.SetReadDeadline(time.Now().Add(uc.config.PongTimeout))
+	}
 	go uc.readLoop()
 	go uc.pingLoop()
 	return nil
