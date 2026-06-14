@@ -18,6 +18,16 @@ import (
 
 const defaultBaseURL = "https://clob.polymarket.com"
 
+// TradeGate decides whether new orders may be submitted. Attach one via
+// Config.TradeGate to make order submission respect a halt decision. A
+// *risk.Breaker (internal/risk) satisfies this interface.
+type TradeGate = internalclob.TradeGate
+
+// ErrTradingHalted is returned by order-creation methods when an attached
+// TradeGate reports trading is halted. Detect it with errors.Is. Cancellation
+// is never blocked.
+var ErrTradingHalted = internalclob.ErrTradingHalted
+
 // Config holds CLOB client settings.
 type Config struct {
 	BaseURL string
@@ -28,6 +38,9 @@ type Config struct {
 	// authenticated deposit-wallet calls use them instead of deriving a key
 	// through /auth/derive-api-key.
 	Credentials APIKey
+	// TradeGate, when set, blocks order submission while it reports trading is
+	// halted (CanProceed()==false). Cancellation is never blocked. Nil = no gate.
+	TradeGate TradeGate
 }
 
 // DefaultConfig returns production CLOB defaults.
@@ -45,7 +58,11 @@ func NewClient(cfg Config) *Client {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = defaultBaseURL
 	}
-	inner := internalclob.NewClient(cfg.BaseURL, nil)
+	var opts []internalclob.Option
+	if cfg.TradeGate != nil {
+		opts = append(opts, internalclob.WithTradeGate(cfg.TradeGate))
+	}
+	inner := internalclob.NewClient(cfg.BaseURL, nil, opts...)
 	inner.SetBuilderCode(cfg.BuilderCode)
 	if apiKeyConfigured(cfg.Credentials) {
 		inner.SetL2Credentials(apiKeyToInternal(cfg.Credentials))

@@ -20,7 +20,8 @@ type Option func(*Client)
 
 // WithTradeGate attaches a TradeGate that is consulted before each order
 // submission. When the gate reports CanProceed()==false, order-creation methods
-// return ErrTradingHalted without signing or sending anything.
+// return ErrTradingHalted without signing or sending anything. Passing a nil
+// gate is a no-op (equivalent to attaching no gate: trading is always allowed).
 func WithTradeGate(g TradeGate) Option {
 	return func(c *Client) { c.gate = g }
 }
