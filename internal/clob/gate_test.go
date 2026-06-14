@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/risk"
 	"github.com/TrebuchetDynamics/polygolem/internal/transport"
 )
 
@@ -57,6 +58,26 @@ func TestCreateBatchOrdersBlockedWhenGateHalted(t *testing.T) {
 	client := NewClient(server.URL+"/", tc, WithTradeGate(fakeGate{ok: false}))
 
 	_, err := client.CreateBatchOrders(context.Background(), testOrderPrivateKey, []CreateOrderParams{{}})
+	if !errors.Is(err, ErrTradingHalted) {
+		t.Fatalf("err = %v, want ErrTradingHalted", err)
+	}
+}
+
+// A *risk.Breaker must be usable directly as a TradeGate. This is the intended
+// production wiring: a bot constructs a Breaker and passes it as the gate.
+func TestRiskBreakerSatisfiesTradeGate(t *testing.T) {
+	var _ TradeGate = risk.NewBreaker(risk.DefaultPolicy())
+
+	server := failingServer(t)
+	defer server.Close()
+
+	breaker := risk.NewBreaker(risk.DefaultPolicy())
+	breaker.Halt() // bot decides to stop trading
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc, WithTradeGate(breaker))
+
+	_, err := client.CreateLimitOrder(context.Background(), testOrderPrivateKey, CreateOrderParams{})
 	if !errors.Is(err, ErrTradingHalted) {
 		t.Fatalf("err = %v, want ErrTradingHalted", err)
 	}
