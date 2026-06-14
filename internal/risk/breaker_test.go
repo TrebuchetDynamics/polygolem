@@ -374,10 +374,10 @@ func TestComputeTotalAbsPosition(t *testing.T) {
 
 func TestShouldTripPerMarket(t *testing.T) {
 	tests := []struct {
-		name    string
-		size    float64
-		max     float64
-		should  bool
+		name   string
+		size   float64
+		max    float64
+		should bool
 	}{
 		{"zero max never trips", 100, 0, false},
 		{"below max does not trip", 5, 10, false},
