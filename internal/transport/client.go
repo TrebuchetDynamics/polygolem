@@ -221,29 +221,35 @@ func (c *Client) doWithHeaders(ctx context.Context, method, path string, body in
 			lastErr = errors.Wrap(errors.CodeConnectionFailed, "request failed", err)
 			continue
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode == http.StatusTooManyRequests {
+			// Drain and close so the connection can be reused before retrying.
+			_, _ = io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
 			lastErr = errors.WithHTTP(errors.CodeRateLimited, "rate limited", resp.StatusCode)
 			continue
 		}
 
 		if resp.StatusCode >= 500 {
 			respBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
 			lastErr = errors.WithHTTP(errors.CodeConnectionFailed, fmt.Sprintf("server error: %s", string(respBody)), resp.StatusCode)
 			continue
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
 			respBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
 			return fmt.Errorf("HTTP %d %s: %s", resp.StatusCode, url, string(respBody))
 		}
 
 		if result != nil {
 			if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+				resp.Body.Close()
 				return fmt.Errorf("decode response from %s: %w", url, err)
 			}
 		}
+		resp.Body.Close()
 		if c.config.Telemetry != nil {
 			c.config.Telemetry.Request(ctx, method, path, resp.StatusCode, time.Since(start), nil)
 		}
