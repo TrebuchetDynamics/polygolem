@@ -2,6 +2,7 @@ package polytypes
 
 import (
 	"encoding/json"
+	"math"
 	"strconv"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
@@ -120,7 +121,7 @@ func (n *NegRiskInfo) UnmarshalJSON(b []byte) error {
 	}
 	n.NegRisk = jsonBoolOrFalse(firstNonEmptyRaw(raw.NegRisk, raw.NegRiskCamel))
 	n.NegRiskMarketID = firstNonEmptyString(string(raw.NegRiskMarketID), string(raw.NegRiskMarketIDCamel))
-	n.NegRiskFeeBips, _ = strconv.Atoi(firstNonEmptyString(string(raw.NegRiskFeeBips), string(raw.NegRiskFeeBipsCamel)))
+	n.NegRiskFeeBips = parseBps(firstNonEmptyString(string(raw.NegRiskFeeBips), string(raw.NegRiskFeeBipsCamel)))
 	return nil
 }
 
@@ -137,7 +138,7 @@ func (f *FeeRate) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	f.FeeRateBps, _ = strconv.Atoi(firstNonEmptyString(string(raw.FeeRateBps), string(raw.FeeRateBpsCamel)))
+	f.FeeRateBps = parseBps(firstNonEmptyString(string(raw.FeeRateBps), string(raw.FeeRateBpsCamel)))
 	return nil
 }
 
@@ -367,6 +368,21 @@ func firstNonEmptyRaw(values ...json.RawMessage) json.RawMessage {
 
 func jsonBoolOrFalse(raw json.RawMessage) bool {
 	return jsonx.BoolOrFalse(raw)
+}
+
+// parseBps parses a basis-points value that the API may render as either an
+// integer ("10") or a float ("10.0", "10.5") string. strconv.Atoi rejects the
+// float forms and would silently yield 0 for a money-relevant fee field, so we
+// parse as a float and round to the nearest integer bps.
+func parseBps(s string) int {
+	if s == "" {
+		return 0
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0
+	}
+	return int(math.Round(f))
 }
 
 // CLOBPaginatedMarkets represents cursor-paginated CLOB markets.

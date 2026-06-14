@@ -37,3 +37,24 @@ func TestFeeRateDecodesStringFieldAndCamelAlias(t *testing.T) {
 		t.Fatalf("row=%+v", row)
 	}
 }
+
+// TestFeeRateDecodesFloatFormattedBps guards the regression where a float-formatted
+// bps string ("30.0") was silently parsed as 0 by strconv.Atoi.
+func TestFeeRateDecodesFloatFormattedBps(t *testing.T) {
+	cases := map[string]int{
+		`{"fee_rate_bps":"30.0"}`: 30,
+		`{"fee_rate_bps":"30.4"}`: 30,
+		`{"fee_rate_bps":"30.6"}`: 31,
+		`{"fee_rate_bps":"30"}`:   30,
+		`{"fee_rate_bps":""}`:     0,
+	}
+	for raw, want := range cases {
+		var row FeeRate
+		if err := json.Unmarshal([]byte(raw), &row); err != nil {
+			t.Fatalf("%s: %v", raw, err)
+		}
+		if row.FeeRateBps != want {
+			t.Fatalf("%s: FeeRateBps=%d want %d", raw, row.FeeRateBps, want)
+		}
+	}
+}
