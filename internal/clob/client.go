@@ -23,6 +23,7 @@ type Client struct {
 	transport     *transport.Client
 	builderCode   string
 	l2Credentials *auth.APIKey
+	gate          TradeGate
 }
 
 const polygonChainID = 137
@@ -64,11 +65,15 @@ func (r *BalanceAllowanceResponse) UnmarshalJSON(data []byte) error {
 }
 
 // NewClient creates a CLOB API client.
-func NewClient(baseURL string, tc *transport.Client) *Client {
+func NewClient(baseURL string, tc *transport.Client, opts ...Option) *Client {
 	if tc == nil {
 		tc = transport.New(nil, transport.DefaultConfig(baseURL))
 	}
-	return &Client{transport: tc, builderCode: bytes32Zero}
+	c := &Client{transport: tc, builderCode: bytes32Zero}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
 }
 
 // SetBuilderCode configures the V2 order builder attribution bytes32.

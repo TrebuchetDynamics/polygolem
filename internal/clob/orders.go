@@ -408,6 +408,9 @@ type orderDraft struct {
 }
 
 func (c *Client) CreateLimitOrder(ctx context.Context, privateKey string, params CreateOrderParams) (*OrderPlacementResponse, error) {
+	if err := c.ensureCanTrade(); err != nil {
+		return nil, err
+	}
 	side, err := normalizeOrderSide(params.Side)
 	if err != nil {
 		return nil, err
