@@ -197,6 +197,12 @@ func (b *Breaker) CanProceed() bool {
 	if b.halted {
 		if b.policy.CoolDownSecs > 0 {
 			if time.Since(b.lastBreak) > time.Duration(b.policy.CoolDownSecs)*time.Second {
+				// Cooling down only clears transient trips. A loss- or
+				// position-limit trip must not auto-resume while the account
+				// is still over the limit, otherwise the guard fails open.
+				if b.tripConditionStillActiveLocked() {
+					return false
+				}
 				b.halted = false
 				b.consecutiveErrs = 0
 				b.tripReason = 0
@@ -206,6 +212,28 @@ func (b *Breaker) CanProceed() bool {
 		return false
 	}
 	return true
+}
+
+// tripConditionStillActiveLocked reports whether the limit that tripped the
+// breaker is still breached. Must be called with b.mu held.
+func (b *Breaker) tripConditionStillActiveLocked() bool {
+	switch b.tripReason {
+	case ReasonDailyLossLimit:
+		return b.policy.DailyLossLimitUSD > 0 && b.dailyLoss >= b.policy.DailyLossLimitUSD
+	case ReasonPositionPerMarket:
+		for _, size := range b.positions {
+			if shouldTripPerMarket(size, b.policy.MaxPositionPerMarket) {
+				return true
+			}
+		}
+		return false
+	case ReasonTotalPosition:
+		return shouldTripTotalPosition(computeTotalAbsPosition(b.positions), b.policy.MaxTotalPosition)
+	default:
+		// Consecutive-error and manual-halt trips are transient and may
+		// clear after the cooldown elapses.
+		return false
+	}
 }
 
 // Halted returns whether the breaker is currently tripped.

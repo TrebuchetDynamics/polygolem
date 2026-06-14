@@ -438,3 +438,61 @@ func TestClampNonNegative(t *testing.T) {
 		})
 	}
 }
+
+// TestBreakerDoesNotAutoResumeWhileOverDailyLoss guards the fail-open regression
+// where CanProceed cleared a daily-loss trip after the cooldown elapsed even though
+// the account was still over its loss limit.
+func TestBreakerDoesNotAutoResumeWhileOverDailyLoss(t *testing.T) {
+	policy := DefaultPolicy()
+	policy.DailyLossLimitUSD = 10
+	policy.CoolDownSecs = 1
+	b := NewBreaker(policy)
+	b.RecordLoss(20) // trip on daily loss
+	// Simulate cooldown elapsing.
+	b.lastBreak = b.lastBreak.Add(-2 * time.Second)
+	if b.CanProceed() {
+		t.Fatal("breaker must stay halted while still over the daily loss limit")
+	}
+	// Once an explicit reset (or a new day) clears the loss, trading may resume.
+	b.Reset()
+	if !b.CanProceed() {
+		t.Fatal("breaker should proceed after Reset clears the loss")
+	}
+}
+
+// TestBreakerDoesNotAutoResumeWhileOverPositionLimit guards the same fail-open for
+// position-limit trips.
+func TestBreakerDoesNotAutoResumeWhileOverPositionLimit(t *testing.T) {
+	policy := DefaultPolicy()
+	policy.MaxTotalPosition = 10
+	policy.CoolDownSecs = 1
+	b := NewBreaker(policy)
+	b.RecordPosition("token1", 20) // trip on total position
+	b.lastBreak = b.lastBreak.Add(-2 * time.Second)
+	if b.CanProceed() {
+		t.Fatal("breaker must stay halted while still over the position limit")
+	}
+	// Reducing the position below the limit clears the condition; cooldown then resumes.
+	b.RecordPosition("token1", 1)
+	b.lastBreak = b.lastBreak.Add(-2 * time.Second)
+	if !b.CanProceed() {
+		t.Fatal("breaker should resume once position is back under the limit")
+	}
+}
+
+// TestBreakerAutoResumesConsecutiveErrorsAfterCooldown confirms transient
+// error trips still auto-clear after the cooldown (unchanged behavior).
+func TestBreakerAutoResumesConsecutiveErrorsAfterCooldown(t *testing.T) {
+	policy := DefaultPolicy()
+	policy.MaxConsecutiveErrs = 1
+	policy.CoolDownSecs = 1
+	b := NewBreaker(policy)
+	b.RecordError()
+	if b.CanProceed() {
+		t.Fatal("should be halted immediately after error trip")
+	}
+	b.lastBreak = b.lastBreak.Add(-2 * time.Second)
+	if !b.CanProceed() {
+		t.Fatal("consecutive-error trip should auto-resume after cooldown")
+	}
+}
