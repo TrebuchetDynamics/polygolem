@@ -851,7 +851,6 @@ func firstRaw(values ...json.RawMessage) json.RawMessage {
 	return jsonx.FirstRaw(values...)
 }
 
-
 func jsonFloatOrZero(raw json.RawMessage) (float64, error) {
 	value := jsonStringOrNumber(raw)
 	if value == "" {
