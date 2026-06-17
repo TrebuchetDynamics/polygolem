@@ -71,7 +71,9 @@ func (s *State) Sell(order Order) (Fill, error) {
 
 	s.Cash += proceeds
 	pos.Size -= order.Size
-	pos.Cost -= avgCost * order.Size
+	// Re-derive the remaining cost from the unchanged average cost so float
+	// rounding can't accumulate dust across repeated partial sells.
+	pos.Cost = avgCost * pos.Size
 	if pos.Size <= sizeEpsilon {
 		delete(s.Positions, order.TokenID)
 	} else {
