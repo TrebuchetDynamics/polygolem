@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1274,14 +1275,16 @@ func TestHeartbeatWithIDIncludesIDInBody(t *testing.T) {
 }
 
 func TestAutoHeartbeatSendsMultiplePings(t *testing.T) {
-	var count int
+	// count is incremented in the httptest handler goroutine and read here, so
+	// it must be accessed atomically.
+	var count atomic.Int64
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/auth/derive-api-key":
 			_, _ = w.Write([]byte(`{"apiKey":"owner-key","secret":"c2VjcmV0","passphrase":"pass"}`))
 		case "/v1/heartbeats":
-			count++
+			count.Add(1)
 			_, _ = w.Write([]byte(`{"status":"ok"}`))
 		default:
 			http.NotFound(w, r)
@@ -1296,20 +1299,21 @@ func TestAutoHeartbeatSendsMultiplePings(t *testing.T) {
 	defer cancel()
 
 	time.Sleep(180 * time.Millisecond)
-	if count < 2 {
-		t.Fatalf("expected at least 2 heartbeats, got %d", count)
+	if count.Load() < 2 {
+		t.Fatalf("expected at least 2 heartbeats, got %d", count.Load())
 	}
 }
 
 func TestAutoHeartbeatCancelStopsPings(t *testing.T) {
-	var count int
+	// count is written by the httptest handler goroutine and read here.
+	var count atomic.Int64
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/auth/derive-api-key":
 			_, _ = w.Write([]byte(`{"apiKey":"owner-key","secret":"c2VjcmV0","passphrase":"pass"}`))
 		case "/v1/heartbeats":
-			count++
+			count.Add(1)
 			_, _ = w.Write([]byte(`{"status":"ok"}`))
 		default:
 			http.NotFound(w, r)
@@ -1324,10 +1328,10 @@ func TestAutoHeartbeatCancelStopsPings(t *testing.T) {
 	time.Sleep(120 * time.Millisecond)
 	cancel()
 
-	before := count
+	before := count.Load()
 	time.Sleep(120 * time.Millisecond)
-	if count != before {
-		t.Fatalf("heartbeat count changed after cancel: before=%d after=%d", before, count)
+	if count.Load() != before {
+		t.Fatalf("heartbeat count changed after cancel: before=%d after=%d", before, count.Load())
 	}
 }
 
