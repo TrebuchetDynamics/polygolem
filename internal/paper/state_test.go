@@ -40,8 +40,8 @@ func TestSellFullPositionCreditsCashAndDeletesPosition(t *testing.T) {
 	if _, ok := state.Positions["yes"]; ok {
 		t.Fatal("fully-sold position must be deleted")
 	}
-	if fill.RealizedPnL != 1 { // (0.30-0.20)*10
-		t.Fatalf("RealizedPnL = %v, want 1", fill.RealizedPnL)
+	if fill.RealizedPnL < 0.9999999 || fill.RealizedPnL > 1.0000001 { // (0.30-0.20)*10
+		t.Fatalf("RealizedPnL = %v, want ~1", fill.RealizedPnL)
 	}
 	if fill.Live {
 		t.Fatal("paper fill must not be live")
@@ -79,8 +79,8 @@ func TestSellBelowCostYieldsNegativePnL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Sell: %v", err)
 	}
-	if fill.RealizedPnL != -1.5 { // (0.10-0.40)*5
-		t.Fatalf("RealizedPnL = %v, want -1.5", fill.RealizedPnL)
+	if fill.RealizedPnL < -1.5000001 || fill.RealizedPnL > -1.4999999 { // (0.10-0.40)*5
+		t.Fatalf("RealizedPnL = %v, want ~-1.5", fill.RealizedPnL)
 	}
 }
 
