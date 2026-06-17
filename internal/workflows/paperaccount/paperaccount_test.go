@@ -36,19 +36,44 @@ func TestRunnerBuyUsesBestAskWhenPriceUnset(t *testing.T) {
 	}
 }
 
-func TestRunnerSellUsesBestBidAndPreservesLocalAccounting(t *testing.T) {
-	pricer := &fakePricer{price: "0.25"}
-	runner := New(Config{State: paper.NewState("USD", 10), Pricer: pricer})
+func TestRunnerSellReducesPositionAndCreditsCash(t *testing.T) {
+	pricer := &fakePricer{price: "0.30"}
+	state := paper.NewState("USD", 10)
+	runner := New(Config{State: state, Pricer: pricer})
 
+	// Buy 4 @ explicit 0.20 first (explicit price skips the pricer): cash 10 -> 9.2.
+	if _, err := runner.Buy(context.Background(), TradeRequest{TokenID: "token-2", Price: "0.20", Size: "4"}); err != nil {
+		t.Fatalf("Buy returned error: %v", err)
+	}
+	// Sell 4 with no explicit price -> pricer best-bid 0.30 on side BUY: cash 9.2 -> 10.4.
 	got, err := runner.Sell(context.Background(), TradeRequest{TokenID: "token-2", Size: "4"})
 	if err != nil {
 		t.Fatalf("Sell returned error: %v", err)
 	}
-	if got.Action != "sell" || got.Proceeds != 1 || got.Cash != 9 {
+	if got.Action != "sell" || got.Price != 0.30 || got.Size != 4 {
 		t.Fatalf("response=%+v", got)
+	}
+	if got.Proceeds != 1.2 || got.Cash < 10.3999999 || got.Cash > 10.4000001 {
+		t.Fatalf("proceeds/cash wrong: %+v", got)
+	}
+	if got.RealizedPnL < 0.3999999 || got.RealizedPnL > 0.4000001 { // (0.30-0.20)*4
+		t.Fatalf("RealizedPnL = %v, want ~0.4", got.RealizedPnL)
+	}
+	if _, ok := state.Positions["token-2"]; ok {
+		t.Fatal("fully-sold position must be deleted")
 	}
 	if pricer.tokenID != "token-2" || pricer.side != "BUY" {
 		t.Fatalf("price call token=%q side=%q", pricer.tokenID, pricer.side)
+	}
+}
+
+func TestRunnerSellRejectsWhenNoPosition(t *testing.T) {
+	pricer := &fakePricer{price: "0.25"}
+	runner := New(Config{State: paper.NewState("USD", 10), Pricer: pricer})
+
+	_, err := runner.Sell(context.Background(), TradeRequest{TokenID: "token-2", Size: "4"})
+	if err == nil {
+		t.Fatal("sell with no position must return an error")
 	}
 }
 
