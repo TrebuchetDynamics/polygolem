@@ -2,10 +2,13 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/spf13/viper"
+
+	"github.com/TrebuchetDynamics/polygolem/internal/modes"
 )
 
 type Options struct {
@@ -60,6 +63,11 @@ func Load(opts Options) (Config, error) {
 	}
 	if cfg.Mode == "" {
 		return Config{}, errors.New("mode is required")
+	}
+	// Reject unknown mode strings (e.g. typos) rather than letting them flow to
+	// callers that gate behavior on exact-string comparisons.
+	if _, err := modes.Parse(cfg.Mode); err != nil {
+		return Config{}, fmt.Errorf("invalid mode: %w", err)
 	}
 	return cfg, nil
 }

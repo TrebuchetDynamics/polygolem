@@ -158,3 +158,22 @@ func (f *fakeRelayer) GetTransaction(_ context.Context, txID string) (*relayer.R
 	f.txID = txID
 	return f.tx, nil
 }
+
+// TestDeploymentStatusSourceLabels guards the regression where the not-deployed
+// case (neither source) was mislabeled "relayer_and_polygon_code".
+func TestDeploymentStatusSourceLabels(t *testing.T) {
+	cases := []struct {
+		relayer, onchain bool
+		want             string
+	}{
+		{true, true, "relayer_and_polygon_code"},
+		{true, false, "relayer"},
+		{false, true, "polygon_code"},
+		{false, false, "none"},
+	}
+	for _, c := range cases {
+		if got := deploymentStatusSource(c.relayer, c.onchain); got != c.want {
+			t.Fatalf("deploymentStatusSource(%v,%v)=%q want %q", c.relayer, c.onchain, got, c.want)
+		}
+	}
+}

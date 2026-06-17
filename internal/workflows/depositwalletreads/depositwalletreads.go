@@ -244,11 +244,15 @@ func ownerAndWallet(privateKey string) (string, string, error) {
 }
 
 func deploymentStatusSource(relayerDeployed bool, onchainDeployed bool) string {
-	if relayerDeployed {
+	switch {
+	case relayerDeployed && onchainDeployed:
+		return "relayer_and_polygon_code"
+	case relayerDeployed:
 		return "relayer"
-	}
-	if onchainDeployed {
+	case onchainDeployed:
 		return "polygon_code"
+	default:
+		// Neither source confirms deployment — the wallet is not deployed.
+		return "none"
 	}
-	return "relayer_and_polygon_code"
 }
