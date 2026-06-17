@@ -24,7 +24,7 @@ func TestRepositoryHygiene(t *testing.T) {
 		"git ls-files -z '*.go' ':!:opensource-projects/**'",
 		"xargs -0 gofmt -w",
 		"go vet ./...",
-		"go test ./...",
+		"go test -short ./...",
 		"git diff --exit-code",
 	} {
 		if !strings.Contains(ciContent, required) {
