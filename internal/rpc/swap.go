@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -35,8 +36,9 @@ const swapRouter02ABI = `[
 // via multicall(refundETH). The pUSD lands on the EOA controlling
 // privateKeyHex; transfer to deposit wallet via [TransferPUSD] separately.
 //
-// Returns the swap transaction hash. The caller is responsible for waiting
-// for confirmation (use [PollTxStatus] or eth_getTransactionReceipt).
+// It waits for the transaction receipt and returns an error if the swap
+// reverted, so the caller never treats a failed swap (e.g. slippage exceeded
+// or an illiquid pool) as success while POL is consumed.
 func SwapPOLForExactPUSD(ctx context.Context, privateKeyHex string, amountPUSDOut, maxPOLIn *big.Int, rpcURL string) (string, error) {
 	privateKeyHex = strings.TrimPrefix(strings.TrimSpace(privateKeyHex), "0x")
 	if amountPUSDOut == nil || amountPUSDOut.Sign() <= 0 {
@@ -128,5 +130,24 @@ func SwapPOLForExactPUSD(ctx context.Context, privateKeyHex string, amountPUSDOu
 	if err := client.SendTransaction(ctx, signed); err != nil {
 		return "", fmt.Errorf("send tx: %w", err)
 	}
-	return signed.Hash().Hex(), nil
+
+	// Confirm the swap actually succeeded. Mirrors TransferPUSD: a reverted
+	// swap must surface as an error, not be reported as a successful swap while
+	// POL was spent on gas / consumed.
+	txHash := signed.Hash().Hex()
+	for i := 0; i < 30; i++ {
+		receipt, err := client.TransactionReceipt(ctx, signed.Hash())
+		if err == nil {
+			if receipt.Status != types.ReceiptStatusSuccessful {
+				return txHash, fmt.Errorf("swap transaction reverted: %s", txHash)
+			}
+			return txHash, nil
+		}
+		select {
+		case <-ctx.Done():
+			return txHash, ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
+	}
+	return txHash, fmt.Errorf("swap sent but confirmation timed out: %s", txHash)
 }
