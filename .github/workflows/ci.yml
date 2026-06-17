@@ -29,6 +29,9 @@ jobs:
       # -short skips live-network e2e tests (tests/*_test.go) so CI does not
       # depend on third-party API availability or live data quirks.
       - run: go test -short ./...
+      # Race detector pass to catch concurrency regressions in the streaming,
+      # transport, and circuit-breaker code (CGO required; enabled by default).
+      - run: go test -race -short ./...
       - name: Coverage
         run: |
           go test -short -coverprofile=coverage.out ./...
