@@ -30,14 +30,15 @@ type TradeRequest struct {
 
 // TradeResponse is the JSON-friendly result of a local paper buy/sell.
 type TradeResponse struct {
-	Action   string     `json:"action"`
-	TokenID  string     `json:"token_id"`
-	Price    float64    `json:"price"`
-	Size     float64    `json:"size"`
-	Cost     float64    `json:"cost,omitempty"`
-	Proceeds float64    `json:"proceeds,omitempty"`
-	Cash     float64    `json:"cash"`
-	Fill     paper.Fill `json:"fill"`
+	Action      string     `json:"action"`
+	TokenID     string     `json:"token_id"`
+	Price       float64    `json:"price"`
+	Size        float64    `json:"size"`
+	Cost        float64    `json:"cost,omitempty"`
+	Proceeds    float64    `json:"proceeds,omitempty"`
+	RealizedPnL float64    `json:"realized_pnl,omitempty"`
+	Cash        float64    `json:"cash"`
+	Fill        paper.Fill `json:"fill"`
 }
 
 // PositionsResponse is the JSON-friendly local paper-account snapshot.
@@ -103,13 +104,20 @@ func (r *Runner) trade(ctx context.Context, action, clobSide string, req TradeRe
 		return TradeResponse{}, err
 	}
 
-	fill, err := r.state.Buy(paper.Order{TokenID: tokenID, Price: price, Size: size})
+	order := paper.Order{TokenID: tokenID, Price: price, Size: size}
+	var fill paper.Fill
+	if action == "sell" {
+		fill, err = r.state.Sell(order)
+	} else {
+		fill, err = r.state.Buy(order)
+	}
 	if err != nil {
 		return TradeResponse{}, err
 	}
 	res := TradeResponse{Action: action, TokenID: tokenID, Price: price, Size: size, Cash: r.state.Cash, Fill: fill}
 	if action == "sell" {
 		res.Proceeds = price * size
+		res.RealizedPnL = fill.RealizedPnL
 	} else {
 		res.Cost = price * size
 	}
