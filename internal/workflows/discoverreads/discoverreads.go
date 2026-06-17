@@ -144,6 +144,9 @@ func (r *Runner) runEnrich(ctx context.Context, req Request) (*polytypes.Enriche
 	if err != nil {
 		return nil, err
 	}
+	if m == nil {
+		return nil, fmt.Errorf("market %q not found", req.ID)
+	}
 	return r.enricher.EnrichMarket(ctx, *m)
 }
 

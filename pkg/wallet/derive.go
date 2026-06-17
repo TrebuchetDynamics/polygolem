@@ -32,19 +32,23 @@ func DeriveSafeWallet(eoa string) string {
 
 func proxySalt(eoa string) []byte {
 	clean := strip0x(eoa)
-	if len(clean) != 40 {
+	b, err := hex.DecodeString(clean)
+	if len(clean) != 40 || err != nil {
+		// Invalid (wrong-length or non-hex) EOA: zero salt rather than panic.
 		return make([]byte, 32)
 	}
-	return keccak256(hexToBytes(clean))
+	return keccak256(b)
 }
 
 func safeSalt(eoa string) []byte {
 	clean := strip0x(eoa)
-	if len(clean) != 40 {
+	b, err := hex.DecodeString(clean)
+	if len(clean) != 40 || err != nil {
+		// Invalid (wrong-length or non-hex) EOA: zero salt rather than panic.
 		return make([]byte, 32)
 	}
 	padded := make([]byte, 32)
-	hexDecodeInto(padded[12:], clean)
+	copy(padded[12:], b)
 	return keccak256(padded)
 }
 
@@ -104,14 +108,6 @@ func hexToBytes(s string) []byte {
 		panic(fmt.Sprintf("hexToBytes: invalid hex %q: %v", s, err))
 	}
 	return b
-}
-
-func hexDecodeInto(dst []byte, src string) {
-	b, err := hex.DecodeString(src)
-	if err != nil {
-		panic(fmt.Sprintf("hexDecodeInto: invalid hex %q: %v", src, err))
-	}
-	copy(dst, b)
 }
 
 func toHex(b []byte) string {

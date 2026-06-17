@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -61,4 +62,18 @@ func TestReadinessEmptyEOA(t *testing.T) {
 	if info.HasSigner {
 		t.Fatal("should not have signer with empty EOA")
 	}
+}
+
+// TestDeriveDoesNotPanicOnInvalidHexEOA guards the regression where a 40-char
+// non-hex EOA panicked in hexToBytes via proxySalt/safeSalt.
+func TestDeriveDoesNotPanicOnInvalidHexEOA(t *testing.T) {
+	bad := "0x" + strings.Repeat("z", 40) // 40 chars, not hex
+	if got := DeriveProxyWallet(bad); got == "" {
+		t.Fatal("DeriveProxyWallet returned empty")
+	}
+	if got := DeriveSafeWallet(bad); got == "" {
+		t.Fatal("DeriveSafeWallet returned empty")
+	}
+	// Readiness must also not panic.
+	_ = Readiness(PolygonChainID, bad)
 }

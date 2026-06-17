@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -52,5 +53,15 @@ func TestLoadRejectsNonPositiveRequestTimeout(t *testing.T) {
 	_, err := Load(Options{ConfigPath: path})
 	if err == nil {
 		t.Fatal("Load returned nil error for non-positive request_timeout")
+	}
+}
+
+// TestLoadRejectsUnknownMode guards the regression where any non-empty mode
+// string was accepted; only known modes (read-only/paper/live) are valid.
+func TestLoadRejectsUnknownMode(t *testing.T) {
+	t.Setenv("POLYMARKET_MODE", "banana")
+	_, err := Load(Options{})
+	if err == nil || !strings.Contains(err.Error(), "mode") {
+		t.Fatalf("err = %v, want an invalid-mode error", err)
 	}
 }

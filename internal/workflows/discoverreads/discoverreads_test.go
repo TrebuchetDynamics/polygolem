@@ -12,6 +12,7 @@ type fakeGamma struct {
 	marketsCalled bool
 	searchParams  *polytypes.SearchParams
 	marketByID    string
+	marketByIDNil bool
 }
 
 func (f *fakeGamma) Markets(context.Context, *polytypes.GetMarketsParams) ([]polytypes.Market, error) {
@@ -21,6 +22,9 @@ func (f *fakeGamma) Markets(context.Context, *polytypes.GetMarketsParams) ([]pol
 
 func (f *fakeGamma) MarketByID(_ context.Context, id string) (*polytypes.Market, error) {
 	f.marketByID = id
+	if f.marketByIDNil {
+		return nil, nil // e.g. Gamma returned a JSON null body
+	}
 	return &polytypes.Market{ID: id, Slug: "market-one"}, nil
 }
 
@@ -122,5 +126,17 @@ func TestRunnerEnrichFetchesMarketThenEnriches(t *testing.T) {
 	}
 	if gamma.marketByID != "market-1" || enricher.marketID != "market-1" {
 		t.Fatalf("marketByID=%q enriched=%q", gamma.marketByID, enricher.marketID)
+	}
+}
+
+// TestRunnerEnrichErrorsWhenMarketNotFound guards the regression where a nil
+// market (Gamma returning a JSON null body) was dereferenced, panicking.
+func TestRunnerEnrichErrorsWhenMarketNotFound(t *testing.T) {
+	gamma := &fakeGamma{marketByIDNil: true}
+	runner := New(Config{Gamma: gamma, Enricher: &fakeEnricher{}})
+
+	_, err := runner.Run(context.Background(), Request{Operation: Enrich, ID: "missing"})
+	if err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("err = %v, want a 'not found' error (no panic)", err)
 	}
 }
