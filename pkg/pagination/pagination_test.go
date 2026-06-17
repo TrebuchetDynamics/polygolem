@@ -152,3 +152,42 @@ func Example_collectAll() {
 	fmt.Println(items)
 	// Output: [1 2 3]
 }
+
+// TestCollectOffsetRejectsNonPositiveLimit guards the regression where a
+// non-positive limit caused an infinite loop (count < limit never true and
+// offset never advances).
+func TestCollectOffsetRejectsNonPositiveLimit(t *testing.T) {
+	for _, limit := range []int{0, -1} {
+		called := false
+		pageFn := func(ctx context.Context, offset, lim int) ([]int, int, error) {
+			called = true
+			return nil, 0, nil
+		}
+		_, err := CollectOffset(context.Background(), pageFn, limit)
+		if err == nil {
+			t.Fatalf("limit=%d: expected error, got nil", limit)
+		}
+		if called {
+			t.Fatalf("limit=%d: pageFn must not be called", limit)
+		}
+	}
+}
+
+// TestBatchRejectsNonPositiveMaxBatchSize guards the regression where
+// maxBatchSize <= 0 caused a divide-by-zero / infinite loop.
+func TestBatchRejectsNonPositiveMaxBatchSize(t *testing.T) {
+	for _, size := range []int{0, -3} {
+		called := false
+		fn := func(ctx context.Context, batch []int) (int, error) {
+			called = true
+			return 0, nil
+		}
+		_, err := Batch(context.Background(), []int{1, 2, 3}, size, fn)
+		if err == nil {
+			t.Fatalf("maxBatchSize=%d: expected error, got nil", size)
+		}
+		if called {
+			t.Fatalf("maxBatchSize=%d: fn must not be called", size)
+		}
+	}
+}

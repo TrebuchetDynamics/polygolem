@@ -17,6 +17,7 @@ package pagination
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -123,6 +124,9 @@ type OffsetPage[T any] func(ctx context.Context, offset, limit int) ([]T, int, e
 // Stops when pageFn returns fewer than limit items. Returns the first
 // error encountered; partial results are discarded.
 func CollectOffset[T any](ctx context.Context, pageFn OffsetPage[T], limit int) ([]T, error) {
+	if limit <= 0 {
+		return nil, fmt.Errorf("pagination: limit must be positive, got %d", limit)
+	}
 	var all []T
 	offset := 0
 	for {
@@ -144,6 +148,10 @@ func CollectOffset[T any](ctx context.Context, pageFn OffsetPage[T], limit int) 
 // Returns the first error encountered. fn may be invoked concurrently;
 // callers are responsible for synchronizing any shared state.
 func Batch[T, R any](ctx context.Context, items []T, maxBatchSize int, fn func(context.Context, []T) (R, error)) ([]R, error) {
+	if maxBatchSize <= 0 {
+		return nil, fmt.Errorf("pagination: maxBatchSize must be positive, got %d", maxBatchSize)
+	}
+
 	type result struct {
 		idx int
 		r   R
