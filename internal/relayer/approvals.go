@@ -30,6 +30,12 @@ const (
 
 func pad32Bytes(hexAddr string) string {
 	hexAddr = strings.TrimPrefix(strings.TrimSpace(hexAddr), "0x")
+	// A 32-byte EVM word holds at most 64 hex chars. Keep the low-order 32
+	// bytes for over-long input (the correct truncation for a uint256) rather
+	// than panicking on strings.Repeat with a negative count.
+	if len(hexAddr) > 64 {
+		hexAddr = hexAddr[len(hexAddr)-64:]
+	}
 	return strings.Repeat("0", 64-len(hexAddr)) + hexAddr
 }
 

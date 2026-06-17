@@ -68,3 +68,26 @@ func assertSetApprovalForAll(t *testing.T, label string, call DepositWalletCall,
 		t.Errorf("%s approved=true not encoded: %s", label, data)
 	}
 }
+
+// TestPad32BytesDoesNotPanicOnOverlongInput guards the regression where a hex
+// string longer than 64 chars caused strings.Repeat to panic with a negative
+// count. Over-long input keeps the low-order 32 bytes; the result is always a
+// 64-char word.
+func TestPad32BytesDoesNotPanicOnOverlongInput(t *testing.T) {
+	cases := []string{
+		"abc",                          // short → left-padded
+		strings.Repeat("f", 64),        // exact 32 bytes
+		"0x" + strings.Repeat("a", 80), // over-long (was a panic)
+	}
+	for _, in := range cases {
+		got := pad32Bytes(in)
+		if len(got) != 64 {
+			t.Fatalf("pad32Bytes(%q) length = %d, want 64", in, len(got))
+		}
+	}
+	// Over-long input keeps the low-order 64 hex chars.
+	over := strings.Repeat("a", 80)
+	if got := pad32Bytes(over); got != over[len(over)-64:] {
+		t.Fatalf("pad32Bytes overlong = %q, want low 64 chars", got)
+	}
+}
