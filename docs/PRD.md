@@ -415,12 +415,14 @@ Acceptance criteria:
 - `auth status`, `live status`, and `preflight` can explain which dependency is
   missing without exposing secrets or attempting a mutation.
 
-### R5. Order Builder ✅
+### R5. Order Builder ⚠️
 
-> **Status:** Fulfilled. `internal/orders` exposes `OrderIntent`, a fluent
-> builder, validation, and lifecycle states; V2 deposit-wallet
-> (`signatureType=3`) signing is in `internal/auth` + `internal/clob`.
-> Surfaced via `polygolem clob create-order` and `polygolem clob market-order`.
+> **Status:** Partial. Live order construction, validation, and V2
+> deposit-wallet (`signatureType=3`) signing live in `internal/clob`
+> (+ `internal/auth`), surfaced via `polygolem clob create-order` and
+> `polygolem clob market-order`. The earlier standalone `internal/orders`
+> OrderIntent/fluent-builder surface was unused by the live path and has been
+> removed; a dedicated public builder is not currently shipped.
 
 The SDK must provide an order builder that can build signable orders without
 posting them.
@@ -453,12 +455,13 @@ Acceptance criteria:
 
 ### R6. Order Execution And Lifecycle ✅
 
-> **Status:** Fulfilled. `internal/execution` separates paper from live
-> executors and enforces gates; `internal/clob` covers place/cancel/query
-> with public account/order/trading DTOs re-exposed through `pkg/clob` and
-> `pkg/universal`, including SDK batch order placement and heartbeats. Live
-> commands (`polygolem live ...` and the `polygolem clob
-> create-order|orders|trades`) ship behind preflight gates.
+> **Status:** Fulfilled. `internal/clob` covers place/cancel/query with public
+> account/order/trading DTOs re-exposed through `pkg/clob` and `pkg/universal`,
+> including SDK batch order placement and heartbeats. Live commands
+> (`polygolem live ...` and the `polygolem clob create-order|orders|trades`)
+> ship behind preflight gates. (The earlier separate `internal/execution`
+> paper/live executor surface was unused by the live path and has been removed;
+> paper simulation lives in `internal/paper`.)
 
 The SDK must expose execution as a separate service from order building.
 
@@ -560,10 +563,9 @@ Acceptance criteria:
 
 ### R9. Paper Trading ✅
 
-> **Status:** Fulfilled. `internal/paper` plus `internal/execution`'s paper
-> executor share the order-intent model with live; persisted JSON state
-> sits behind a storage boundary. Surfaced via the `polygolem paper`
-> command group with explicit "simulated" markers.
+> **Status:** Fulfilled. `internal/paper` holds local-only cash/positions/fills
+> and simulates buys and sells (see `internal/workflows/paperaccount`). Surfaced
+> via the `polygolem paper` command group with explicit "simulated" markers.
 
 Paper execution must remain local-only.
 
@@ -682,7 +684,7 @@ Acceptance criteria:
 
 > **Status:** Partial. Polygolem-side primitives exist (`pkg/clob`,
 > `pkg/orderbook`, `pkg/stream`,
-> `pkg/marketresolver`, `pkg/bridge`, `internal/dataapi`, `internal/execution`)
+> `pkg/marketresolver`, `pkg/bridge`, `internal/dataapi`)
 > and CLI JSON output is
 > regenerated in `docs/COMMANDS.md`. Go-bot-side adoption (full removal of
 > direct `internal/polymarket` clients, repository guard) is tracked
@@ -766,10 +768,8 @@ Recommended Polygolem internal modules:
 - `internal/wallet`: signer/funder readiness, chain consistency, proxy/Safe
   derivation checks, and non-mutating wallet diagnostics.
 - `internal/marketdiscovery`: Gamma + CLOB market enrichment service.
-- `internal/orders`: order intent, order builder, signed order payloads,
-  order/trade models, and lifecycle states.
-- `internal/execution`: paper/live executor interface, live gate enforcement,
-  idempotency policy, and cancellation/query flows.
+- `internal/clob`: order construction, V2 deposit-wallet signing, signed order
+  payloads, and place/cancel/query flows.
 - `internal/account`: balances, allowances, rewards, and position summaries.
 - `internal/risk`: per-trade caps, open-order caps, slippage limits,
   daily-loss gates, close-only handling, and circuit breakers.

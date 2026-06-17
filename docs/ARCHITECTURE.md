@@ -48,11 +48,9 @@ Implementation. Not part of the public SDK contract.
 | `internal/config` | Viper-backed config loading, defaults, environment binding, validation, redaction. |
 | `internal/dataapi` | Data API client — positions, volume, leaderboards. |
 | `internal/errors` | Structured error types and code helpers. |
-| `internal/execution` | Paper executor today; live executor surface for future use. |
 | `internal/gamma` | Typed Gamma HTTP client — markets, events, search, tags, series, sports, comments, profiles. |
 | `internal/marketdiscovery` | High-level market discovery service that combines Gamma and CLOB. |
 | `internal/modes` | Read-only / paper / live mode parsing and gate checks. |
-| `internal/orders` | OrderIntent, fluent builder, validation, lifecycle states. |
 | `internal/output` | Stable table and JSON rendering plus structured errors. |
 | `internal/paper` | Local-only paper positions, fills, and persisted state. |
 | `internal/polytypes` | Polymarket protocol-level types shared across clients. |
@@ -106,10 +104,9 @@ state.
   `internal/paper` state. Simulated actions stay local. Authenticated
   mutation APIs remain off-limits.
 - **Live**: gated. Requires preflight + risk + funding gates to pass.
-  Live execution operates through `internal/execution`, `internal/orders`,
-  `internal/clob` (write endpoints), `internal/relayer`, `internal/rpc`,
-  and `internal/wallet`. The default `polygolem` invocation does not enter
-  live mode.
+  Live execution operates through `internal/clob` (order build/sign + write
+  endpoints), `internal/relayer`, `internal/rpc`, and `internal/wallet`. The
+  default `polygolem` invocation does not enter live mode.
 
 ## Signature types
 
