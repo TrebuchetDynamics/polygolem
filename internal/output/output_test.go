@@ -3,6 +3,7 @@ package output
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"testing"
 )
 
@@ -41,5 +42,19 @@ func TestWriteErrorJSONUsesStableEnvelope(t *testing.T) {
 	}
 	if got.Meta.TS == "" {
 		t.Fatalf("meta timestamp missing: %#v", got)
+	}
+}
+
+// TestWriteJSONNoPartialOutputOnMarshalError guards the regression where the
+// streaming encoder could emit partial bytes before failing on an unmarshalable
+// value (e.g. a non-finite float). WriteJSON must write nothing and return error.
+func TestWriteJSONNoPartialOutputOnMarshalError(t *testing.T) {
+	var buf bytes.Buffer
+	err := WriteJSON(&buf, map[string]any{"bad": math.Inf(1)})
+	if err == nil {
+		t.Fatal("expected marshal error for non-finite float")
+	}
+	if buf.Len() != 0 {
+		t.Fatalf("no bytes should be written on marshal failure, got %q", buf.String())
 	}
 }

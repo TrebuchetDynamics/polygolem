@@ -162,3 +162,26 @@ func TestRunnerPropagatesSearchErrors(t *testing.T) {
 		t.Fatalf("error=%v, want %v", err, wantErr)
 	}
 }
+
+// TestRunnerUnsetLimitReturnsAllSnapshots guards the regression where Limit==0
+// (unset) truncated output to a single snapshot via `len(results) >= req.Limit`.
+func TestRunnerUnsetLimitReturnsAllSnapshots(t *testing.T) {
+	searcher := &fakeSearcher{resp: &polytypes.SearchResponse{Events: []polytypes.Event{{
+		ID:     "event-btc",
+		Title:  "BTC 5m event",
+		Active: true,
+		Markets: []polytypes.Market{
+			{ID: "m1", Question: "BTC up or down in 5m?", Active: true, ClobTokenIDs: `["btc-up","btc-down"]`},
+			{ID: "m2", Question: "BTC again in 5m?", Active: true, ClobTokenIDs: `["btc-2"]`},
+		},
+	}}}}
+
+	// Limit unset (0) must mean "no limit", not "cap at 1".
+	got, err := New(searcher, nil).Run(context.Background(), Request{Asset: "BTC", Interval: "5m"})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if got.Count != 2 || len(got.Markets) != 2 {
+		t.Fatalf("unset limit truncated snapshots: count=%d markets=%d, want 2", got.Count, len(got.Markets))
+	}
+}

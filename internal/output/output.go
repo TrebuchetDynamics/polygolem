@@ -39,9 +39,16 @@ type Envelope struct {
 const ContractVersion = "1"
 
 func WriteJSON(w io.Writer, value any) error {
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
-	return enc.Encode(value)
+	// Marshal fully before writing so a marshal failure (e.g. NaN/Inf, an
+	// unsupported type) cannot emit a partial/corrupt envelope. The trailing
+	// newline matches json.Encoder.Encode's behavior.
+	b, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return err
+	}
+	b = append(b, '\n')
+	_, err = w.Write(b)
+	return err
 }
 
 func WriteSuccess(w io.Writer, command string, startedAt time.Time, value any) error {
