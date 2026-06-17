@@ -3,6 +3,7 @@ package stream
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -66,6 +67,24 @@ func (d *Deduplicator) evictLocked(nowMs int64) {
 		if (nowMs - ts) >= d.ttlMs {
 			delete(d.seen, k)
 		}
+	}
+	if d.size <= 0 || len(d.seen) <= d.size {
+		return
+	}
+	// Still over the hard cap after expiring stale entries: a burst of unique
+	// messages within the TTL window would otherwise grow the map unbounded.
+	// Drop the oldest entries until back within size.
+	type entry struct {
+		key string
+		ts  int64
+	}
+	entries := make([]entry, 0, len(d.seen))
+	for k, ts := range d.seen {
+		entries = append(entries, entry{k, ts})
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].ts < entries[j].ts })
+	for i := 0; i < len(entries) && len(d.seen) > d.size; i++ {
+		delete(d.seen, entries[i].key)
 	}
 }
 

@@ -713,6 +713,8 @@ func TestClientCreateBatchOrdersReturnsPublicResponses(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
+		case "/tick-size":
+			_, _ = w.Write([]byte(`{"minimum_tick_size":"0.01"}`))
 		case "/auth/derive-api-key":
 			_, _ = w.Write([]byte(`{"apiKey":"api-key","secret":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=","passphrase":"pass"}`))
 		case "/neg-risk":

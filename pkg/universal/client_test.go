@@ -526,6 +526,8 @@ func TestBatchOrdersAndHeartbeatRoutes(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
+		case "/tick-size":
+			json.NewEncoder(w).Encode(map[string]string{"minimum_tick_size": "0.01"})
 		case "/auth/derive-api-key":
 			json.NewEncoder(w).Encode(map[string]string{
 				"apiKey":     "k-batch",
