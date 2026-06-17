@@ -480,6 +480,10 @@ func (c *Client) CreateBatchOrders(ctx context.Context, privateKey string, param
 		return nil, fmt.Errorf("derive deposit-wallet api key: %w", err)
 	}
 
+	// Cache tick sizes per token so a batch touching the same market does not
+	// repeat the /tick-size lookup for every order.
+	tickCache := make(map[string]*polytypes.TickSize)
+
 	payloads := make([]sendOrderPayload, len(params))
 	for i, p := range params {
 		side, err := normalizeOrderSide(p.Side)
@@ -505,6 +509,23 @@ func (c *Client) CreateBatchOrders(ctx context.Context, privateKey string, param
 		if p.PostOnly && orderType != "GTC" && orderType != "GTD" {
 			return nil, fmt.Errorf("order %d: postOnly is only supported for GTC and GTD orders", i)
 		}
+
+		// Validate price scale against the market tick size, matching the
+		// single-order path (CreateLimitOrder). Minimum order size is
+		// intentionally not pre-rejected here, consistent with the rest of the
+		// client.
+		tick, ok := tickCache[p.TokenID]
+		if !ok {
+			tick, err = c.TickSize(ctx, p.TokenID)
+			if err != nil {
+				return nil, fmt.Errorf("order %d: tick size lookup failed: %w", i, err)
+			}
+			tickCache[p.TokenID] = tick
+		}
+		if err := validatePriceScale(price, p.Price, tick); err != nil {
+			return nil, fmt.Errorf("order %d: %w", i, err)
+		}
+
 		makerAmount, takerAmount := limitFixedAmounts(side, price, size)
 		draft := orderDraft{
 			tokenID:     tokenID,

@@ -1138,6 +1138,8 @@ func TestCreateBatchOrdersUsesConfiguredL2CredentialsWithoutDerive(t *testing.T)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
+		case "/tick-size":
+			_, _ = w.Write([]byte(`{"minimum_tick_size":"0.01"}`))
 		case "/neg-risk":
 			_, _ = w.Write([]byte(`{"neg_risk":false}`))
 		case "/auth/derive-api-key":
@@ -1365,5 +1367,47 @@ func TestValidateMinimumOrderSizeIgnoresNilSentinel(t *testing.T) {
 	tick := &polytypes.TickSize{MinimumOrderSize: "<nil>"}
 	if err := validateMinimumOrderSize(size, tick); err != nil {
 		t.Fatalf("validateMinimumOrderSize returned error: %v", err)
+	}
+}
+
+// TestCreateBatchOrdersValidatesPriceScale guards the regression where batch
+// orders skipped the tick-size / price-scale validation that CreateLimitOrder
+// enforces, letting out-of-scale prices reach the server.
+func TestCreateBatchOrdersValidatesPriceScale(t *testing.T) {
+	var ordersPosted bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/tick-size":
+			_, _ = w.Write([]byte(`{"minimum_tick_size":"0.01"}`))
+		case "/neg-risk":
+			_, _ = w.Write([]byte(`{"neg_risk":false}`))
+		case "/auth/derive-api-key":
+			_, _ = w.Write([]byte(`{"apiKey":"owner-key","secret":"c2VjcmV0","passphrase":"pass"}`))
+		case "/orders":
+			ordersPosted = true
+			_, _ = w.Write([]byte(`[{"success":true,"orderID":"0xabc","status":"live"}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	// Second order has 3 decimal places, invalid for a 0.01 tick.
+	_, err := client.CreateBatchOrders(context.Background(), testOrderPrivateKey, []CreateOrderParams{
+		{TokenID: "12345", Side: "buy", Price: "0.500000", Size: "2.000000", OrderType: "GTC"},
+		{TokenID: "12345", Side: "buy", Price: "0.125000", Size: "2.000000", OrderType: "GTC"},
+	})
+	if err == nil {
+		t.Fatal("expected price-scale validation error for the second order")
+	}
+	if !strings.Contains(err.Error(), "order 1") || !strings.Contains(err.Error(), "decimal") {
+		t.Fatalf("error = %v, want it to name order 1 and the decimal-scale problem", err)
+	}
+	if ordersPosted {
+		t.Fatal("a price-invalid batch must not be posted to /orders")
 	}
 }

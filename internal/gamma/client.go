@@ -452,7 +452,10 @@ func (c *Client) CommentByID(ctx context.Context, id string) (*polytypes.Comment
 }
 
 func (c *Client) CommentsByUser(ctx context.Context, userAddress string, limit int) ([]polytypes.Comment, error) {
-	path := fmt.Sprintf("/comments?user_address=%s&limit=%d", userAddress, limit)
+	q := url.Values{}
+	q.Set("user_address", userAddress)
+	q.Set("limit", strconv.Itoa(limit))
+	path := "/comments?" + q.Encode()
 	var result []polytypes.Comment
 	if err := c.transport.Get(ctx, path, &result); err != nil {
 		return nil, err

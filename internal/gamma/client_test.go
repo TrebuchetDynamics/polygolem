@@ -263,3 +263,33 @@ func TestEventsSerializesPreviouslyDroppedFilters(t *testing.T) {
 		t.Fatalf("end_date_max = %q, want 2026-06-01T00:00:00Z", got.Get("end_date_max"))
 	}
 }
+
+// TestCommentsByUserURLEncodesAddress guards the regression where the user
+// address was interpolated into the query string without URL-encoding, so a
+// value containing query-significant characters could break or inject params.
+func TestCommentsByUserURLEncodesAddress(t *testing.T) {
+	var gotQuery url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	addr := "0xAbC 123&injected=1"
+	if _, err := client.CommentsByUser(context.Background(), addr, 25); err != nil {
+		t.Fatalf("CommentsByUser returned error: %v", err)
+	}
+	if gotQuery.Get("user_address") != addr {
+		t.Fatalf("user_address = %q, want %q (round-trips through proper encoding)", gotQuery.Get("user_address"), addr)
+	}
+	if gotQuery.Has("injected") {
+		t.Fatal("query-significant characters in the address leaked an injected parameter")
+	}
+	if gotQuery.Get("limit") != "25" {
+		t.Fatalf("limit = %q, want 25", gotQuery.Get("limit"))
+	}
+}

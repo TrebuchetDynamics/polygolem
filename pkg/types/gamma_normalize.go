@@ -30,6 +30,11 @@ func (ct *NormalizedTime) UnmarshalJSON(b []byte) error {
 		"2006-01-02T15:04:05Z",
 		"2006-01-02 15:04:05-07:00",
 		"2006-01-02 15:04:05+00:00",
+		// Postgres/Gamma sometimes emits a seconds-granularity timezone offset
+		// (e.g. "...+00:00:00"); a fractional second, if present, is consumed
+		// automatically by time.Parse.
+		"2006-01-02 15:04:05-07:00:00",
+		"2006-01-02T15:04:05-07:00:00",
 		"2006-01-02",
 		"January 2, 2006",
 	}
