@@ -115,7 +115,9 @@ func (r *Runner) snapshots(ctx context.Context, resp *polytypes.SearchResponse, 
 		}
 
 		results = append(results, snapshot)
-		if len(results) >= req.Limit {
+		// Only cap when a positive limit is set; req.Limit == 0 means "no limit"
+		// (otherwise the >= comparison would truncate to a single snapshot).
+		if req.Limit > 0 && len(results) >= req.Limit {
 			return results
 		}
 	}
