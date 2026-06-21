@@ -22,10 +22,13 @@ rs-clob-client/
 # Agent/local analysis state
 .pi/
 .understand-anything/
+docs/superpowers/plans/
+go-bot/internal/dataapi/testdata/*_live.json
 
 CLAUDE.md
 # compiled binaries (keep cmd/*/ source tracked)
 /polygolem
+/live_siwe_probe
 /indexer_probe
 indexer_probe.pid
 indexer_probe.state.json
