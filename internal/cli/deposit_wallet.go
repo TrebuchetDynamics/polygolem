@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
-	"github.com/TrebuchetDynamics/polygolem/internal/gamma"
 	"github.com/TrebuchetDynamics/polygolem/internal/relayer"
 	"github.com/TrebuchetDynamics/polygolem/internal/rpc"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletfunding"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletreads"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletsettlement"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/relayerauth"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 	"github.com/TrebuchetDynamics/polygolem/pkg/data"
@@ -1069,10 +1069,6 @@ func relayerClientForAutomation(ctx context.Context, stderr io.Writer, privateKe
 }
 
 func mintRelayerV2KeyForAutomation(ctx context.Context, stderr io.Writer, privateKey string) (relayer.V2APIKey, string, error) {
-	signer, err := auth.NewPrivateKeySigner(privateKey, 137)
-	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("init signer: %w", err)
-	}
 	gammaURL := firstNonEmptyCLI(os.Getenv("POLYMARKET_GAMMA_URL"), defaultGammaBaseURL)
 	relayerURL := firstNonEmptyCLI(os.Getenv("POLYMARKET_RELAYER_URL"), defaultRelayerV2BaseURL)
 	if stderr != nil {
@@ -1081,29 +1077,13 @@ func mintRelayerV2KeyForAutomation(ctx context.Context, stderr io.Writer, privat
 	loginCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	session, err := auth.NewSIWESession(signer, gammaURL)
+	key, err := relayerauth.MintV2Key(loginCtx, relayerauth.MintV2KeyRequest{
+		PrivateKey: privateKey,
+		GammaURL:   gammaURL,
+		RelayerURL: relayerURL,
+	})
 	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("new siwe session: %w", err)
-	}
-	if err := session.Login(loginCtx); err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("siwe login: %w", err)
-	}
-	maker, err := auth.MakerAddressForSignatureType(signer.Address(), 137, 3)
-	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("derive deposit wallet maker: %w", err)
-	}
-	body := gamma.NewCreateProfileRequest(
-		signer.Address(),
-		maker,
-		"metamask",
-		time.Now().UnixMilli(),
-	)
-	if _, err := gamma.CreateProfile(loginCtx, session.HTTPClient(), gammaURL, body); err != nil && !strings.Contains(err.Error(), "HTTP 409") {
-		return relayer.V2APIKey{}, "", fmt.Errorf("create profile: %w", err)
-	}
-	key, err := relayer.MintV2APIKey(loginCtx, session.HTTPClient(), relayerURL)
-	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("mint v2 relayer key: %w", err)
+		return relayer.V2APIKey{}, "", err
 	}
 	target := relayerEnvFileCandidates()[0]
 	abs, err := filepath.Abs(target)

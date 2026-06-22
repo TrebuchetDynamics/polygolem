@@ -12,9 +12,14 @@ This directory contains the canonical documentation for polygolem. For a single 
 | See a real EOA-to-filled-sell trade with every tx and gas figure | [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) |
 | See all CLI commands | [COMMANDS.md](./COMMANDS.md) |
 | Understand the architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Follow the smallest safe path from read-only to tiny live order | [SAFE-HAPPY-PATH.md](./SAFE-HAPPY-PATH.md) |
 | Review safety and risk features | [SAFETY.md](./SAFETY.md) |
+| Review the funds/credential threat model | [THREAT-MODEL.md](./THREAT-MODEL.md) |
+| Understand the dependency/runtime story | [DEPENDENCIES.md](./DEPENDENCIES.md) |
 | Use read-only MCP/OpenAPI agent surfaces | [MCP-OPENAPI.md](./MCP-OPENAPI.md) |
 | Use the AI agent/SDK skill manifest | [../SKILL.md](../SKILL.md) |
+| Run copyable starter examples | [../examples/](../examples/) |
+| Run the opt-in live smoke script | [../scripts/live-smoke.sh](../scripts/live-smoke.sh) |
 | Build or deploy the public docs website | [docs-site/](./docs-site/) |
 | Review the open-source reinforcement roadmap | [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) |
 
@@ -28,7 +33,9 @@ This directory contains the canonical documentation for polygolem. For a single 
 | [BROWSER-SETUP.md](./BROWSER-SETUP.md) | Manual signing fallback and security guidance when `polygolem auth login` is blocked. | **Canonical** |
 | [ENABLE-TRADING-HEADLESS.md](./ENABLE-TRADING-HEADLESS.md) | SDK flow for the UI Enable Trading typed-data prompts: ClobAuth API keys and token approvals. | **Canonical** |
 | [COMMANDS.md](./COMMANDS.md) | Auto-generated CLI reference. Every command, flag, and example. | **Auto-generated** |
+| [SAFE-HAPPY-PATH.md](./SAFE-HAPPY-PATH.md) | Minimal operator path: health, discovery, paper, readiness, tiny capped live order. | **Canonical** |
 | [SAFETY.md](./SAFETY.md) | Read-only default, deposit wallet safety, risk breaker, circuit breaker. | **Canonical** |
+| [THREAT-MODEL.md](./THREAT-MODEL.md) | Private key, API key, relayer key, approvals, token ID, and stale-market checklist. | **Canonical** |
 
 ### Technical Reference
 
@@ -38,6 +45,7 @@ This directory contains the canonical documentation for polygolem. For a single 
 | [CONTRACTS.md](./CONTRACTS.md) | All smart contract addresses, factory ABI, CREATE2 derivation. | **Canonical** |
 | [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md) | How POLY_1271 / deposit wallet signing works. | **Canonical** |
 | [POLYMARKET-COVERAGE-MATRIX.md](./POLYMARKET-COVERAGE-MATRIX.md) | Conservative SDK/CLI/docs/test coverage across Polymarket surfaces. | **Canonical** |
+| [DEPENDENCIES.md](./DEPENDENCIES.md) | Why the binary has crypto-heavy Go dependencies while keeping no runtime sidecars. | **Canonical** |
 
 ### AI Agent Interface
 

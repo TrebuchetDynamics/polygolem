@@ -463,11 +463,14 @@ gofmt -w .
 | Document | What it covers |
 |---|---|
 | [5-Minute Crypto Markets Guide](POLYGOLEM-5M-CRYPTO-GUIDE.md) | End-user demo for discovering and paper trading 5m crypto markets |
+| [Safe Happy Path](docs/SAFE-HAPPY-PATH.md) | Smallest path from read-only checks to a tiny capped live order |
 | [Live Trade Walkthrough](docs/LIVE-TRADE-WALKTHROUGH.md) | End-to-end reference run: every tx, gas figure, and pUSD movement |
 | [Onboarding](docs/ONBOARDING.md) | Complete deposit wallet flow, troubleshooting |
 | [Headless Enable Trading](docs/ENABLE-TRADING-HEADLESS.md) | SDK for UI ClobAuth and token-approval signing |
 | [Browser Fallback](docs/BROWSER-SETUP.md) | Manual signing when headless login is blocked |
 | [Safety](docs/SAFETY.md) | Risk controls, deposit-wallet-only enforcement |
+| [Threat Model](docs/THREAT-MODEL.md) | Funds, credentials, approvals, wrong-token, and stale-market checklist |
+| [Dependencies](docs/DEPENDENCIES.md) | Why crypto-heavy Go dependencies still ship as one binary |
 | [Contracts](docs/CONTRACTS.md) | Contract addresses, factory ABI, CREATE2 derivation |
 | [Architecture](docs/ARCHITECTURE.md) | Package boundaries and dependency direction |
 | [Commands](docs/COMMANDS.md) | Auto-generated CLI reference |
