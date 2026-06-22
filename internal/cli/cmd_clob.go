@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 
@@ -40,6 +41,8 @@ type clobDiagnosticCommandRunner interface {
 	ListBuilderFeeKeys(context.Context, clobdiagnostics.Request) ([]clob.BuilderFeeKeyRecord, error)
 	MarketTradesProbe(context.Context, clobdiagnostics.ProbeRequest) (*clob.MarketTradesProbeResult, error)
 }
+
+const defaultMaxLiveOrderUSD = "1"
 
 func addCLOBOutputFlag(c *cobra.Command, output *string) {
 	c.Flags().StringVar(output, "output", "json", "output format (json)")
@@ -480,6 +483,9 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 				return err
 			}
 			w.clob.SetBuilderCode(builderCode)
+			if err := enforceLimitOrderCap(createOrderPrice, createOrderSize); err != nil {
+				return err
+			}
 			key, err := privateKey()
 			if err != nil {
 				return err
@@ -566,6 +572,9 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 				return err
 			}
 			w.clob.SetBuilderCode(builderCode)
+			if err := enforceMarketOrderCap(marketOrderAmount); err != nil {
+				return err
+			}
 			key, err := privateKey()
 			if err != nil {
 				return err
@@ -618,4 +627,54 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 	cmd.AddCommand(heartbeatCmd)
 
 	return cmd
+}
+
+func enforceLimitOrderCap(price, size string) error {
+	p, err := decimalRat("--price", price)
+	if err != nil {
+		return err
+	}
+	s, err := decimalRat("--size", size)
+	if err != nil {
+		return err
+	}
+	return enforceLiveOrderCap(new(big.Rat).Mul(p, s))
+}
+
+func enforceMarketOrderCap(amount string) error {
+	a, err := decimalRat("--amount", amount)
+	if err != nil {
+		return err
+	}
+	return enforceLiveOrderCap(a)
+}
+
+func enforceLiveOrderCap(notional *big.Rat) error {
+	capValue := strings.TrimSpace(os.Getenv("POLYGOLEM_MAX_LIVE_ORDER_USD"))
+	if capValue == "" {
+		capValue = defaultMaxLiveOrderUSD
+	}
+	capRat, err := decimalRat("POLYGOLEM_MAX_LIVE_ORDER_USD", capValue)
+	if err != nil {
+		return err
+	}
+	if notional.Cmp(capRat) > 0 {
+		return fmt.Errorf("live order notional %s exceeds POLYGOLEM_MAX_LIVE_ORDER_USD=%s", notional.FloatString(6), capRat.FloatString(6))
+	}
+	return nil
+}
+
+func decimalRat(name, value string) (*big.Rat, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, fmt.Errorf("%s is required", name)
+	}
+	if strings.Contains(value, "/") {
+		return nil, fmt.Errorf("%s must be a decimal", name)
+	}
+	r, ok := new(big.Rat).SetString(value)
+	if !ok || r.Sign() <= 0 {
+		return nil, fmt.Errorf("%s must be a positive decimal", name)
+	}
+	return r, nil
 }

@@ -22,7 +22,8 @@ Short checklist for operating polygolem with funds. This is not legal or financi
 4. Confirm enable-trading and CLOB auth readiness.
 5. Confirm token ID, outcome, condition ID, and market window.
 6. Calculate worst-case spend and compare it to a hard cap.
-7. Prefer a tiny `--post-only` limit order before any taking order.
+7. Set `POLYGOLEM_MAX_LIVE_ORDER_USD` to that cap; it defaults to 1.
+8. Prefer a tiny `--post-only` limit order before any taking order.
 8. Save tx hashes, order IDs, and JSON envelopes for audit.
 
 ## Things polygolem should not do

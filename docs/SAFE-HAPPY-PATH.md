@@ -50,6 +50,8 @@ Expected: deposit wallet is derived/deployed, CLOB credentials are available, en
 Use a tiny amount you are willing to lose. Prefer a maker-only order first so an accidental market order cannot immediately take liquidity:
 
 ```bash
+export POLYGOLEM_MAX_LIVE_ORDER_USD=1
+
 polygolem clob create-order \
   --token <TOKEN_ID> \
   --side buy \

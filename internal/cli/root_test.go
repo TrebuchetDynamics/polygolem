@@ -788,6 +788,41 @@ func TestCLOBCreateOrderHasPostOnlyFlag(t *testing.T) {
 	}
 }
 
+func TestCLOBLimitOrderCapRejectsBeforePrivateKey(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "0.50")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	stdout, _, err := executeRootForTest("clob", "create-order", "--token", "1", "--price", "0.25", "--size", "3")
+	if err == nil {
+		t.Fatal("expected live order cap error")
+	}
+	if stdout != "" {
+		t.Fatalf("stdout=%q, want empty", stdout)
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
+	}
+}
+
+func TestCLOBMarketOrderCapRejectsBeforePrivateKey(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "0.50")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	_, _, err := executeRootForTest("clob", "market-order", "--token", "1", "--amount", "0.51")
+	if err == nil {
+		t.Fatal("expected live order cap error")
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
+	}
+}
+
 func TestStreamMarketReadsFromLocalWebSocket(t *testing.T) {
 	upgrader := websocket.Upgrader{}
 	subscriptions := make(chan []string, 1)

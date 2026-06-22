@@ -62,6 +62,7 @@ func writeEnvironmentVariablesSection(b *strings.Builder) {
 	b.WriteString("| `POLYMARKET_CLOB_PASSPHRASE` | Passphrase for `POLYMARKET_CLOB_API_KEY`. |\n")
 	b.WriteString("| `POLYMARKET_BUILDER_CODE` | Optional CLOB V2 order builder attribution bytes32. |\n")
 	b.WriteString("| `POLYMARKET_CLOB_BUILDER_CODE` | Alias for `POLYMARKET_BUILDER_CODE`. |\n")
+	b.WriteString("| `POLYGOLEM_MAX_LIVE_ORDER_USD` | Optional live CLOB order notional cap; defaults to 1 pUSD/USDC equivalent per order. |\n")
 	b.WriteString("| `POLYMARKET_RELAYER_URL` | Optional relayer URL override. |\n\n")
 	b.WriteString("Short-form `CLOB_API_KEY`, `CLOB_SECRET`, `CLOB_PASSPHRASE`, `CLOB_PASS_PHRASE`, `BUILDER_API_KEY`, `BUILDER_SECRET`, and `BUILDER_PASS_PHRASE` are also accepted for local automation.\n\n")
 }
