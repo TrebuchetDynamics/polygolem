@@ -1,0 +1,95 @@
+---
+title: MCP and OpenAPI
+---
+
+Polygolem exposes agent-friendly **read-only** integration surfaces for local
+tooling and SDK experiments. They do not add a hosted proxy, a signing service,
+or any live-trading mutation path.
+
+## Safety boundary
+
+MCP and OpenAPI v1 must not expose:
+
+- live order placement or cancellation;
+- private-key signing;
+- token approvals;
+- bridge withdrawals;
+- deposit-wallet relayer submission;
+- authenticated trading mutations.
+
+Use the regular CLI and SDK safety gates for future mutating flows. The agent
+surfaces are for discovery, market data, public account reads, and diagnostics.
+
+## MCP stdio server
+
+Run the minimal MCP stdio server from the repo root:
+
+```bash
+go run ./cmd/polygolem_mcp
+```
+
+List safe tools with one JSON-RPC line:
+
+```bash
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  | go run ./cmd/polygolem_mcp
+```
+
+Current tool manifest:
+
+| Tool | Purpose |
+| ---- | ------- |
+| `polygolem.health` | Public API reachability check. |
+| `polygolem.discover_search` | Read-only market search. |
+| `polygolem.data_positions` | Public Data API position lookup. |
+| `polygolem.orderbook_book` | CLOB order book read. |
+| `polygolem.marketdata_snapshot` | Local market-data tracker snapshot. |
+
+By default, `cmd/polygolem_mcp` exposes the manifest and rejects unconfigured
+execution. Embedders can wire concrete read-only SDK clients with
+`pkg/mcp.NewServerWithHandlers` or `pkg/mcp.NewSDKReadOnlyHandlers`.
+
+## OpenAPI spec
+
+Print the read-only OpenAPI 3.1 document:
+
+```bash
+go run ./cmd/polygolem_openapi
+```
+
+Current paths:
+
+| Path | Purpose |
+| ---- | ------- |
+| `GET /health` | API health. |
+| `GET /diag` | Local diagnostic envelope. |
+| `GET /discover/search?q=...` | Public market search. |
+| `GET /data/positions?user=...` | Public user position reads. |
+| `GET /orderbook/{token_id}` | CLOB order book read. |
+| `GET /marketdata/snapshot?token_id=...` | Local market-data snapshot. |
+
+This is a spec artifact for local proxy/tooling experiments. Polygolem does not
+ship or operate a hosted proxy service.
+
+## Go embedding sketch
+
+```go
+handlers := mcp.NewSDKReadOnlyHandlers(
+    mcp.HandlerConfig{Timeout: 10 * time.Second},
+    gamma.NewClient(""),
+    data.NewClient(data.Config{}),
+    clob.NewClient(clob.Config{}),
+)
+server := mcp.NewServerWithHandlers(handlers)
+_ = server
+```
+
+For market-data snapshots, feed a `marketdata.Tracker` from your websocket
+reader and register `mcp.NewMarketDataSnapshotHandler(tracker)` as the
+`polygolem.marketdata_snapshot` handler.
+
+## Related
+
+- [Go SDK Contracts](/docs/reference/sdk)
+- [CLI Commands](/docs/reference/cli)
+- [Safety Model](/docs/concepts/safety)

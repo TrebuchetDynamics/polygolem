@@ -6,7 +6,7 @@
 
 <p align="center">
   Discover markets, paper trade, and trade on Polymarket V2 through deposit wallets.<br>
-  One binary. No Python. No npm. No opaque wrappers.
+  One binary. No Python/npm runtime in the signing path. No opaque wrappers.
 </p>
 
 <p align="center">
@@ -22,13 +22,14 @@
 ## Contents
 
 - [Quick Start](#quick-start)
+- [What is Polymarket?](#what-is-polymarket)
 - [Known Limitations](#known-limitations)
 - [Try It — No Credentials Needed](#try-it--no-credentials-needed)
 - [5-Minute Crypto Markets Demo](#5-minute-crypto-markets-demo)
 - [Installation](#installation)
 - [What's New](#whats-new)
 - [Who This Is For](#who-this-is-for)
-- [The Problem We Solve](#the-problem-we-solve)
+- [Why Polygolem?](#why-polygolem)
 - [Production Validation](#production-validation)
 - [Features](#features)
 - [Go SDK](#go-sdk)
@@ -58,6 +59,28 @@ polygolem health
 No credentials needed. Read-only is the default for everything until you set
 `POLYMARKET_PRIVATE_KEY`. For a quick tour with zero setup, see
 [Try It — No Credentials Needed](#try-it--no-credentials-needed) below.
+
+---
+
+## What is Polymarket?
+
+Polymarket is a prediction-market exchange. Users trade YES/NO shares on
+real-world outcomes such as elections, sports, crypto prices, and macro events.
+A share usually trades between $0 and $1; the price is roughly the market's
+implied probability before fees, spread, and liquidity caveats.
+
+A useful Polymarket integration touches several surfaces:
+
+| Surface | What it answers | Auth |
+|---|---|---|
+| Gamma API | What markets, events, tags, and comments exist? | None |
+| CLOB API | What are the live books/prices, and how do I place/cancel orders? | None for reads, L2 auth for trading |
+| Data API | What positions, holders, activity, and leaderboards exist? | Mostly none |
+| WebSocket | What changed in real time? | None for market streams, L2 auth for user streams |
+| Relayer + contracts | How do deposit-wallet deploys, approvals, settlement, and signatures work? | Relayer auth / wallet signatures |
+
+Polygolem wraps these pieces in a Go CLI and SDK while keeping read-only paths
+credential-free and mutating paths explicit.
 
 ---
 
@@ -173,38 +196,45 @@ See [CHANGELOG.md](CHANGELOG.md) for full details.
 - **Quant developers** who want deterministic, compiled infrastructure with type safety
 - **Operators** running headless trading systems that need auditability and local signing
 - **Engineers** embedding Polymarket data and execution into larger Go services
-- **Developers** who want one dependency, not a Python virtualenv + npm + Docker compose
+- **Developers** who want one compiled artifact, not a Python virtualenv + npm + Docker compose
 
-If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with fixture-tested V2 deposit-wallet signing, polygolem focuses on that path with documented tests, fixtures, and live validation evidence.
+If you are writing a Polymarket bot in Python or TypeScript, start with
+Polymarket's official clients. If you are building in Go, or you want a single
+CLI binary with fixture-tested V2 deposit-wallet signing, Polygolem focuses on
+that path.
 
 ---
 
-## The Problem We Solve
+## Why Polygolem?
 
-Polymarket migrated to V2 in April 2026. The new model requires **deposit wallets** (ERC-1967 proxies with ERC-1271 validation) instead of EOAs as order makers. This broke most existing tooling.
+Polymarket migrated to V2 in April 2026. The current production trading path
+uses **deposit wallets** (ERC-1967 proxies with ERC-1271 validation) as order
+makers, while the EOA still authenticates and signs. Polygolem exists to make
+that model understandable, testable, and usable from Go.
 
-| | Official Python/TS SDKs | polygolem |
-|---|---|---|
-| **Language** | Python / TypeScript | Go |
-| **Dependencies** | pip/npm + 10+ transitive packages | Go stdlib + `cobra` |
-| **Distribution** | Package manager install | Single static binary |
-| **V2 deposit wallet** | Supported (with known bugs) | Supported, production-validated |
-| **EOA signing** | Supported (produces ghost fills on V2) | **Blocked** — deposit-wallet only |
-| **Version negotiation** | Hardcoded `CLOB_VERSION = "1"` → breaks on upgrades | Dynamic `/version` query before signing |
-| **Credential security** | Auth headers leaked in error logs ([#327](https://github.com/Polymarket/clob-client/issues/327)) | Redacted in all output and logs |
-| **Tick size caching** | In-memory per-instance, stale on update | Fresh fetch per order placement |
-| **API key propagation** | 2-minute delay, no status polling | Derived on-demand with immediate use |
-| **Local signing** | Optional (can use remote signers) | **Required** — key never leaves process |
-| **External SDK in trust path** | Yes (Polymarket Python/TS SDKs) | No — all protocol code in this repo |
-| **Go embedding** | Not possible | Native `pkg/` packages |
-| **Read-only default** | No | Yes — credentials required explicitly |
+Use Polymarket's official Python/TypeScript clients when those ecosystems fit
+your stack. Use Polygolem when you need:
 
-**Concrete issues we avoid:**
+- **Go-native integration** — importable `pkg/` packages plus a CLI binary.
+- **Read-only first workflows** — health, market search, order books, streams,
+  public wallet analytics, and paper trading before credentials.
+- **V2 deposit-wallet focus** — POLY_1271 order signing, relayer onboarding,
+  approvals, balances, and settlement readiness documented in one place.
+- **Fixture-backed protocol evidence** — checked-in vectors for CLOB auth,
+  V2 orders, HMAC headers, CTF calldata, and deposit-wallet batches.
+- **No Python/npm runtime in the signing path** — the production CLI and SDK are
+  Go; Node is used only for the optional docs site/tooling.
 
-- **Hardcoded `CLOB_VERSION = "1"`** in `py-clob-client` caused mass `order_version_mismatch` failures when Polymarket upgraded their EIP-712 domain in April 2026. Polygolem queries `/version` dynamically before every signing session.
-- **Auth headers leaked in error logs** (TypeScript client [#327](https://github.com/Polymarket/clob-client/issues/327)). Polygolem redacts all secrets in errors, logs, and JSON output — tested and enforced.
-- **Tick size caching bugs** ([#265](https://github.com/Polymarket/clob-client/issues/265)) cause valid orders to be rejected because stale tick sizes are cached per client instance. Polygolem fetches tick sizes fresh per order placement.
-- **No official Go client exists** — only scattered community efforts with varying completeness. Polygolem is a unified, production-validated Go-native SDK.
+### Evidence for these claims
+
+| Claim | Where to verify |
+|---|---|
+| Official Python/TypeScript clients exist | `https://github.com/Polymarket/py-clob-client` and `https://github.com/Polymarket/clob-client` |
+| Polygolem is Go-native | `go.mod`, `cmd/polygolem`, and `pkg/` packages |
+| Read-only commands work without credentials | `polygolem health --json`, `polygolem discover search`, `polygolem orderbook get` |
+| Deposit-wallet/POLY_1271 flow is fixture-tested | `fixtures/conformance/order_v2_poly1271.json`, `fixtures/protocol/eip712_orders.json`, `tests/conformance_vectors_test.go` |
+| Secret redaction is tested | `internal/cli/cmd_diag_test.go` |
+| Public API shapes are pinned | `fixtures/schemas/`, `tests/json_schema_contract_test.go` |
 
 ---
 

@@ -4,6 +4,36 @@ title: Polymarket API Overview
 
 Understanding the Polymarket ecosystem APIs that polygolem wraps.
 
+## What is Polymarket?
+
+Polymarket is a prediction-market exchange. Users trade outcome shares for
+questions like "Will BTC be above $X at 12:00?" or "Will candidate Y win?" A
+YES or NO share usually trades between $0 and $1; a $0.62 YES price is roughly a
+62% market-implied probability before fees, spread, and liquidity caveats.
+
+A complete Polymarket integration needs more than one API:
+
+| Layer | What it answers | Typical auth |
+| ----- | --------------- | ------------ |
+| Gamma | What markets/events exist? | None |
+| CLOB | What are the live books/prices, and how do I place/cancel orders? | None for reads, L2 auth for trading |
+| Data API | What positions, holders, activity, leaderboards, and analytics exist? | Mostly none |
+| WebSocket | What changed in real time? | None for market streams, L2 auth for user streams |
+| Relayer | How do deposit-wallet deploy/approval batches get submitted? | Relayer auth |
+| Polygon contracts | What settles funds, positions, approvals, and signatures on-chain? | Wallet signatures / chain calls |
+
+Polygolem gives these layers one Go-shaped interface while keeping read-only
+paths credential-free and mutating paths explicit.
+
+## The short version
+
+- Use **Gamma** to find markets and metadata.
+- Use **CLOB public reads** for order books, prices, tick sizes, and fee rates.
+- Use **Data API** for wallet/portfolio/holder analytics.
+- Use **WebSocket** for live market and user-event streams.
+- Use **Relayer + contracts** for deposit-wallet lifecycle operations.
+- Use **CLOB authenticated endpoints** for live order placement and cancels.
+
 ## Gamma API (`gamma-api.polymarket.com`)
 
 **Read-only. No authentication.**
