@@ -463,6 +463,7 @@ gofmt -w .
 | Document | What it covers |
 |---|---|
 | [5-Minute Crypto Markets Guide](POLYGOLEM-5M-CRYPTO-GUIDE.md) | End-user demo for discovering and paper trading 5m crypto markets |
+| [Operator One-Pager](docs/OPERATOR-ONE-PAGER.md) | Short no-wallet and pre-live checklist |
 | [Safe Happy Path](docs/SAFE-HAPPY-PATH.md) | Smallest path from read-only checks to a tiny capped live order |
 | [Live Trade Walkthrough](docs/LIVE-TRADE-WALKTHROUGH.md) | End-to-end reference run: every tx, gas figure, and pUSD movement |
 | [Onboarding](docs/ONBOARDING.md) | Complete deposit wallet flow, troubleshooting |
@@ -471,6 +472,7 @@ gofmt -w .
 | [Safety](docs/SAFETY.md) | Risk controls, deposit-wallet-only enforcement |
 | [Threat Model](docs/THREAT-MODEL.md) | Funds, credentials, approvals, wrong-token, and stale-market checklist |
 | [Dependencies](docs/DEPENDENCIES.md) | Why crypto-heavy Go dependencies still ship as one binary |
+| [Upstream Drift Runbook](docs/UPSTREAM-DRIFT-RUNBOOK.md) | Live smoke and fixture-first response plan for upstream API changes |
 | [Contracts](docs/CONTRACTS.md) | Contract addresses, factory ABI, CREATE2 derivation |
 | [Architecture](docs/ARCHITECTURE.md) | Package boundaries and dependency direction |
 | [Commands](docs/COMMANDS.md) | Auto-generated CLI reference |

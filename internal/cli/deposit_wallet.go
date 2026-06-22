@@ -1025,14 +1025,14 @@ func relayerClientFromEnv() (*relayer.Client, error) {
 		relayerURL = defaultRelayerURL
 	}
 
-	if key, _, ok := relayerV2KeyFromProcessEnv(); ok {
+	if key, _, ok := relayerauth.V2KeyFromProcessEnv(); ok {
 		return relayer.NewV2(relayerURL, key, 137)
 	}
 
 	if bc, err := builderConfigFromEnv(); err == nil {
 		return relayer.New(relayerURL, bc, 137)
 	}
-	if key, _, ok := relayerV2KeyFromFiles(); ok {
+	if key, _, ok := relayerauth.V2KeyFromFiles(relayerEnvFileCandidates()); ok {
 		return relayer.NewV2(relayerURL, key, 137)
 	}
 	return nil, fmt.Errorf("builder credentials not configured: set POLYMARKET_BUILDER_API_KEY, POLYMARKET_BUILDER_SECRET, and POLYMARKET_BUILDER_PASSPHRASE (or BUILDER_API_KEY / BUILDER_SECRET / BUILDER_PASS_PHRASE)")
@@ -1043,7 +1043,7 @@ func relayerClientForAutomation(ctx context.Context, stderr io.Writer, privateKe
 	if relayerURL == "" {
 		relayerURL = defaultRelayerURL
 	}
-	if key, source, ok := relayerV2KeyFromProcessEnv(); ok {
+	if key, source, ok := relayerauth.V2KeyFromProcessEnv(); ok {
 		client, err := relayer.NewV2(relayerURL, key, 137)
 		return client, relayerClientAuthResult{Source: source}, err
 	}
@@ -1051,7 +1051,7 @@ func relayerClientForAutomation(ctx context.Context, stderr io.Writer, privateKe
 		client, err := relayer.New(relayerURL, bc, 137)
 		return client, relayerClientAuthResult{Source: "legacy-builder-env"}, err
 	}
-	if key, source, ok := relayerV2KeyFromFiles(); ok {
+	if key, source, ok := relayerauth.V2KeyFromFiles(relayerEnvFileCandidates()); ok {
 		client, err := relayer.NewV2(relayerURL, key, 137)
 		return client, relayerClientAuthResult{Source: source}, err
 	}
@@ -1101,68 +1101,8 @@ func mintRelayerV2KeyForAutomation(ctx context.Context, stderr io.Writer, privat
 	return key, abs, nil
 }
 
-func relayerV2KeyFromProcessEnv() (relayer.V2APIKey, string, bool) {
-	v2Key := strings.TrimSpace(os.Getenv("RELAYER_API_KEY"))
-	v2Addr := strings.TrimSpace(os.Getenv("RELAYER_API_KEY_ADDRESS"))
-	if v2Key != "" && v2Addr != "" {
-		return relayer.V2APIKey{Key: v2Key, Address: v2Addr}, "env", true
-	}
-	return relayer.V2APIKey{}, "", false
-}
-
-func relayerV2KeyFromFiles() (relayer.V2APIKey, string, bool) {
-	for _, path := range relayerEnvFileCandidates() {
-		values, ok := readSimpleEnvFile(path)
-		if !ok {
-			continue
-		}
-		v2Key := strings.TrimSpace(values["RELAYER_API_KEY"])
-		v2Addr := strings.TrimSpace(values["RELAYER_API_KEY_ADDRESS"])
-		if v2Key != "" && v2Addr != "" {
-			return relayer.V2APIKey{Key: v2Key, Address: v2Addr}, path, true
-		}
-	}
-	return relayer.V2APIKey{}, "", false
-}
-
 func relayerEnvFileCandidates() []string {
-	if override := strings.TrimSpace(os.Getenv("POLYGOLEM_RELAYER_ENV_FILE")); override != "" {
-		return []string{override}
-	}
-	return []string{
-		defaultRelayerEnvFile,
-		"../.env.relayer-v2",
-		".env.relayer-v2",
-		"../go-bot/.env",
-		"../.env",
-		".env",
-	}
-}
-
-func readSimpleEnvFile(path string) (map[string]string, bool) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, false
-	}
-	out := make(map[string]string)
-	for _, line := range strings.Split(string(raw), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		line = strings.TrimPrefix(line, "export ")
-		key, value, ok := strings.Cut(line, "=")
-		if !ok {
-			continue
-		}
-		key = strings.TrimSpace(key)
-		value = strings.TrimSpace(value)
-		value = strings.Trim(value, `"'`)
-		if key != "" {
-			out[key] = value
-		}
-	}
-	return out, true
+	return relayerauth.EnvFileCandidates(os.Getenv("POLYGOLEM_RELAYER_ENV_FILE"), defaultRelayerEnvFile)
 }
 
 func requirePrivateKey() (string, error) {
