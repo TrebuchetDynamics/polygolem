@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletfunding"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 )
 
@@ -120,18 +121,18 @@ func TestParsePUSDAmountUsesExactSixDecimalBaseUnits(t *testing.T) {
 		"42":        "42000000",
 	}
 	for input, want := range tests {
-		got, err := parsePUSDAmount(input)
+		got, err := depositwalletfunding.ParsePUSDAmount(input)
 		if err != nil {
-			t.Fatalf("parsePUSDAmount(%q): %v", input, err)
+			t.Fatalf("ParsePUSDAmount(%q): %v", input, err)
 		}
 		if got.String() != want {
-			t.Fatalf("parsePUSDAmount(%q)=%s, want %s", input, got, want)
+			t.Fatalf("ParsePUSDAmount(%q)=%s, want %s", input, got, want)
 		}
 	}
 }
 
 func TestParsePUSDAmountRejectsTooManyNonZeroDecimals(t *testing.T) {
-	if _, err := parsePUSDAmount("0.0000001"); err == nil {
+	if _, err := depositwalletfunding.ParsePUSDAmount("0.0000001"); err == nil {
 		t.Fatal("expected error for sub-micro pUSD amount")
 	}
 }

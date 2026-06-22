@@ -91,7 +91,7 @@ func newAuthLoginBaseCommand(jsonOut bool) *cobra.Command {
 
 The /profiles step is what registers the maker address with Polymarket's
 backend so subsequent CLOB orders are accepted (without it, fresh EOAs
-get HTTP 400 "maker address not allowed"). See BLOCKERS.md "CORRECTION
+get HTTP 400 "maker address not allowed"). See docs/history/BLOCKERS.md "CORRECTION
 2026-05-08" for the captured signup flow this command replicates.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -134,7 +134,7 @@ func (c *Client) DeriveAPIKey(ctx context.Context, privateKey string) (auth.APIK
 }
 
 // DeriveAPIKeyForAddress derives existing CLOB L2 credentials. The 2026-05-08
-// web-UI capture (BLOCKERS.md) showed that even for sigtype-3 deposit-wallet
+// web-UI capture (docs/history/BLOCKERS.md) showed that even for sigtype-3 deposit-wallet
 // users, the CLOB API key is **EOA-bound**: POLY_ADDRESS=EOA, raw 65-byte
 // ECDSA POLY_SIGNATURE — no ERC-7739 wrap. The deposit-wallet identity rides
 // on the order's `signatureType=3` field at the EIP-712 layer plus the

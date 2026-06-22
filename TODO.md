@@ -7,9 +7,9 @@ These notes came from a blunt review of what looks wrong or fragile about the pr
 ### Public positioning
 
 - [ ] Narrow the homepage/README promise to one clear claim: **"Go CLI/SDK for safe Polymarket V2 bot infrastructure."**
-- [ ] Replace broad marketing language such as "only production-ready option" with evidence-backed claims.
-- [ ] Add a visible "Known limitations" section near the top of the README.
-- [ ] Clearly distinguish what is proven from what is experimental, research, or internal archaeology.
+- [x] Replace broad marketing language such as "only production-ready option" with evidence-backed claims.
+- [x] Add a visible "Known limitations" section near the top of the README.
+- [x] Clearly distinguish what is proven from what is experimental, research, or internal archaeology.
 
 ### Trust and funds safety
 
@@ -22,8 +22,8 @@ These notes came from a blunt review of what looks wrong or fragile about the pr
 ### Onboarding and demo path
 
 - [ ] Add one end-to-end demo path: read-only check → paper trade → live-readiness check → tiny live order with warnings.
-- [ ] Make the deposit-wallet/new-user onboarding limitation explicit: one-time browser login is still required for some flows.
-- [ ] Clarify what is fully headless versus what requires browser/manual setup.
+- [x] Make the deposit-wallet/new-user onboarding limitation explicit: one-time browser login is still required for some flows.
+- [x] Clarify what is fully headless versus what requires browser/manual setup.
 - [ ] Provide a compatibility matrix for Go version, CLOB versioning, wallet type, signature type, relayer/deposit-wallet support, and supported flows.
 
 ### Evidence and validation
@@ -36,13 +36,13 @@ These notes came from a blunt review of what looks wrong or fragile about the pr
 ### Scope control and docs cleanup
 
 - [ ] Separate the public reader path from internal archaeology: move obsolete investigations, correction notes, PRDs, probes, and historical blockers out of the main path.
-- [ ] Keep `BLOCKERS.md`/history useful but avoid making new users parse old wrong conclusions before they can run the happy path.
+- [x] Keep `docs/history/BLOCKERS.md`/history useful but avoid making new users parse old wrong conclusions before they can run the happy path.
 - [ ] Re-evaluate whether Polydart, docs site, live probes, open-source project analysis, paper trading, SDK, CLI, and deposit-wallet flows should all be presented at once.
 - [ ] Define the core thing polygolem does better than anything else.
 
 ### Dependency and version story
 
-- [ ] Revisit `go.mod` declaring `go 1.25.0`; explain or adjust if it weakens installability.
+- [x] Revisit `go.mod` declaring `go 1.25.0`; explain or adjust if it weakens installability.
 - [ ] Explain the heavy crypto/zk/Ethereum indirect dependency tree so the "simple static binary" story remains credible.
 
 ## Blunt diagnosis

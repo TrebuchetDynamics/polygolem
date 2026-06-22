@@ -392,7 +392,13 @@ func TestJSONAuthExportKeyConfirmedOutputsWalletImportData(t *testing.T) {
 	const privateKey = "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
 	t.Setenv("POLYMARKET_PRIVATE_KEY", privateKey)
 
-	stdout, stderr, err := executeRootForTest("--json", "auth", "export-key", "--confirm")
+	signer, err := auth.NewPrivateKeySigner(privateKey, 137)
+	if err != nil {
+		t.Fatalf("init signer: %v", err)
+	}
+	suffix := addressSuffix(signer.Address(), 6)
+
+	stdout, stderr, err := executeRootForTest("--json", "auth", "export-key", "--confirm", "EXPORT_PRIVATE_KEY", "--confirm-address-suffix", suffix)
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}

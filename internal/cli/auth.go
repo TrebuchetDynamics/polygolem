@@ -117,11 +117,12 @@ func warnIfNoDepositKey(ctx context.Context, stderr io.Writer, privateKey string
 
 func newAuthExportKeyCommand(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
-	var confirm bool
+	var confirm string
+	var confirmAddressSuffix string
 
 	cmd := &cobra.Command{
 		Use:   "export-key",
-		Short: "Display private key for wallet import (use with care)",
+		Short: "HIGH RISK: display private key for wallet import",
 		Long: `Displays the current POLYMARKET_PRIVATE_KEY and derived addresses
 in formats suitable for wallet import. This is useful when a bot/agent
 generated the key and the user needs to import it into MetaMask/Rabby/etc.
@@ -130,6 +131,8 @@ for the one-time Polymarket browser signup.
 SECURITY WARNING: The private key will be printed to your terminal.
 Anyone with access to your screen or shell history can steal your funds.
 Use this only in a secure environment and clear your terminal history after.
+This command requires both a typed confirmation token and the last six hex
+characters of the EOA address to reduce accidental key disclosure.
 
 Recommended flow for bot-generated keys:
   1. Run this command in a secure terminal
@@ -144,15 +147,16 @@ Recommended flow for bot-generated keys:
 				return fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
 			}
 
-			if !confirm {
-				return fmt.Errorf("this command prints your private key to the terminal; pass --confirm to proceed")
-			}
-
 			signer, err := auth.NewPrivateKeySigner(privateKey, 137)
 			if err != nil {
 				return fmt.Errorf("init signer: %w", err)
 			}
 			owner := signer.Address()
+			expectedSuffix := addressSuffix(owner, 6)
+			gotSuffix := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(confirmAddressSuffix), "0x"))
+			if confirm != "EXPORT_PRIVATE_KEY" || gotSuffix != expectedSuffix {
+				return fmt.Errorf("this command prints your private key to the terminal; pass --confirm EXPORT_PRIVATE_KEY --confirm-address-suffix %s to proceed", expectedSuffix)
+			}
 
 			depositWallet, err := auth.MakerAddressForSignatureType(owner, 137, 3)
 			if err != nil {
@@ -171,8 +175,17 @@ Recommended flow for bot-generated keys:
 		},
 	}
 
-	cmd.Flags().BoolVar(&confirm, "confirm", false, "acknowledge security risk and print the private key")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "must be exactly EXPORT_PRIVATE_KEY to print the private key")
+	cmd.Flags().StringVar(&confirmAddressSuffix, "confirm-address-suffix", "", "last 6 hex characters of the EOA address")
 	return cmd
+}
+
+func addressSuffix(address string, n int) string {
+	clean := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(address), "0x"))
+	if len(clean) <= n {
+		return clean
+	}
+	return clean[len(clean)-n:]
 }
 
 func warnIfNoDepositKeySimple(stderr io.Writer, privateKey string) {

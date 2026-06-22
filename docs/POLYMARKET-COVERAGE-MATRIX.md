@@ -36,6 +36,6 @@ execution gates remain documented gaps until they have local tests.
   Cobra command tree. Run `go run ./cmd/polygolem_docs` after changing CLI
   commands.
 - The shared CLI v1 JSON envelope is implemented for success payloads, group
-  command usage errors, not-implemented stubs, and common auth failures.
-  Remaining JSON-contract work is more precise protocol/transport/chain error
-  classification and structured `error.details` for upstream failures.
+  command usage errors, not-implemented stubs, common auth failures, and
+  protocol/transport/chain failures with structured `error.details` for
+  upstream HTTP status/source where available.

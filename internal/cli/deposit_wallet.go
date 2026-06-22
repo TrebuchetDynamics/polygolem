@@ -16,6 +16,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/internal/gamma"
 	"github.com/TrebuchetDynamics/polygolem/internal/relayer"
 	"github.com/TrebuchetDynamics/polygolem/internal/rpc"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletfunding"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletreads"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletsettlement"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
@@ -572,39 +573,16 @@ func depositWalletFundCmd(jsonOut bool) *cobra.Command {
 Requires POL for gas on Polygon.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
+			result, err := depositwalletfunding.Fund(cmd.Context(), depositwalletfunding.FundConfig{
+				PrivateKey: requirePrivateKey,
+			}, depositwalletfunding.FundRequest{
+				AmountPUSD: amountPUSD,
+				RPCURL:     rpcURL,
+			})
 			if err != nil {
 				return err
 			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			owner := signer.Address()
-			wallet, err := auth.MakerAddressForSignatureType(owner, 137, 3)
-			if err != nil {
-				return fmt.Errorf("derive deposit wallet: %w", err)
-			}
-			if strings.TrimSpace(amountPUSD) == "" {
-				return fmt.Errorf("--amount is required (pUSD to transfer, e.g. 0.71)")
-			}
-			amountFloat, err := parsePUSDAmount(amountPUSD)
-			if err != nil {
-				return fmt.Errorf("invalid amount: %w", err)
-			}
-			if amountFloat.Sign() <= 0 {
-				return fmt.Errorf("amount must be positive")
-			}
-			txHash, err := rpc.TransferPUSD(cmd.Context(), key, wallet, amountFloat, rpcURL)
-			if err != nil {
-				return fmt.Errorf("transfer pUSD: %w", err)
-			}
-			return printJSON(cmd, map[string]string{
-				"txHash": txHash,
-				"from":   owner,
-				"to":     wallet,
-				"amount": amountPUSD,
-			})
+			return printJSON(cmd, result)
 		},
 	}
 	cmd.Flags().StringVar(&amountPUSD, "amount", "", "pUSD amount to transfer (e.g. 0.71)")
@@ -634,85 +612,23 @@ afterwards to move pUSD into the deposit wallet.
 --max-pol-in caps the POL the router may consume (e.g. "10" for 10 POL).`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
+			result, err := depositwalletfunding.Swap(cmd.Context(), depositwalletfunding.SwapConfig{
+				PrivateKey: requirePrivateKey,
+			}, depositwalletfunding.SwapRequest{
+				AmountPUSDOut: amountPUSDOut,
+				MaxPOLIn:      maxPOLIn,
+				RPCURL:        rpcURL,
+			})
 			if err != nil {
 				return err
 			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			if strings.TrimSpace(amountPUSDOut) == "" {
-				return fmt.Errorf("--out-pusd is required (pUSD to receive, e.g. 0.72)")
-			}
-			if strings.TrimSpace(maxPOLIn) == "" {
-				return fmt.Errorf("--max-pol-in is required (max POL to spend, e.g. 10)")
-			}
-			outPUSD, err := parsePUSDAmount(amountPUSDOut)
-			if err != nil {
-				return fmt.Errorf("invalid --out-pusd: %w", err)
-			}
-			if outPUSD.Sign() <= 0 {
-				return fmt.Errorf("--out-pusd must be positive")
-			}
-			maxPOLWei, err := parsePOLAmount(maxPOLIn)
-			if err != nil {
-				return fmt.Errorf("invalid --max-pol-in: %w", err)
-			}
-			if maxPOLWei.Sign() <= 0 {
-				return fmt.Errorf("--max-pol-in must be positive")
-			}
-			txHash, err := rpc.SwapPOLForExactPUSD(cmd.Context(), key, outPUSD, maxPOLWei, rpcURL)
-			if err != nil {
-				return fmt.Errorf("swap POL→pUSD: %w", err)
-			}
-			return printJSON(cmd, map[string]string{
-				"txHash":        txHash,
-				"recipient":     signer.Address(),
-				"amountPUSDOut": amountPUSDOut,
-				"maxPOLIn":      maxPOLIn,
-			})
+			return printJSON(cmd, result)
 		},
 	}
 	cmd.Flags().StringVar(&amountPUSDOut, "out-pusd", "", "exact pUSD amount to receive (e.g. 0.72)")
 	cmd.Flags().StringVar(&maxPOLIn, "max-pol-in", "", "max POL the router may consume (e.g. 10)")
 	cmd.Flags().StringVar(&rpcURL, "rpc-url", "", "Polygon RPC URL (default: public node)")
 	return cmd
-}
-
-// parsePOLAmount converts a human POL string (e.g. "10", "0.5") to wei
-// (18-decimal *big.Int).
-func parsePOLAmount(s string) (*big.Int, error) {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil, fmt.Errorf("empty amount")
-	}
-	parts := strings.Split(s, ".")
-	if len(parts) > 2 {
-		return nil, fmt.Errorf("invalid POL amount %q", s)
-	}
-	whole, ok := new(big.Int).SetString(parts[0], 10)
-	if !ok {
-		return nil, fmt.Errorf("invalid integer part: %s", parts[0])
-	}
-	weiPerPOL := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
-	result := new(big.Int).Mul(whole, weiPerPOL)
-	if len(parts) == 2 {
-		frac := parts[1]
-		if len(frac) > 18 {
-			frac = frac[:18]
-		}
-		// pad to 18 digits
-		for len(frac) < 18 {
-			frac += "0"
-		}
-		fracInt, ok := new(big.Int).SetString(frac, 10)
-		if !ok {
-			return nil, fmt.Errorf("invalid fractional part: %s", parts[1])
-		}
-		result.Add(result, fracInt)
-	}
-	return result, nil
 }
 
 func depositWalletOnboardCmd(jsonOut bool) *cobra.Command {
@@ -819,20 +735,13 @@ automatically.`,
 			}
 
 			if strings.TrimSpace(fundAmount) != "" {
-				amountFloat, err := parsePUSDAmount(fundAmount)
-				if err != nil {
-					return fmt.Errorf("invalid --fund-amount: %w", err)
-				}
-				txHash, err := rpc.TransferPUSD(cmd.Context(), key, wallet, amountFloat, "")
+				fundResult, err := depositwalletfunding.Fund(cmd.Context(), depositwalletfunding.FundConfig{
+					PrivateKey: func() (string, error) { return key, nil },
+				}, depositwalletfunding.FundRequest{AmountPUSD: fundAmount})
 				if err != nil {
 					return fmt.Errorf("fund transfer: %w", err)
 				}
-				result["fund"] = map[string]string{
-					"txHash": txHash,
-					"from":   owner,
-					"to":     wallet,
-					"amount": fundAmount,
-				}
+				result["fund"] = fundResult
 			}
 
 			result["nextSteps"] = []string{
@@ -1085,68 +994,6 @@ func depositWalletDeployed(ctx context.Context, rc *relayer.Client, owner string
 		return false, fmt.Errorf("relayer reported not deployed and on-chain code check failed: %w", err)
 	}
 	return status.Deployed, nil
-}
-
-func parsePUSDAmount(s string) (*big.Int, error) {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil, fmt.Errorf("empty amount")
-	}
-	if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "+") {
-		return nil, fmt.Errorf("amount must be unsigned decimal")
-	}
-	parts := strings.Split(s, ".")
-	if len(parts) > 2 {
-		return nil, fmt.Errorf("invalid amount %q", s)
-	}
-	wholePart := parts[0]
-	if wholePart == "" {
-		wholePart = "0"
-	}
-	if !decimalDigitsOnly(wholePart) {
-		return nil, fmt.Errorf("invalid integer part: %s", parts[0])
-	}
-	fracPart := ""
-	if len(parts) == 2 {
-		fracPart = parts[1]
-		if !decimalDigitsOnly(fracPart) {
-			return nil, fmt.Errorf("invalid fractional part: %s", fracPart)
-		}
-		for len(fracPart) > 6 && strings.HasSuffix(fracPart, "0") {
-			fracPart = strings.TrimSuffix(fracPart, "0")
-		}
-		if len(fracPart) > 6 {
-			return nil, fmt.Errorf("pUSD supports at most 6 decimals")
-		}
-	}
-	for len(fracPart) < 6 {
-		fracPart += "0"
-	}
-	whole, ok := new(big.Int).SetString(wholePart, 10)
-	if !ok {
-		return nil, fmt.Errorf("invalid integer part: %s", wholePart)
-	}
-	result := new(big.Int).Mul(whole, big.NewInt(1000000))
-	if fracPart != "" {
-		frac, ok := new(big.Int).SetString(fracPart, 10)
-		if !ok {
-			return nil, fmt.Errorf("invalid fractional part: %s", fracPart)
-		}
-		result.Add(result, frac)
-	}
-	return result, nil
-}
-
-func decimalDigitsOnly(s string) bool {
-	if s == "" {
-		return true
-	}
-	for _, r := range s {
-		if r < '0' || r > '9' {
-			return false
-		}
-	}
-	return true
 }
 
 func builderConfigFromEnv() (auth.BuilderConfig, error) {

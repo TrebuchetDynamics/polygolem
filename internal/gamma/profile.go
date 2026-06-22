@@ -13,7 +13,7 @@ import (
 // CreateProfileRequest mirrors the JSON body the polymarket.com web UI
 // posts to gamma-api.polymarket.com/profiles after SIWE login. The shape
 // was decoded from a Playwright capture (see scripts/playwright-capture/
-// and BLOCKERS.md "CORRECTION 2026-05-08").
+// and docs/history/BLOCKERS.md "CORRECTION 2026-05-08").
 //
 // `ProxyWallet` is the maker address polygolem will register: for the
 // deposit-wallet path it's `MakerAddressForSignatureType(eoa, 137, 3)`;

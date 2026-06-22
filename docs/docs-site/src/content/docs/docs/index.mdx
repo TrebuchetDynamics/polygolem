@@ -11,6 +11,13 @@ No Python. No npm. No opaque wrappers.
 
 **Read-only by default.** No credentials needed to start.
 
+## Known limitations
+
+- Live trading can lose funds; use paper mode and preflight checks first.
+- New-user deposit-wallet setup can require one-time browser login.
+- Only deposit-wallet / POLY_1271 trading is supported for new production accounts.
+- `pkg/experimental/` APIs can change before promotion.
+
 **Trading requires a deposit wallet (type 3 / POLY_1271).** EOA, proxy, and Safe
 are blocked for new API users by Polymarket's CLOB V2. Polygolem handles the
 full deposit wallet lifecycle: derive, deploy via relayer, fund, approve, trade.
@@ -26,7 +33,7 @@ polygolem discover crypto --asset BTC --interval 5m --enrich
 - **Operators** running headless trading systems that need auditability and local signing
 - **Engineers** embedding Polymarket data and execution into larger Go services
 
-If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with no runtime dependencies, polygolem is the only production-ready option.
+If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with fixture-tested V2 deposit-wallet signing, polygolem focuses on that path with documented tests, fixtures, and live validation evidence.
 
 ## What can you do?
 

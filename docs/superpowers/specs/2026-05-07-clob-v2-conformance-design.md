@@ -2,7 +2,7 @@
 
 **Status:** approved (brainstormed 2026-05-07)
 **Owner:** polygolem
-**Track:** B-5 hardening (per `BLOCKERS.md`)
+**Track:** B-5 hardening (per `docs/history/BLOCKERS.md`)
 **Goal:** Close the gaps in polygolem's partially-landed CLOB V2 order
 signing so the V2 wire format reaches production cleanly across all
 signature types and market kinds.
@@ -105,7 +105,7 @@ This track closes each gap.
    - sigtype 3 (deposit-wallet POLY_1271), regular market.
    Hashes sourced from the `foxme666/Polymarket-golang` V2 fork after it
    is cloned into `opensource-projects/repos/`.
-5. **Light docs repositioning** — `BLOCKERS.md`, `README.md`,
+5. **Light docs repositioning** — `docs/history/BLOCKERS.md`, `README.md`,
    `docs/COMMANDS.md`, `docs/PRD.md`, `docs/SAFETY.md`,
    `docs/DEPOSIT-WALLET-MIGRATION.md`. Surgical edits where V1
    contracts, V1 fields, or out-of-date framing appear. No global
@@ -398,7 +398,7 @@ will actually hit:
 
 | File | Change |
 |---|---|
-| `BLOCKERS.md` | Mark B-5 truly closed when this lands; demote B-6 to operational. Note the empirical "new API user → deposit-wallet only" finding so future readers don't repeat the discovery work. |
+| `docs/history/BLOCKERS.md` | Mark B-5 truly closed when this lands; demote B-6 to operational. Note the empirical "new API user → deposit-wallet only" finding so future readers don't repeat the discovery work. |
 | `README.md` | Where text claims V1 contract addresses or client-computed fees, update to V2. Keep deposit-wallet section. Do not promote any single sigtype as "the V2 default." |
 | `docs/COMMANDS.md` | Same surgical edits where V1 details surface. |
 | `docs/PRD.md` | Same. |
@@ -444,7 +444,7 @@ CI does not need to run the operator-side step.
    source (it can still appear in `internal/clob/client.go::FeeRateBps`
    read-only API helper if any caller needs the server-side fee for
    display).
-5. `BLOCKERS.md` § B-5 actually closed (the parallel session's claim
+5. `docs/history/BLOCKERS.md` § B-5 actually closed (the parallel session's claim
    becomes true).
 6. README and docs no longer reference V1 contracts or client-computed
    `feeRateBps` as if they were current.
@@ -493,7 +493,7 @@ The plan will sequence:
 9. Rename V2-suffixed identifiers back to unsuffixed.
 10. Add golden-vector fixtures (4).
 11. Light docs repositioning + `tests/docs_safety_test.go` pins;
-    update `BLOCKERS.md` to cite the V2 migration docs as the
+    update `docs/history/BLOCKERS.md` to cite the V2 migration docs as the
     authoritative source for the deposit-wallet mandate.
 12. Operator end-to-end verification (sigtype 3 once builder
     credentials and deposit wallet are funded).

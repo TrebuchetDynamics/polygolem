@@ -22,6 +22,7 @@
 ## Contents
 
 - [Quick Start](#quick-start)
+- [Known Limitations](#known-limitations)
 - [Try It — No Credentials Needed](#try-it--no-credentials-needed)
 - [5-Minute Crypto Markets Demo](#5-minute-crypto-markets-demo)
 - [Installation](#installation)
@@ -57,6 +58,26 @@ polygolem health
 No credentials needed. Read-only is the default for everything until you set
 `POLYMARKET_PRIVATE_KEY`. For a quick tour with zero setup, see
 [Try It — No Credentials Needed](#try-it--no-credentials-needed) below.
+
+---
+
+## Known Limitations
+
+Polygolem is safest when used as a read-only CLI/SDK, paper-trading harness,
+and deposit-wallet V2 implementation reference. Before funding a wallet, note:
+
+- **Live trading can lose funds.** Use paper mode and preflight checks first;
+  live mutation commands require explicit credentials and confirmations.
+- **New-user deposit-wallet setup may require one-time browser login.** The CLI
+  supports headless pieces, but Polymarket account/session state can still
+  require manual browser setup. See [docs/ONBOARDING.md](docs/ONBOARDING.md).
+- **Only deposit-wallet / POLY_1271 trading is supported.** EOA, proxy, and Safe
+  trading modes are blocked for new production accounts.
+- **Experimental SDK packages can change.** Anything under `pkg/experimental/`
+  is not covered by the stable public SDK promise.
+- **Read-only and fixture-tested flows are the strongest path.** Treat live
+  relayer, CLOB, and chain behavior as upstream-dependent and verify with tiny
+  capped runs.
 
 ---
 
@@ -123,8 +144,8 @@ cd polygolem && go build -o polygolem ./cmd/polygolem
 
 ### Requirements
 
-- Go 1.22+
-- No other dependencies — single static binary
+- Go 1.25+ (matches `go.mod` and CI)
+- No runtime dependencies — single static binary
 
 ---
 
@@ -154,7 +175,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full details.
 - **Engineers** embedding Polymarket data and execution into larger Go services
 - **Developers** who want one dependency, not a Python virtualenv + npm + Docker compose
 
-If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with no runtime dependencies, polygolem is the only production-ready option.
+If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with fixture-tested V2 deposit-wallet signing, polygolem focuses on that path with documented tests, fixtures, and live validation evidence.
 
 ---
 

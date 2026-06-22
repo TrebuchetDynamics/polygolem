@@ -46,7 +46,7 @@ polygolem --json version | jq .
 polygolem - Safe Polymarket SDK and CLI for Go
   auth - Inspect authentication readiness
     clob-probe - Probe configured CLOB L2 credentials with read-only calls
-    export-key - Display private key for wallet import (use with care)
+    export-key - HIGH RISK: display private key for wallet import
     headless-onboard - Run SIWE login + mint V2 Relayer API Key
     login - Sign in to Polymarket headlessly and mint V2 relayer credentials
     status - Check authentication readiness and API key status
@@ -220,7 +220,7 @@ polygolem auth [flags]
 | Command | Description |
 |---|---|
 | `polygolem auth clob-probe` | Probe configured CLOB L2 credentials with read-only calls |
-| `polygolem auth export-key` | Display private key for wallet import (use with care) |
+| `polygolem auth export-key` | HIGH RISK: display private key for wallet import |
 | `polygolem auth headless-onboard` | Run SIWE login + mint V2 Relayer API Key |
 | `polygolem auth login` | Sign in to Polymarket headlessly and mint V2 relayer credentials |
 | `polygolem auth status` | Check authentication readiness and API key status |
@@ -255,7 +255,7 @@ polygolem auth clob-probe [flags]
 
 ### polygolem auth export-key
 
-Display private key for wallet import (use with care)
+HIGH RISK: display private key for wallet import
 
 Displays the current POLYMARKET_PRIVATE_KEY and derived addresses
 in formats suitable for wallet import. This is useful when a bot/agent
@@ -265,6 +265,8 @@ for the one-time Polymarket browser signup.
 SECURITY WARNING: The private key will be printed to your terminal.
 Anyone with access to your screen or shell history can steal your funds.
 Use this only in a secure environment and clear your terminal history after.
+This command requires both a typed confirmation token and the last six hex
+characters of the EOA address to reduce accidental key disclosure.
 
 Recommended flow for bot-generated keys:
   1. Run this command in a secure terminal
@@ -283,7 +285,8 @@ polygolem auth export-key [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--confirm` | `bool` | `false` | acknowledge security risk and print the private key |
+| `--confirm` | `string` | `""` | must be exactly EXPORT_PRIVATE_KEY to print the private key |
+| `--confirm-address-suffix` | `string` | `""` | last 6 hex characters of the EOA address |
 | `-h, --help` | `bool` | `false` | help for export-key |
 | `--json` | `bool` | `false` | emit JSON output |
 

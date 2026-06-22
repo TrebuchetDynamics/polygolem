@@ -551,7 +551,7 @@ Cancel afterward to avoid an unintentional fill.
 
 After running steps 2 and 3, append the actual outputs (with
 sensitive values redacted as needed) under a new sub-section here in
-`BLOCKERS.md`:
+`docs/history/BLOCKERS.md`:
 
 ```markdown
 ### Verification run on YYYY-MM-DD

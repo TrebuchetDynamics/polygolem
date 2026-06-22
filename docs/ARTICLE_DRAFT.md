@@ -80,7 +80,7 @@ response: {"apiKey":"b28f3795-db29-6a67-e0f8-892db2d96030",...}
 
 **Why this matters:** The deposit wallet's identity is established at the API key binding step. After that, every authenticated request uses `POLY_ADDRESS=depositWallet` and L2 HMAC headers. The order's `signatureType=3` tells the CTF Exchange to call `isValidSignature` on-chain.
 
-> **Evidence:** Full Playwright capture with fresh EOA `0x4c72...f84` → proxy profile → relayer key → WALLET-CREATE → API key bound to deposit wallet `0x8968...`. All request/response logs in [BLOCKERS.md](https://github.com/TrebuchetDynamics/polygolem/blob/main/BLOCKERS.md) § "CORRECTION 2026-05-08".
+> **Evidence:** Full Playwright capture with fresh EOA `0x4c72...f84` → proxy profile → relayer key → WALLET-CREATE → API key bound to deposit wallet `0x8968...`. All request/response logs in [BLOCKERS.md](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/history/BLOCKERS.md) § "CORRECTION 2026-05-08".
 
 ---
 
@@ -254,7 +254,7 @@ polygolem clob create-order --token <ID> --side buy --price 0.5 --size 10
 3. Polymarket Quickstart Guide — https://docs.polymarket.com/trading/quickstart
 4. Polygolem Repository — https://github.com/TrebuchetDynamics/polygolem
 5. Polygolem ONBOARDING.md — https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/ONBOARDING.md
-6. Polygolem BLOCKERS.md (Playwright capture evidence) — https://github.com/TrebuchetDynamics/polygolem/blob/main/BLOCKERS.md
+6. Polygolem historical blockers log (Playwright capture evidence) — https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/history/BLOCKERS.md
 
 ---
 
