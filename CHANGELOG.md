@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.2.0] — 2026-06-22
+
+### Added
+
+- **Wallet Intelligence V1 (`pkg/intel`, CLI workflows, and context glossary).**
+  Adds reproducible wallet dossier scoring, formula-versioned score output,
+  batch dossier alerts, source-authority/conflict handling, and E2E coverage
+  for read-only wallet intelligence signals.
+- **Public protocol conformance artifacts.** Added fixtures and tests for
+  CLOB auth, builder headers, POLY_1271 order signatures, deposit-wallet
+  batches, CTF calldata, JSON envelopes, and schema contracts so downstream
+  SDKs can verify parity without live credentials.
+- **MCP and OpenAPI surfaces.** Added `cmd/polygolem_mcp`,
+  `cmd/polygolem_openapi`, `pkg/mcp`, `pkg/openapi`, and documentation for
+  read-only agent/tool integrations.
+- **Public SDK expansion.** Added order fills, RFQ dry-run DTOs, CTF operation
+  DTOs, signer interfaces plus HTTP/KMS/Turnkey signer adapters, stream user
+  helpers, richer Gamma discovery collections, and more V2 market/type helpers.
+- **Examples and operator docs.** Added read-only monitor scripts, paper
+  strategy examples, basic/tradegate/boring-paper bots, operator one-pager,
+  safe happy path, threat model, upstream drift runbook, and coverage/parity
+  matrices.
+- **Live BTC 5-minute CLOB contract test and live-smoke script.** These expand
+  optional live validation while keeping default CI on fixture-backed `-short`
+  tests.
+
+### Changed
+
+- **CLOB live order paths are guardable through `TradeGate`.** `pkg/clob` and
+  `pkg/universal` can thread an opt-in gate through create-order paths while
+  keeping cancel paths open for risk reduction.
+- **Paper sell accounting now uses average-cost realized PnL.** Paper account
+  sells route through `State.Sell`, update remaining cost basis, and report
+  realized PnL deterministically.
+- **README and docs were reworked for open-source users.** The README now
+  emphasizes no-credential read-only flows, known limitations, production-safe
+  deposit-wallet usage, and SDK/package boundaries.
+- **CI now runs short tests and a race-detector pass.** Live-network E2E tests
+  no longer gate pull requests, while concurrency regressions are covered by
+  `go test -race -short ./...`.
+- **Dependency updates.** Bumped `github.com/ethereum/go-ethereum` to v1.17.3,
+  `github.com/spf13/cobra` to v1.10.2, and `golang.org/x/crypto` to v0.53.0.
+- **Docs site moved under `docs/docs-site/`.** Historical plans were archived
+  under `docs/history/` and the public documentation map was refreshed.
+
+### Fixed
+
+- **CLOB market orders price from the best book level** instead of stale or
+  inappropriate pricing inputs.
+- **Silent stream connections are detected and reconnect budget is reset** so
+  dead WebSocket sessions recover more reliably.
+- **Compact JSON signing is escape-aware** for HMAC body signing.
+- **Transport retries close response bodies on every iteration** to avoid
+  leaking resources.
+- **Risk breaker stays halted while still over loss/position limits** and clamps
+  negative loss records.
+- **Gamma query serialization now includes all declared filters.**
+- **Batch price validation, comment URL encoding, dedup caps, and TZ-offset
+  parsing** were hardened.
+- **Marketdata limit handling no longer truncates unset limits to one**, and
+  JSON output buffering prevents partial output on errors.
+- **Pagination helpers and relayer padding reject bad input safely.**
+- **Wallet nil dereference, mode validation, deployment-source labels, paper
+  sell-accounting edge cases, and AutoHeartbeat test races** were fixed.
+- **Swap submission now confirms receipts** so reverted swaps are not reported
+  as success.
+
+### Removed
+
+- Removed unenforced risk policy fields (`MaxOrderUSD`, `MaxOpenOrders`) that
+  looked authoritative but were not applied.
+
 ## [v0.1.1] — 2026-05-11
 
 ### Added
@@ -245,7 +317,8 @@ the May 2026 deposit-wallet migration and the documentation overhaul.
   (headless for existing users), Builder Fee Key (headless via L2 HMAC), Relayer API Key
   (headless via SIWE). See `docs/ONBOARDING.md`.
 
-[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.0...HEAD
+[v0.2.0]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.2.0
 [v0.1.1]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.1.1
 [v2026.5.9]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v2026.5.9
 [0.1.0]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.1.0
