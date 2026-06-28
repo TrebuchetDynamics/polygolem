@@ -66,7 +66,9 @@ Today's trading approval batch is six calls: pUSD `approve` plus CTF
 additional four-call WALLET batch: pUSD `approve` plus CTF
 `setApprovalForAll` for each collateral adapter. Redeem itself needs the CTF
 approval leg; the pUSD approval leg is included so the same one-time adapter
-batch also covers split flows.
+batch also covers split flows. In Go, `pkg/contracts.TradingApprovals`,
+`SettlementApprovals`, and `EnableTradingApprovals` are the source of truth;
+`pkg/relayer` only encodes them into WALLET batch calldata.
 
 SAFE/PROXY relayer examples are separate wallet-type flows. They do not create
 a deposit-wallet shortcut around the V2 adapter path, and raw

@@ -1,10 +1,8 @@
-// Package wallet provides deposit-wallet primitives — CREATE2 derivation,
-// status checks, deploy and batch-signing helpers.
+// Package wallet provides public deposit-wallet primitives.
 //
-// Address derivation is non-mutating and used by read-only deposit-wallet
-// commands. Deploy and batch operations sit behind builder credentials
-// and the live gate. See docs/DEPOSIT-WALLET-MIGRATION.md for the May 2026
-// signature-type migration this package implements.
-//
-// This package is internal and not part of the polygolem public SDK.
+// The canonical Polymarket V2 trading wallet is the deterministic deposit
+// wallet used for POLY_1271 / signature type 3 orders. Address derivation is
+// non-mutating and safe for read-only flows. Deploy, approvals, funding, and
+// batch operations live in pkg/relayer, pkg/enabletrading, pkg/funding, and
+// pkg/settlement so this package stays a small identity/readiness module.
 package wallet

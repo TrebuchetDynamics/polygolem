@@ -13,7 +13,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | Package | Purpose |
 |---|---|
 | `pkg/clob` | CLOB market-data plus authenticated account/order DTOs. |
-| `pkg/contracts` | Polygon contract registry and contract-code deployment checks. |
+| `pkg/contracts` | Polygon contract registry, wallet approval capability sets, and contract-code deployment checks. |
 | `pkg/orderbook` | Read-only CLOB order-book reader. |
 | `pkg/bridge` | Bridge API client — supported assets, deposit addresses, quotes. |
 | `pkg/builder` | Builder attribution and fee configuration for order placement. |
@@ -32,7 +32,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/stream` | Read-only public CLOB WebSocket market stream client, including V2 custom feature events. |
 | `pkg/types` | Public DTOs shared by SDK packages. |
 | `pkg/universal` | Single client wrapping Gamma + CLOB + Data API + Discovery + Stream (70+ methods). |
-| `pkg/wallet` | Public deposit-wallet primitives — derive, deploy, status, batch signing. |
+| `pkg/wallet` | Public deposit-wallet identity/readiness primitives — derive the POLY_1271 wallet and report wallet identity. |
 | `pkg/experimental/orders` | **Experimental** — fluent `OrderIntent` builder and validation (staged for SDK promotion). |
 | `pkg/experimental/auth` | **Experimental** — EIP-712 domain helpers, signature type constants, and hex utilities (staged for SDK promotion). |
 
@@ -125,6 +125,18 @@ EOA, proxy, and Gnosis Safe are blocked by CLOB V2 and are not supported.
 
 Builder credentials are required for deposit wallet deployment via the
 relayer. Order attribution uses the on-order `builder` bytes32 field (V2).
+
+## Wallet contract capabilities
+
+`pkg/contracts` is the stable source of Polygon addresses and approval sets:
+
+- `TradingApprovals()` — six pUSD/CTF approvals for CLOB V2 order matching.
+- `SettlementApprovals()` — four pUSD/CTF approvals for V2 split/merge/redeem adapters.
+- `EnableTradingApprovals()` — two ERC-20 approvals mirrored from the polymarket.com Enable Trading flow.
+
+`pkg/relayer` turns those metadata rows into deposit-wallet WALLET batch calldata.
+`pkg/wallet` stays identity-only; deploy, approvals, funding, and settlement live
+behind their own package seams.
 
 ## Public SDK boundary
 

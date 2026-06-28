@@ -285,6 +285,8 @@ Every CLI subcommand is a thin wrapper around importable `pkg/` packages:
 | [`pkg/gamma`](pkg/gamma) | Read-only Gamma market discovery (26 methods) |
 | [`pkg/stream`](pkg/stream) | Public CLOB WebSocket market stream |
 | [`pkg/marketdata`](pkg/marketdata) | Live share-price snapshots from stream events |
+| [`pkg/wallet`](pkg/wallet) | Deposit-wallet identity/readiness — derive the POLY_1271 wallet |
+| [`pkg/contracts`](pkg/contracts) | Polygon contract registry plus trading/settlement/enable-trading approval sets |
 | [`pkg/relayer`](pkg/relayer) | V2 Relayer client — WALLET-CREATE, batch, nonce |
 | [`pkg/settlement`](pkg/settlement) | V2 winner redemption planning, adapter calls, readiness gates |
 | [`pkg/bridge`](pkg/bridge) | Bridge deposits, status, quotes, and guarded withdrawal/offramp dry-runs |
@@ -389,7 +391,10 @@ pays only for the single ERC-20 transfer that funds the deposit wallet.
 | Find an active market | `polygolem discover search --query "..."` |
 | List all 5m crypto markets | `polygolem discover crypto-5m` |
 | Inspect the book | `polygolem clob book <token-id>` |
-| Check deposit wallet status | `polygolem deposit-wallet status` |
+| Derive deposit wallet | `polygolem deposit-wallet derive` |
+| Onboard deposit wallet | `polygolem deposit-wallet onboard` |
+| Check deposit wallet status | `polygolem deposit-wallet status --check-enable-trading` |
+| Prepare by inspecting the exact book | `polygolem orderbook get --token-id <TOKEN_ID>` |
 | Place a limit buy | `polygolem clob create-order --token <ID> --side buy --price 0.5 --size 10` |
 | Place a market FOK buy | `polygolem clob market-order --token <ID> --side buy --amount 1 --price <cap>` |
 | Cancel everything | `polygolem clob cancel-all` |

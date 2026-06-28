@@ -3,6 +3,8 @@ package relayer
 import (
 	"strings"
 	"testing"
+
+	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 )
 
 func TestBuildAdapterApprovalCallsCalldata(t *testing.T) {
@@ -12,12 +14,12 @@ func TestBuildAdapterApprovalCallsCalldata(t *testing.T) {
 	}
 
 	// Calls 0-1: CtfCollateralAdapter
-	assertApprove(t, "call0", calls[0], pusdAddress, ctfCollateralAdapter)
-	assertSetApprovalForAll(t, "call1", calls[1], ctfAddress, ctfCollateralAdapter)
+	assertApprove(t, "call0", calls[0], contracts.PUSD, contracts.CtfCollateralAdapter)
+	assertSetApprovalForAll(t, "call1", calls[1], contracts.CTF, contracts.CtfCollateralAdapter)
 
 	// Calls 2-3: NegRiskCtfCollateralAdapter
-	assertApprove(t, "call2", calls[2], pusdAddress, negRiskCtfCollateralAdapter)
-	assertSetApprovalForAll(t, "call3", calls[3], ctfAddress, negRiskCtfCollateralAdapter)
+	assertApprove(t, "call2", calls[2], contracts.PUSD, contracts.NegRiskCtfCollateralAdapter)
+	assertSetApprovalForAll(t, "call3", calls[3], contracts.CTF, contracts.NegRiskCtfCollateralAdapter)
 }
 
 func TestBuildAdapterApprovalCallsIdempotent(t *testing.T) {

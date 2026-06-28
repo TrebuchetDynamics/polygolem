@@ -37,6 +37,35 @@ func TestPolygonMainnetIncludesV2Adapters(t *testing.T) {
 	}
 }
 
+func TestApprovalSets(t *testing.T) {
+	trading := TradingApprovals()
+	if len(trading) != 6 {
+		t.Fatalf("TradingApprovals len=%d want 6", len(trading))
+	}
+	if trading[0] != (Approval{Token: PUSD, Spender: CTFExchangeV2, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeTrading}) {
+		t.Fatalf("first trading approval=%+v", trading[0])
+	}
+	if trading[1] != (Approval{Token: CTF, Spender: CTFExchangeV2, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeTrading}) {
+		t.Fatalf("second trading approval=%+v", trading[1])
+	}
+
+	settlement := SettlementApprovals()
+	if len(settlement) != 4 {
+		t.Fatalf("SettlementApprovals len=%d want 4", len(settlement))
+	}
+	if settlement[0].Spender != CtfCollateralAdapter || settlement[2].Spender != NegRiskCtfCollateralAdapter {
+		t.Fatalf("settlement approvals=%+v", settlement)
+	}
+
+	enable := EnableTradingApprovals()
+	if len(enable) != 2 {
+		t.Fatalf("EnableTradingApprovals len=%d want 2", len(enable))
+	}
+	if enable[0].Token != PUSD || enable[0].Spender != CTF || enable[1].Token != USDCE || enable[1].Spender != CollateralOnramp {
+		t.Fatalf("enable trading approvals=%+v", enable)
+	}
+}
+
 func TestRedeemAdapterFor(t *testing.T) {
 	if got := RedeemAdapterFor(false); got != CtfCollateralAdapter {
 		t.Errorf("RedeemAdapterFor(false) = %q, want %q", got, CtfCollateralAdapter)

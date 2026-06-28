@@ -5,6 +5,24 @@ import (
 	"testing"
 )
 
+func TestDeriveDepositWallet(t *testing.T) {
+	eoa := "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23"
+	result, err := DeriveDepositWallet(eoa)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "0xfd5041047Be8C192C725A66228F141196Fa3cF9C"
+	if result != want {
+		t.Fatalf("deposit wallet = %s, want %s", result, want)
+	}
+}
+
+func TestDeriveDepositWalletRejectsInvalidEOA(t *testing.T) {
+	if _, err := DeriveDepositWallet("not-an-address"); err == nil {
+		t.Fatal("expected invalid EOA error")
+	}
+}
+
 func TestDeriveProxyWallet(t *testing.T) {
 	eoa := "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23"
 	result := DeriveProxyWallet(eoa)
@@ -49,11 +67,8 @@ func TestReadiness(t *testing.T) {
 	if info.ChainID != 137 {
 		t.Fatalf("chainID = %d", info.ChainID)
 	}
-	if info.ProxyWallet == "" {
-		t.Fatal("proxy wallet missing")
-	}
-	if info.SafeWallet == "" {
-		t.Fatal("safe wallet missing")
+	if info.DepositWallet != "0xfd5041047Be8C192C725A66228F141196Fa3cF9C" {
+		t.Fatalf("deposit wallet = %s", info.DepositWallet)
 	}
 }
 

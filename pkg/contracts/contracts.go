@@ -83,6 +83,60 @@ func PolygonMainnet() Registry {
 	}
 }
 
+const (
+	ApprovalERC20Approve       = "erc20_approve"
+	ApprovalERC1155ForAll      = "erc1155_set_approval_for_all"
+	ApprovalPurposeTrading     = "trading"
+	ApprovalPurposeSettlement  = "settlement"
+	ApprovalPurposeEnableTrade = "enable_trading"
+)
+
+// Approval describes one contract permission a deposit wallet needs for a
+// Polymarket capability. It is metadata only; pkg/relayer turns it into calldata.
+type Approval struct {
+	Token   string `json:"token"`
+	Spender string `json:"spender"`
+	Kind    string `json:"kind"`
+	Purpose string `json:"purpose"`
+}
+
+// TradingApprovals returns the pUSD + CTF approvals required for V2 CLOB orders.
+func TradingApprovals() []Approval {
+	return spenderApprovals(ApprovalPurposeTrading, CTFExchangeV2, NegRiskExchangeV2, NegRiskAdapterV2)
+}
+
+// SettlementAdapters returns the V2 collateral adapters used by split, merge,
+// and redeem flows.
+func SettlementAdapters() []string {
+	return []string{CtfCollateralAdapter, NegRiskCtfCollateralAdapter}
+}
+
+// SettlementApprovals returns the pUSD + CTF approvals required for V2 split,
+// merge, and redeem through the collateral adapters.
+func SettlementApprovals() []Approval {
+	return spenderApprovals(ApprovalPurposeSettlement, SettlementAdapters()...)
+}
+
+// EnableTradingApprovals returns the ERC-20 approvals observed in the
+// polymarket.com Enable Trading flow after deposit-wallet deployment.
+func EnableTradingApprovals() []Approval {
+	return []Approval{
+		{Token: PUSD, Spender: CTF, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: USDCE, Spender: CollateralOnramp, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+	}
+}
+
+func spenderApprovals(purpose string, spenders ...string) []Approval {
+	out := make([]Approval, 0, len(spenders)*2)
+	for _, spender := range spenders {
+		out = append(out,
+			Approval{Token: PUSD, Spender: spender, Kind: ApprovalERC20Approve, Purpose: purpose},
+			Approval{Token: CTF, Spender: spender, Kind: ApprovalERC1155ForAll, Purpose: purpose},
+		)
+	}
+	return out
+}
+
 // RedeemAdapterFor returns the V2 collateral adapter address that a
 // deposit wallet must call redeemPositions on for a given market kind.
 // The adapter pulls the wallet's CTF tokens, redeems through legacy

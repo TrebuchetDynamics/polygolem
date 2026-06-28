@@ -3,7 +3,9 @@ package wallet
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/auth"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -18,14 +20,23 @@ const (
 	safeInitCodeHash  = "0x2bce2127ff07fb632d16c8347c4ebf501f4841168bed00d9e6ef715ddb6fcecf"
 )
 
+// DeriveDepositWallet computes the deterministic Polymarket V2 deposit-wallet
+// address for an EOA. This is the canonical wallet for POLY_1271 trading.
+func DeriveDepositWallet(eoa string) (string, error) {
+	if !validHexAddress(eoa) {
+		return "", fmt.Errorf("invalid EOA address")
+	}
+	return auth.MakerAddressForSignatureType(eoa, PolygonChainID, 3)
+}
+
 // DeriveProxyWallet computes the deterministic proxy wallet address via CREATE2.
-// Proxy wallets are used by Polymarket Magic/email accounts.
+// Deprecated: Polygolem supports deposit-wallet / POLY_1271 trading only.
 func DeriveProxyWallet(eoa string) string {
 	return deriveCreate2(ProxyFactoryAddr, proxySalt(eoa), proxyInitCodeHash)
 }
 
 // DeriveSafeWallet computes the deterministic Gnosis Safe address via CREATE2.
-// Safe wallets are used by Polymarket browser accounts.
+// Deprecated: Polygolem supports deposit-wallet / POLY_1271 trading only.
 func DeriveSafeWallet(eoa string) string {
 	return deriveCreate2(SafeFactoryAddr, safeSalt(eoa), safeInitCodeHash)
 }
@@ -72,11 +83,12 @@ func deriveCreate2(factory string, salt []byte, initCodeHash string) string {
 
 // ReadyInfo holds wallet readiness information.
 type ReadyInfo struct {
-	ChainID     int64  `json:"chain_id"`
-	EOA         string `json:"eoa,omitempty"`
-	ProxyWallet string `json:"proxy_wallet,omitempty"`
-	SafeWallet  string `json:"safe_wallet,omitempty"`
-	HasSigner   bool   `json:"has_signer"`
+	ChainID       int64  `json:"chain_id"`
+	EOA           string `json:"eoa,omitempty"`
+	DepositWallet string `json:"deposit_wallet,omitempty"`
+	ProxyWallet   string `json:"proxy_wallet,omitempty"`
+	SafeWallet    string `json:"safe_wallet,omitempty"`
+	HasSigner     bool   `json:"has_signer"`
 }
 
 // Readiness returns wallet readiness info for the given EOA.
@@ -87,6 +99,7 @@ func Readiness(chainID int64, eoa string) ReadyInfo {
 	}
 	if eoa != "" {
 		info.HasSigner = true
+		info.DepositWallet, _ = DeriveDepositWallet(eoa)
 		info.ProxyWallet = DeriveProxyWallet(eoa)
 		info.SafeWallet = DeriveSafeWallet(eoa)
 	}
@@ -95,8 +108,17 @@ func Readiness(chainID int64, eoa string) ReadyInfo {
 
 // helpers
 
+func validHexAddress(s string) bool {
+	s = strip0x(s)
+	if len(s) != 40 {
+		return false
+	}
+	_, err := hex.DecodeString(s)
+	return err == nil
+}
+
 func strip0x(s string) string {
-	if len(s) >= 2 && s[:2] == "0x" {
+	if len(s) >= 2 && strings.EqualFold(s[:2], "0x") {
 		return s[2:]
 	}
 	return s
