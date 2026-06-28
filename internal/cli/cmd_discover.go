@@ -242,25 +242,34 @@ Examples:
 	cmd.AddCommand(windowCmd)
 
 	var fiveMinEnrich bool
+	var fiveMinHoursAhead int
+	var fiveMinTimezone string
+	var fiveMinAssets []string
 	fiveMinCmd := &cobra.Command{
 		Use:   "crypto-5m",
-		Short: "List all 7 active 5-minute crypto markets",
-		Long: `Resolve the current 5-minute window for all supported crypto assets
-and return a consolidated view of every active market.
+		Short: "List active 5-minute crypto markets",
+		Long: `Resolve current and near-future 5-minute windows for supported crypto assets
+and return a consolidated view of every open accepting market.
 
-Assets scanned: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
+Assets scanned by default: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
 
+Use --hours-ahead 1 for the current window plus the next hour.
+Use --timezone America/Denver to add local window fields.
+Use --asset BTC --asset ETH to narrow the sweep.
 Use --enrich to fetch live CLOB prices and spreads (slower).`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			result, err := crypto5m.New(w.gamma, w.clob).Run(cmd.Context(), crypto5m.Request{Enrich: fiveMinEnrich})
+			result, err := crypto5m.New(w.gamma, w.clob).Run(cmd.Context(), crypto5m.Request{Assets: fiveMinAssets, Enrich: fiveMinEnrich, HoursAhead: fiveMinHoursAhead, Timezone: fiveMinTimezone})
 			if err != nil {
 				return err
 			}
 			return writeCommandJSON(cmd, result)
 		},
 	}
+	fiveMinCmd.Flags().StringSliceVar(&fiveMinAssets, "asset", nil, "crypto asset(s) to scan (repeat or comma-separate: BTC,ETH,SOL)")
 	fiveMinCmd.Flags().BoolVar(&fiveMinEnrich, "enrich", false, "enrich with CLOB price and spread")
+	fiveMinCmd.Flags().IntVar(&fiveMinHoursAhead, "hours-ahead", 0, "include future 5m windows this many hours ahead")
+	fiveMinCmd.Flags().StringVar(&fiveMinTimezone, "timezone", "UTC", "display local window fields in this IANA timezone (example: America/Chicago)")
 	cmd.AddCommand(fiveMinCmd)
 
 	var opportunityType, opportunityAsset string

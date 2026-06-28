@@ -13,10 +13,10 @@ func TestQueryBuildsAssetIntervalAndDefaultsToCrypto(t *testing.T) {
 		filter Filter
 		want   string
 	}{
-		{name: "asset interval", filter: Filter{Asset: "BTC", Interval: "5m"}, want: "BTC 5m"},
-		{name: "trimmed asset interval", filter: Filter{Asset: " ETH ", Interval: " 15m "}, want: "ETH 15m"},
+		{name: "asset interval", filter: Filter{Asset: "BTC", Interval: "5m"}, want: "bitcoin 5m updown"},
+		{name: "trimmed asset interval", filter: Filter{Asset: " ETH ", Interval: " 15m "}, want: "ethereum 15m updown"},
 		{name: "asset only", filter: Filter{Asset: "SOL"}, want: "SOL"},
-		{name: "interval only", filter: Filter{Interval: "daily"}, want: "daily"},
+		{name: "interval only", filter: Filter{Interval: "daily"}, want: "daily updown"},
 		{name: "empty", filter: Filter{}, want: "crypto"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -106,6 +106,27 @@ func TestSelectFiltersActiveMarketsByAssetAndIntervalAndParsesTokens(t *testing.
 	}
 	if want := []string{"btc-raw-token"}; !reflect.DeepEqual(got[1].TokenIDs, want) {
 		t.Fatalf("second tokens=%v, want %v", got[1].TokenIDs, want)
+	}
+}
+
+func TestSelectMatchesIntervalInSlug(t *testing.T) {
+	resp := &polytypes.SearchResponse{Events: []polytypes.Event{{
+		ID:     "event-btc",
+		Title:  "Bitcoin Up or Down - June 27, 11:50PM-11:55PM ET",
+		Slug:   "btc-updown-5m-1782618600",
+		Active: true,
+		Markets: []polytypes.Market{{
+			ID:           "market-btc",
+			Slug:         "btc-updown-5m-1782618600",
+			Question:     "Bitcoin Up or Down - June 27, 11:50PM-11:55PM ET",
+			Active:       true,
+			ClobTokenIDs: `["up","down"]`,
+		}},
+	}}}
+
+	got := Select(resp, Filter{Asset: "BTC", Interval: "5m"})
+	if len(got) != 1 {
+		t.Fatalf("Select returned %d candidates, want 1", len(got))
 	}
 }
 

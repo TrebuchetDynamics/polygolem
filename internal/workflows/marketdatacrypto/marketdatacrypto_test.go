@@ -111,13 +111,13 @@ func TestRunnerSearchesFiltersQuotesAndLimitsCryptoSnapshots(t *testing.T) {
 	if searcher.params == nil {
 		t.Fatal("Search was not called")
 	}
-	if searcher.params.Q != "BTC 5m" {
-		t.Fatalf("query=%q, want BTC 5m", searcher.params.Q)
+	if searcher.params.Q != "bitcoin 5m updown" {
+		t.Fatalf("query=%q, want bitcoin 5m updown", searcher.params.Q)
 	}
 	if searcher.params.LimitPerType == nil || *searcher.params.LimitPerType != 50 {
 		t.Fatalf("LimitPerType=%v, want 50", searcher.params.LimitPerType)
 	}
-	if got.Query != "BTC 5m" || got.Asset != "BTC" || got.Interval != "5m" || got.Count != 1 {
+	if got.Query != "bitcoin 5m updown" || got.Asset != "BTC" || got.Interval != "5m" || got.Count != 1 {
 		t.Fatalf("unexpected summary: %+v", got)
 	}
 	if len(got.Markets) != 1 {

@@ -27,15 +27,30 @@ func Query(filter Filter) string {
 	interval := strings.TrimSpace(filter.Interval)
 	query := asset
 	if interval != "" {
+		if name := cryptoSearchName(asset); name != "" {
+			query = name
+		}
 		if query != "" {
 			query += " "
 		}
-		query += interval
+		query += interval + " updown"
 	}
 	if query == "" {
 		query = "crypto"
 	}
 	return query
+}
+
+func cryptoSearchName(asset string) string {
+	return map[string]string{
+		"BTC":  "bitcoin",
+		"ETH":  "ethereum",
+		"SOL":  "solana",
+		"XRP":  "xrp",
+		"DOGE": "doge",
+		"BNB":  "bnb",
+		"HYPE": "hyperliquid",
+	}[strings.ToUpper(asset)]
 }
 
 // Select returns active, non-closed event markets matching the filter.
@@ -79,8 +94,12 @@ func matchesAsset(event polytypes.Event, market polytypes.Market, asset string) 
 	if asset == "" {
 		return true
 	}
-	asset = strings.ToUpper(asset)
-	return strings.Contains(strings.ToUpper(market.Question), asset) || strings.Contains(strings.ToUpper(event.Title), asset)
+	text := strings.ToLower(event.Title + " " + event.Slug + " " + market.Question + " " + market.Slug)
+	if strings.Contains(text, strings.ToLower(asset)) {
+		return true
+	}
+	name := cryptoSearchName(asset)
+	return name != "" && strings.Contains(text, name)
 }
 
 func matchesInterval(event polytypes.Event, market polytypes.Market, interval string) bool {
@@ -89,5 +108,6 @@ func matchesInterval(event polytypes.Event, market polytypes.Market, interval st
 		return true
 	}
 	interval = strings.ToLower(interval)
-	return strings.Contains(strings.ToLower(event.Title), interval) || strings.Contains(strings.ToLower(market.Question), interval)
+	text := strings.ToLower(event.Title + " " + event.Slug + " " + market.Question + " " + market.Slug)
+	return strings.Contains(text, interval)
 }

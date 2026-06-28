@@ -69,14 +69,32 @@ func (r *Runner) Run(ctx context.Context, req Request) (Response, error) {
 	filter := cryptomarkets.Filter{Asset: req.Asset, Interval: req.Interval}
 	query := cryptomarkets.Query(filter)
 	limit := req.Limit
-	resp, err := r.searcher.Search(ctx, &polytypes.SearchParams{
-		Q:            query,
-		LimitPerType: &limit,
-	})
-	if err != nil {
-		return Response{}, err
+	if limit <= 0 {
+		limit = 20
 	}
-	markets := r.markets(ctx, resp, filter, req)
+
+	var markets []Market
+	for page := 1; len(markets) < limit; page++ {
+		perPage := limit - len(markets)
+		if perPage > 50 {
+			perPage = 50
+		}
+		resp, err := r.searcher.Search(ctx, &polytypes.SearchParams{
+			Q:            query,
+			LimitPerType: &perPage,
+			Page:         &page,
+			EventsStatus: "active",
+		})
+		if err != nil {
+			return Response{}, err
+		}
+		batch := r.markets(ctx, resp, filter, req)
+		markets = append(markets, batch...)
+		if resp == nil || !resp.Pagination.HasMore || len(batch) == 0 {
+			break
+		}
+	}
+
 	return Response{
 		Query:    query,
 		Asset:    req.Asset,

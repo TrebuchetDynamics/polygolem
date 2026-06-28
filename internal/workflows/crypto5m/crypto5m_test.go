@@ -56,13 +56,18 @@ func TestRunnerScansAssetsAndKeepsPerAssetStatus(t *testing.T) {
 				Markets: []polytypes.Market{
 					{ID: "btc-closed", Active: true, Closed: true, ClobTokenIDs: `["closed"]`},
 					{
-						ID:           "btc-market",
-						Question:     "BTC up or down?",
-						ConditionID:  "btc-condition",
-						Active:       true,
-						ClobTokenIDs: `["btc-up","btc-down"]`,
-						Outcomes:     polytypes.StringOrArray{"Up", "Down"},
-						EndDateISO:   "2026-05-23T12:35:00Z",
+						ID:              "btc-market",
+						Question:        "BTC up or down?",
+						ConditionID:     "btc-condition",
+						Active:          true,
+						AcceptingOrders: true,
+						LiquidityClob:   12000,
+						BestBid:         0.50,
+						BestAsk:         0.51,
+						Spread:          0.01,
+						ClobTokenIDs:    `["btc-up","btc-down"]`,
+						Outcomes:        polytypes.StringOrArray{"Up", "Down"},
+						EndDateISO:      "2026-05-23T12:35:00Z",
 					},
 				},
 			},
@@ -97,6 +102,9 @@ func TestRunnerScansAssetsAndKeepsPerAssetStatus(t *testing.T) {
 	if got.Markets[0].Price != "0.55" || got.Markets[0].Spread != "0.03" {
 		t.Fatalf("BTC enrichment missing: %+v", got.Markets[0])
 	}
+	if !got.Markets[0].AcceptingOrders || got.Markets[0].LiquidityClob != 12000 || got.Markets[0].BookSpread != 0.01 {
+		t.Fatalf("BTC book fields missing: %+v", got.Markets[0])
+	}
 	if got.Markets[1].Asset != "ETH" || got.Markets[1].Status != "not_found" || got.Markets[1].Error != "gamma 404" {
 		t.Fatalf("unexpected ETH result: %+v", got.Markets[1])
 	}
@@ -108,6 +116,54 @@ func TestRunnerScansAssetsAndKeepsPerAssetStatus(t *testing.T) {
 	}
 	if pricer.priceToken != "btc-up" || pricer.priceSide != "BUY" || pricer.spreadToken != "btc-up" {
 		t.Fatalf("unexpected price calls: %+v", pricer)
+	}
+}
+
+func TestRunnerAddsLocalTimezoneFields(t *testing.T) {
+	now := time.Date(2026, 6, 28, 4, 26, 0, 0, time.UTC)
+	windowStart := time.Date(2026, 6, 28, 4, 25, 0, 0, time.UTC)
+	slug := marketresolver.CryptoWindowSlug("BTC", "5m", windowStart)
+	events := &fakeEvents{events: map[string]*polytypes.Event{slug: {
+		ID:    "event-btc",
+		Title: "BTC 5m",
+		Slug:  slug,
+		Markets: []polytypes.Market{{
+			ID:              "btc-market",
+			Question:        "BTC up or down?",
+			Active:          true,
+			AcceptingOrders: true,
+			ClobTokenIDs:    `["btc-up","btc-down"]`,
+		}},
+	}}, errs: map[string]error{}}
+	runner := New(events, nil)
+	runner.Now = func() time.Time { return now }
+
+	got, err := runner.Run(context.Background(), Request{Assets: []string{"BTC"}, Timezone: "America/Chicago"})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if got.Timezone != "America/Chicago" || got.Markets[0].WindowStartLocal != "2026-06-27T23:25:00-05:00" {
+		t.Fatalf("unexpected timezone fields: %+v", got)
+	}
+}
+
+func TestRunnerIncludesFutureWindows(t *testing.T) {
+	now := time.Date(2026, 5, 23, 12, 34, 56, 0, time.UTC)
+	windowStart := time.Date(2026, 5, 23, 12, 30, 0, 0, time.UTC)
+	events := &fakeEvents{events: map[string]*polytypes.Event{}, errs: map[string]error{}}
+	runner := New(events, nil)
+	runner.Now = func() time.Time { return now }
+
+	got, err := runner.Run(context.Background(), Request{Assets: []string{"BTC"}, HoursAhead: 1})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if got.Count != 13 || len(events.slugs) != 13 {
+		t.Fatalf("count/slugs=%d/%d, want 13/13", got.Count, len(events.slugs))
+	}
+	wantLast := marketresolver.CryptoWindowSlug("BTC", "5m", windowStart.Add(time.Hour))
+	if events.slugs[12] != wantLast {
+		t.Fatalf("last slug=%q, want %q", events.slugs[12], wantLast)
 	}
 }
 

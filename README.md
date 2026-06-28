@@ -132,8 +132,11 @@ This is the fastest end-user tour: find the live crypto up/down markets, inspect
 one window, and paper trade it without connecting a wallet.
 
 ```bash
-# 1. List the current 5-minute markets for every supported asset
-polygolem discover crypto-5m --enrich --json
+# 1. List current + next-hour 5-minute markets for every supported asset
+polygolem discover crypto-5m --hours-ahead 1 --timezone America/Denver --json
+
+# Optional: narrow to liquid majors and fetch live CLOB quote fields
+polygolem discover crypto-5m --asset BTC --asset ETH --asset SOL --hours-ahead 1 --enrich --json
 
 # 2. Focus on the current BTC 5-minute window
 polygolem discover crypto-window --asset BTC --interval 5m --enrich --json
@@ -144,9 +147,10 @@ polygolem paper trade --asset BTC --interval 5m --side up --size 1 --json
 polygolem paper positions --json
 ```
 
-Look for `data.markets[].token_ids`, `outcomes`, `price`, and `spread` in the
-JSON output. If a window is not available yet, wait for the next 5-minute UTC
-boundary and retry. Full walkthrough: [POLYGOLEM-5M-CRYPTO-GUIDE.md](POLYGOLEM-5M-CRYPTO-GUIDE.md).
+Look for `data.markets[].token_ids`, `outcomes`, `liquidity_clob`, `best_bid`,
+`best_ask`, and `book_spread` in the JSON output. `price` and `spread` are added
+when `--enrich` succeeds. If a window is not available yet, wait for the next
+5-minute UTC boundary and retry. Full walkthrough: [POLYGOLEM-5M-CRYPTO-GUIDE.md](POLYGOLEM-5M-CRYPTO-GUIDE.md).
 
 ---
 
@@ -330,8 +334,11 @@ Polymarket runs 5-minute up/down markets for major crypto assets. Polygolem
 discovers them deterministically — no search index lag:
 
 ```bash
-# All 7 active 5m markets in one call
-polygolem discover crypto-5m --enrich
+# Current + next-hour 5m markets in one call
+polygolem discover crypto-5m --hours-ahead 1 --timezone America/Denver
+
+# Liquid-major sweep only
+polygolem discover crypto-5m --asset BTC --asset ETH --asset SOL --hours-ahead 1 --enrich
 
 # Specific window
 polygolem discover crypto-window --asset BTC --interval 5m

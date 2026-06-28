@@ -116,7 +116,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
   discover - Market discovery via Polymarket Gamma API
     comments - List or fetch public Gamma comments
     crypto - Discover active crypto prediction markets
-    crypto-5m - List all 7 active 5-minute crypto markets
+    crypto-5m - List active 5-minute crypto markets
     crypto-window - Resolve the current crypto prediction window deterministically
     enrich - Enrich market with CLOB data
     market - Get market details
@@ -1830,7 +1830,7 @@ polygolem discover [flags]
 |---|---|
 | `polygolem discover comments` | List or fetch public Gamma comments |
 | `polygolem discover crypto` | Discover active crypto prediction markets |
-| `polygolem discover crypto-5m` | List all 7 active 5-minute crypto markets |
+| `polygolem discover crypto-5m` | List active 5-minute crypto markets |
 | `polygolem discover crypto-window` | Resolve the current crypto prediction window deterministically |
 | `polygolem discover enrich` | Enrich market with CLOB data |
 | `polygolem discover market` | Get market details |
@@ -1907,13 +1907,16 @@ polygolem discover crypto [flags]
 
 ### polygolem discover crypto-5m
 
-List all 7 active 5-minute crypto markets
+List active 5-minute crypto markets
 
-Resolve the current 5-minute window for all supported crypto assets
-and return a consolidated view of every active market.
+Resolve current and near-future 5-minute windows for supported crypto assets
+and return a consolidated view of every open accepting market.
 
-Assets scanned: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
+Assets scanned by default: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
 
+Use --hours-ahead 1 for the current window plus the next hour.
+Use --timezone America/Denver to add local window fields.
+Use --asset BTC --asset ETH to narrow the sweep.
 Use --enrich to fetch live CLOB prices and spreads (slower).
 
 **Usage:**
@@ -1926,9 +1929,12 @@ polygolem discover crypto-5m [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--asset` | `stringSlice` | `[]` | crypto asset(s) to scan (repeat or comma-separate: BTC,ETH,SOL) |
 | `--enrich` | `bool` | `false` | enrich with CLOB price and spread |
 | `-h, --help` | `bool` | `false` | help for crypto-5m |
+| `--hours-ahead` | `int` | `0` | include future 5m windows this many hours ahead |
 | `--json` | `bool` | `false` | emit JSON output |
+| `--timezone` | `string` | `UTC` | display local window fields in this IANA timezone (example: America/Chicago) |
 
 ### polygolem discover crypto-window
 
