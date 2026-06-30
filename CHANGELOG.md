@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.2.1] — 2026-06-30
+
+### Added
+
+- **Raw WebSocket recorder support.** Market streams now expose deduplicated raw payload callbacks and per-event stats for collector freshness receipts.
+- **Crypto stream lookahead refresh.** `stream crypto` subscribes to current and near-future window tokens and refreshes at interval boundaries.
+- **Polymarket interface ADRs.** Documented the non-bot API boundary, deposit-wallet-only trading path, and stable public SDK surface.
+
+### Changed
+
+- **Docs now describe user-directed transactions** instead of embedded trading decisions, keeping strategy choices outside Polygolem.
+
 ## [v0.2.0] — 2026-06-22
 
 ### Added
