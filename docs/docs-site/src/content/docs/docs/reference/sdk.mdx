@@ -191,11 +191,13 @@ func (c *MarketClient) Connect(ctx context.Context) error
 func (c *MarketClient) SubscribeAssets(ctx context.Context, assetIDs []string) error
 func (c *MarketClient) Close()
 func (c *MarketClient) IsConnected() bool
+func (c *MarketClient) Stats() StreamStatsSnapshot
 
 func (c *UserClient) Connect(ctx context.Context) error
 func (c *UserClient) SubscribeUser(ctx context.Context, markets []string) error
 func (c *UserClient) Close()
 func (c *UserClient) IsConnected() bool
+func (c *UserClient) Stats() StreamStatsSnapshot
 
 func (d *Deduplicator) Process(data []byte) bool
 func (d *Deduplicator) Reset()
@@ -214,6 +216,8 @@ type TickSizeChangeMessage struct
 type BestBidAskMessage struct
 type NewMarketMessage struct
 type MarketResolvedMessage struct
+type RawMessage struct
+type StreamStatsSnapshot struct
 type UserCredentials struct
 type UserOrderMessage struct
 type UserTradeMessage struct
@@ -221,7 +225,10 @@ type UserTradeMessage struct
 
 `pkg/stream` covers public market data and authenticated user order/trade
 streams. Set `Config.CustomFeatureEnabled = true` to request top-of-book and
-market lifecycle events from the V2 market channel.
+market lifecycle events from the V2 market channel. `MarketClient.OnRawMessage`
+exposes each deduplicated market payload for append-only JSONB recorders, and
+`Stats()` includes `last_message_at` plus per-event `event_counts` for
+coverage/freshness receipts.
 
 ## `pkg/marketdata` — Live Share-Price Snapshots
 

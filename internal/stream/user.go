@@ -167,7 +167,7 @@ func (uc *UserClient) dispatch(msg []byte) {
 			var order UserOrderMessage
 			if err := json.Unmarshal(msg, &order); err == nil {
 				order.EventType = eventType
-				uc.stats.RecordMessage(time.Now())
+				uc.stats.RecordEvent(eventType, time.Now())
 				uc.OnOrder(order)
 			} else {
 				uc.stats.RecordInvalid()
@@ -178,7 +178,7 @@ func (uc *UserClient) dispatch(msg []byte) {
 			var trade UserTradeMessage
 			if err := json.Unmarshal(msg, &trade); err == nil {
 				trade.EventType = eventType
-				uc.stats.RecordMessage(time.Now())
+				uc.stats.RecordEvent(eventType, time.Now())
 				uc.OnTrade(trade)
 			} else {
 				uc.stats.RecordInvalid()

@@ -1,6 +1,7 @@
 package cryptomarkets
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -24,6 +25,35 @@ func TestQueryBuildsAssetIntervalAndDefaultsToCrypto(t *testing.T) {
 				t.Fatalf("Query(%+v)=%q, want %q", tc.filter, got, tc.want)
 			}
 		})
+	}
+}
+
+type fakeSearcher struct {
+	params *polytypes.SearchParams
+	resp   *polytypes.SearchResponse
+}
+
+func (f *fakeSearcher) Search(ctx context.Context, params *polytypes.SearchParams) (*polytypes.SearchResponse, error) {
+	f.params = params
+	return f.resp, nil
+}
+
+func TestDiscoverSearchesSelectsAndFlattensTokens(t *testing.T) {
+	searcher := &fakeSearcher{resp: &polytypes.SearchResponse{Events: []polytypes.Event{{
+		Title:   "BTC 5m event",
+		Active:  true,
+		Markets: []polytypes.Market{{Question: "BTC up in 5m?", Active: true, ClobTokenIDs: `["up","down"]`}},
+	}}}}
+
+	query, candidates, err := Discover(context.Background(), searcher, Filter{Asset: "BTC", Interval: "5m"}, 7)
+	if err != nil {
+		t.Fatalf("Discover returned error: %v", err)
+	}
+	if query != "bitcoin 5m updown" || searcher.params == nil || *searcher.params.LimitPerType != 7 {
+		t.Fatalf("unexpected query/search params: query=%q params=%+v", query, searcher.params)
+	}
+	if want := []string{"up", "down"}; !reflect.DeepEqual(TokenIDs(candidates), want) {
+		t.Fatalf("TokenIDs=%v, want %v", TokenIDs(candidates), want)
 	}
 }
 

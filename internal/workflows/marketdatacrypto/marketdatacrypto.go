@@ -11,9 +11,7 @@ import (
 const searchLimit = 50
 
 // Searcher searches Gamma markets and events.
-type Searcher interface {
-	Search(ctx context.Context, params *polytypes.SearchParams) (*polytypes.SearchResponse, error)
-}
+type Searcher = cryptomarkets.Searcher
 
 // Quoter reads CLOB quote metadata for one token.
 type Quoter interface {
@@ -70,16 +68,11 @@ func New(searcher Searcher, quoter Quoter) *Runner {
 // Run searches Gamma, filters active crypto markets, and fetches one CLOB snapshot per market.
 func (r *Runner) Run(ctx context.Context, req Request) (Response, error) {
 	filter := cryptomarkets.Filter{Asset: req.Asset, Interval: req.Interval}
-	query := cryptomarkets.Query(filter)
-	limit := searchLimit
-	resp, err := r.searcher.Search(ctx, &polytypes.SearchParams{
-		Q:            query,
-		LimitPerType: &limit,
-	})
+	query, candidates, err := cryptomarkets.Discover(ctx, r.searcher, filter, searchLimit)
 	if err != nil {
 		return Response{}, err
 	}
-	snapshots := r.snapshots(ctx, resp, filter, req)
+	snapshots := r.snapshots(ctx, candidates, req)
 	return Response{
 		Query:    query,
 		Asset:    req.Asset,
@@ -89,9 +82,9 @@ func (r *Runner) Run(ctx context.Context, req Request) (Response, error) {
 	}, nil
 }
 
-func (r *Runner) snapshots(ctx context.Context, resp *polytypes.SearchResponse, filter cryptomarkets.Filter, req Request) []Snapshot {
+func (r *Runner) snapshots(ctx context.Context, candidates []cryptomarkets.Candidate, req Request) []Snapshot {
 	var results []Snapshot
-	for _, candidate := range cryptomarkets.Select(resp, filter) {
+	for _, candidate := range candidates {
 		event := candidate.Event
 		market := candidate.Market
 		if len(candidate.TokenIDs) == 0 {

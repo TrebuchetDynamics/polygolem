@@ -41,6 +41,25 @@ func TestLastTradeMessage_Unmarshal(t *testing.T) {
 	}
 }
 
+func TestMarketClient_RawMessageAndStatsDoNotRequireTypedHandler(t *testing.T) {
+	client := NewMarketClient(DefaultConfig("wss://example.com/ws"))
+	var raw RawMessage
+	client.OnRawMessage = func(msg RawMessage) { raw = msg }
+
+	client.processMessage([]byte(`{"event_type":"best_bid_ask","asset_id":"token-1","market":"condition-1","best_bid":"0.49","best_ask":"0.51"}`))
+
+	if raw.EventType != "best_bid_ask" || raw.AssetID != "token-1" || raw.Market != "condition-1" {
+		t.Fatalf("unexpected raw message: %+v", raw)
+	}
+	if len(raw.Payload) == 0 || raw.ObservedAt.IsZero() {
+		t.Fatalf("missing raw payload or observed time: %+v", raw)
+	}
+	stats := client.Stats()
+	if stats.MessagesReceived != 1 || stats.InvalidMessages != 0 || stats.EventCounts["best_bid_ask"] != 1 {
+		t.Fatalf("unexpected stats: %+v", stats)
+	}
+}
+
 func TestDefaultConfig_UsesURL(t *testing.T) {
 	cfg := DefaultConfig("wss://example.com/ws")
 	if cfg.URL != "wss://example.com/ws" {

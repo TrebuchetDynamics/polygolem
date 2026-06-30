@@ -2,11 +2,17 @@
 package cryptomarkets
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 )
+
+// Searcher searches Gamma markets and events.
+type Searcher interface {
+	Search(ctx context.Context, params *polytypes.SearchParams) (*polytypes.SearchResponse, error)
+}
 
 // Filter contains crypto market search filters shared by workflow modules.
 type Filter struct {
@@ -19,6 +25,53 @@ type Candidate struct {
 	Event    polytypes.Event
 	Market   polytypes.Market
 	TokenIDs []string
+}
+
+// Discover searches Gamma once and returns active crypto market candidates.
+func Discover(ctx context.Context, searcher Searcher, filter Filter, limit int) (string, []Candidate, error) {
+	query := Query(filter)
+	if limit <= 0 {
+		limit = 50
+	}
+	resp, err := searcher.Search(ctx, &polytypes.SearchParams{Q: query, LimitPerType: &limit})
+	if err != nil {
+		return query, nil, err
+	}
+	return query, Select(resp, filter), nil
+}
+
+// DiscoverPaged searches Gamma pages until limit candidates are collected or no page remains.
+func DiscoverPaged(ctx context.Context, searcher Searcher, filter Filter, limit int) (string, []Candidate, error) {
+	query := Query(filter)
+	if limit <= 0 {
+		limit = 20
+	}
+	var out []Candidate
+	for page := 1; len(out) < limit; page++ {
+		perPage := limit - len(out)
+		if perPage > 50 {
+			perPage = 50
+		}
+		resp, err := searcher.Search(ctx, &polytypes.SearchParams{Q: query, LimitPerType: &perPage, Page: &page, EventsStatus: "active"})
+		if err != nil {
+			return query, nil, err
+		}
+		batch := Select(resp, filter)
+		out = append(out, batch...)
+		if resp == nil || !resp.Pagination.HasMore || len(batch) == 0 {
+			break
+		}
+	}
+	return query, out, nil
+}
+
+// TokenIDs flattens candidate CLOB token IDs in market order.
+func TokenIDs(candidates []Candidate) []string {
+	var out []string
+	for _, candidate := range candidates {
+		out = append(out, candidate.TokenIDs...)
+	}
+	return out
 }
 
 // Query builds the Gamma search query for a crypto market filter.
