@@ -1,8 +1,8 @@
 # Architecture
 
-`polygolem` is a Go protocol and automation stack for Polymarket with a
-Cobra-based CLI frontend. The CLI is a thin shell over typed, testable
-internal packages and a small public SDK in `pkg/`.
+`polygolem` is a Go SDK and CLI interface into Polymarket APIs and contracts.
+The CLI is a thin shell over typed, testable internal packages and a small
+public SDK in `pkg/`.
 
 ## Surface map
 
@@ -12,7 +12,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 
 | Package | Purpose |
 |---|---|
-| `pkg/clob` | CLOB market-data plus authenticated account/order DTOs. |
+| `pkg/clob` | CLOB market-data plus stable authenticated account/order transaction DTOs. |
 | `pkg/contracts` | Polygon contract registry, wallet approval capability sets, and contract-code deployment checks. |
 | `pkg/orderbook` | Read-only CLOB order-book reader. |
 | `pkg/bridge` | Bridge API client — supported assets, deposit addresses, quotes. |
@@ -33,7 +33,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/types` | Public DTOs shared by SDK packages. |
 | `pkg/universal` | Single client wrapping Gamma + CLOB + Data API + Discovery + Stream (70+ methods). |
 | `pkg/wallet` | Public deposit-wallet identity/readiness primitives — derive the POLY_1271 wallet and report wallet identity. |
-| `pkg/experimental/orders` | **Experimental** — fluent `OrderIntent` builder and validation (staged for SDK promotion). |
+| `pkg/experimental/orders` | **Experimental helper only** — fluent `OrderIntent` validation; stable user-directed order transactions live in `pkg/clob` and `polygolem clob create-order`. |
 | `pkg/experimental/auth` | **Experimental** — EIP-712 domain helpers, signature type constants, and hex utilities (staged for SDK promotion). |
 
 ### Internal packages (`internal/`)
@@ -87,6 +87,12 @@ Command handlers parse flags, call package APIs, and render output via
 `internal/output`. Protocol clients do not know about Cobra. Safety packages
 do not depend on command text. Paper state stays local and never reaches
 authenticated mutation endpoints.
+
+Polygolem is not a bot or strategy engine. It exposes Polymarket API and
+contract interfaces, with strong support for wallet setup, approvals, signing,
+and user-directed order transactions. Callers decide markets, sides, prices,
+sizes, timing, and whether to trade. See
+[ADR-0002](adr/0002-polymarket-api-interface-boundary.md).
 
 Cobra command handlers must not contain protocol or trading business logic.
 That logic belongs in typed clients, application services, safety gates, and

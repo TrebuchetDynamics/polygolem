@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  Discover markets, paper trade, and trade on Polymarket V2 through deposit wallets.<br>
-  One binary. No Python/npm runtime in the signing path. No opaque wrappers.
+  Interface with Polymarket APIs and contracts, including wallet setup and user-directed order transactions.<br>
+  No bot decisions. No Python/npm runtime in the signing path. No opaque wrappers.
 </p>
 
 <p align="center">
@@ -196,10 +196,10 @@ See [CHANGELOG.md](CHANGELOG.md) for full details.
 ## Who This Is For
 
 - **End users** who want a credential-free CLI to inspect and paper trade fast crypto markets before funding an account
-- **Bot developers** building automated trading strategies in Go
+- **Bot or strategy developers** who need a Go interface into Polymarket APIs, not embedded strategy decisions
 - **Quant developers** who want deterministic, compiled infrastructure with type safety
-- **Operators** running headless trading systems that need auditability and local signing
-- **Engineers** embedding Polymarket data and execution into larger Go services
+- **Operators** running user-directed headless transaction flows that need auditability and local signing
+- **Engineers** embedding Polymarket data, wallet setup, and order transactions into larger Go services
 - **Developers** who want one compiled artifact, not a Python virtualenv + npm + Docker compose
 
 If you are writing a Polymarket bot in Python or TypeScript, start with
@@ -265,7 +265,7 @@ Core trading flows validated today:
 - **Deterministic crypto resolution** — Resolve current 5m/15m/1h/4h windows by slug (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE)
 - **Live market data** — Order books, prices, spreads, midpoints, tick sizes, last trades
 - **WebSocket streaming** — Public CLOB market stream with auto-reconnect
-- **V2 deposit wallet lifecycle** — Derive, deploy, fund, approve, trade — all headless
+- **V2 deposit wallet lifecycle** — Derive, deploy, fund, approve, and submit user-directed order transactions headlessly
 - **Paper trading** — Simulate orders against live CLOB data with zero risk
 - **Settlement readiness** — Check adapter approvals before redeeming winning positions
 - **Local signing** — Private key never leaves the process; no external signing services
@@ -361,7 +361,7 @@ Assets supported: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE.
 | **Deposit-wallet only** | Cannot accidentally sign as EOA, proxy, or Safe |
 | **Local signing** | Private key never leaves the process |
 | **No external SDKs** | All wallet derivation, EIP-712, ERC-7739, and relayer code is in this repo |
-| **Pre-trade caps + daily limits + circuit breaker** | Configurable in `internal/risk` |
+| **Transaction safety caps + circuit breaker** | Guard user-directed transactions without selecting markets, sides, prices, or timing |
 | **Secret redaction** | API keys and signatures are redacted in logs |
 
 See [docs/SAFETY.md](docs/SAFETY.md) for the full model.

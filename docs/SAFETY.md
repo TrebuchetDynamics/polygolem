@@ -150,13 +150,13 @@ operations. These rules apply.
    credentials enables deposit-wallet operations; it does not relax any
    gate or grant trading privileges.
 
-8. **Decision-window safety.** Automated order placement must bind the
-   strategy decision window to the selected market window. A signal for
-   `2026-05-09T08:20:00Z` must not buy a market that starts at
-   `2026-05-09T12:20:00Z`, even when the asset and timeframe match. The
-   required SDK path is a strict window resolver that returns a
-   `window_mismatch` status instead of silently falling back to a future
-   market.
+8. **Decision-window safety.** External applications that automate trading
+   decisions must bind each decision to the selected market window. A signal
+   for `2026-05-09T08:20:00Z` must not buy a market that starts at
+   `2026-05-09T12:20:00Z`, even when the asset and timeframe match. Polygolem
+   provides the strict window resolver that returns a `window_mismatch` status
+   instead of silently falling back to a future market; it does not create the
+   trading signal.
 
 ## Matched, Winning, And Redeemable
 

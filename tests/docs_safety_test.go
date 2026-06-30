@@ -19,6 +19,10 @@ func TestDocumentationSafety(t *testing.T) {
 		"docs/POLYGOLEM-ROADMAP-MATRIX.md",
 		"docs/POLYMARKET-COVERAGE-MATRIX.md",
 		"docs/history/REFERENCE-RUST-CLI.md",
+		"docs/adr/README.md",
+		"docs/adr/0002-polymarket-api-interface-boundary.md",
+		"docs/adr/0003-deposit-wallet-only-trading.md",
+		"docs/adr/0004-public-sdk-boundary.md",
 	}
 	for _, requiredDoc := range requiredDocs {
 		path := filepath.Join(root, filepath.FromSlash(requiredDoc))
@@ -110,7 +114,8 @@ func TestDocumentationSafety(t *testing.T) {
 
 	architecture := readRepositoryFile(t, root, "docs/ARCHITECTURE.md")
 	for _, required := range []string{
-		"Go protocol and automation stack for Polymarket with a\nCobra-based CLI frontend",
+		"Go SDK and CLI interface into Polymarket APIs and contracts",
+		"Polygolem is not a bot or strategy engine",
 		"Command handlers parse flags, call package APIs, and render output via\n`internal/output`",
 		"Cobra command handlers must not contain protocol or trading business logic",
 		"**Read-only** (default): public market data only",
@@ -147,6 +152,7 @@ func TestDocumentationSafety(t *testing.T) {
 
 	contextMD := readRepositoryFile(t, root, "CONTEXT.md")
 	for _, required := range []string{
+		"Polymarket API Interface",
 		"EOA-Bound CLOB Auth",
 		"POLY_1271 Order Signing",
 		"ERC-7739 Wrapped Order Signature",
@@ -208,6 +214,8 @@ func TestDocumentationSafety(t *testing.T) {
 		"POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md",
 		"POLYGOLEM-ROADMAP-MATRIX.md",
 		"POLYMARKET-COVERAGE-MATRIX.md",
+		"adr/",
+		"Architecture decision records",
 	} {
 		if !strings.Contains(docsIndex, required) {
 			t.Fatalf("docs/README.md must index reinforcement doc %q", required)

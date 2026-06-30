@@ -2,6 +2,8 @@
 
 This directory contains the canonical documentation for polygolem. For a single source of truth, always prefer the docs listed here. Older or superseded docs reference these canonical versions.
 
+Canonical source docs are kept current. Historical plans under `docs/history/` and `docs/superpowers/` preserve audit context and may contain old wording; generated site output under `docs/docs-site/dist/` is not edited by hand.
+
 ## Quick Start
 
 | I want to... | Read this |
@@ -45,6 +47,7 @@ This directory contains the canonical documentation for polygolem. For a single 
 | Doc | What It Covers | Status |
 |-----|---------------|--------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Package boundaries, dependency direction, design decisions. | **Canonical** |
+| [adr/](./adr/) | Architecture decision records, including the non-bot Polymarket API interface boundary. | **Canonical** |
 | [CONTRACTS.md](./CONTRACTS.md) | All smart contract addresses, factory ABI, CREATE2 derivation. | **Canonical** |
 | [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md) | How POLY_1271 / deposit wallet signing works. | **Canonical** |
 | [POLYMARKET-COVERAGE-MATRIX.md](./POLYMARKET-COVERAGE-MATRIX.md) | Conservative SDK/CLI/docs/test coverage across Polymarket surfaces. | **Canonical** |

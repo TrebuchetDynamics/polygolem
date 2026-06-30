@@ -48,6 +48,10 @@ _Avoid_: Co-positioning signal, inferred cluster, visual guess
 
 ### CLOB Auth & Orders
 
+**Polymarket API Interface**:
+Polygolem is an interface into Polymarket APIs and contracts. It has first-class support for wallet setup, approvals, signing primitives, and user-directed order transactions. It does not choose markets, sides, prices, sizes, timing, or whether to trade.
+_Avoid_: Bot, strategy engine, autonomous trader, decision maker, trading decisions
+
 **EOA-Bound CLOB Auth**:
 Polygolem's validated CLOB L1/L2 authentication path: `POLY_ADDRESS` is the EOA and `POLY_SIGNATURE` is a standard 65-byte EOA ECDSA signature. The deposit wallet identity is carried by the order payload (`maker`, `signer`, `signatureType=3`), not by ClobAuth headers.
 _Avoid_: Deposit-wallet-owned API key, deposit-wallet-bound ClobAuth, ERC-7739 wrapped auth

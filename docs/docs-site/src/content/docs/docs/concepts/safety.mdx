@@ -71,10 +71,11 @@ When `signature_type = 3` (deposit), the CLOB balance endpoint returns the
 
 ### Decision-Window Safety
 
-Automated trading must bind each strategy decision to the exact market window
-it intends to trade. A 5m signal for `2026-05-09T08:20:00Z` must not buy a
-market that starts at `2026-05-09T12:20:00Z`, even if the asset and timeframe
-match.
+External applications that automate trading decisions must bind each decision
+to the exact market window they intend to trade. A 5m signal for
+`2026-05-09T08:20:00Z` must not buy a market that starts at
+`2026-05-09T12:20:00Z`, even if the asset and timeframe match. Polygolem
+provides the strict resolver; it does not create the trading signal.
 
 The safe resolver behavior is fail-closed:
 

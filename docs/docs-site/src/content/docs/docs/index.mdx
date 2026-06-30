@@ -62,7 +62,7 @@ site.
 
 **Trading requires a deposit wallet (type 3 / POLY_1271).** EOA, proxy, and Safe
 are blocked for new API users by Polymarket's CLOB V2. Polygolem handles the
-full deposit wallet lifecycle: derive, deploy via relayer, fund, approve, trade.
+full deposit wallet lifecycle: derive, deploy via relayer, fund, approve, and submit user-directed order transactions.
 
 ```bash
 polygolem discover crypto --asset BTC --interval 5m --enrich
@@ -70,10 +70,10 @@ polygolem discover crypto --asset BTC --interval 5m --enrich
 
 ## Who This Is For
 
-- **Bot developers** building automated trading strategies in Go
+- **Bot or strategy developers** who need a Go interface into Polymarket APIs, not embedded strategy decisions
 - **Quant developers** who want deterministic, compiled infrastructure with type safety
-- **Operators** running headless trading systems that need auditability and local signing
-- **Engineers** embedding Polymarket data and execution into larger Go services
+- **Operators** running user-directed headless transaction flows that need auditability and local signing
+- **Engineers** embedding Polymarket data, wallet setup, and order transactions into larger Go services
 
 If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with fixture-tested V2 deposit-wallet signing, polygolem focuses on that path with documented tests, fixtures, and live validation evidence.
 
@@ -86,7 +86,7 @@ If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB 
 - **Check market readiness** — tick sizes, fee rates, neg risk status
 - **Bridge assets** — check supported chains, create deposit addresses, use the SDK for quotes/status
 - **Paper trade** — simulate orders against live market data
-- **Build bots** — use the Go SDK to create automated strategies
+- **Build integrations** — use the Go SDK as the API/contract interface for external applications
 
 ## No credentials needed
 
