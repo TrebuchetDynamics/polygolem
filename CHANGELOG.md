@@ -329,7 +329,8 @@ the May 2026 deposit-wallet migration and the documentation overhaul.
   (headless for existing users), Builder Fee Key (headless via L2 HMAC), Relayer API Key
   (headless via SIWE). See `docs/ONBOARDING.md`.
 
-[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.1...HEAD
+[v0.2.1]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.2.0
 [v0.1.1]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.1.1
 [v2026.5.9]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v2026.5.9
