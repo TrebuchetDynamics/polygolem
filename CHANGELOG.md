@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pkg/marketresolver`: canonical outcome helpers `NormalizeOutcome`,
   `OutcomeForToken`, and `CryptoMarket.OutcomeForToken` mapping a winning
   token ID to `up`/`down`/`unknown`.
+- `pkg/marketresolver`: exported crypto-market parsing helpers migrated
+  from the mega-bot consumer — `UpDownTokenIDs`, `InferTimeframe`,
+  `InferTimeframeFromWindow`, `WindowFromSlug` (inverse of
+  `CryptoWindowSlug`), `AssetSearchQueries`, `AssetMentioned`, and
+  `ParseJSONStringList`.
 - `pkg/contracts`: exported calldata builders for EOA and deposit-wallet
   flows — `ERC20{Approve,Transfer,Allowance,BalanceOf}Calldata`,
   `ERC1155{SetApprovalForAll,IsApprovedForAll}Calldata`,

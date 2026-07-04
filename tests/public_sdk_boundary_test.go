@@ -30,6 +30,7 @@ import (
 	"context"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/pkg/bridge"
 	"github.com/TrebuchetDynamics/polygolem/pkg/builder"
@@ -145,6 +146,14 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var tickSizeValue func(types.CLOBTickSize) (float64, error) = types.CLOBTickSize.Value
 	var outcomeForToken func(string, string, string) string = marketresolver.OutcomeForToken
 	var normalizeOutcome func(string) string = marketresolver.NormalizeOutcome
+	var upDownTokenIDs func([]string, []string) (string, string) = marketresolver.UpDownTokenIDs
+	var inferTimeframe func(...string) string = marketresolver.InferTimeframe
+	var inferTimeframeFromWindow func(time.Time, time.Time) string = marketresolver.InferTimeframeFromWindow
+	var windowFromSlug func(string, string) (time.Time, time.Time, bool) = marketresolver.WindowFromSlug
+	var assetSearchQueries func(string) []string = marketresolver.AssetSearchQueries
+	var assetMentioned func(string, string) bool = marketresolver.AssetMentioned
+	var parseJSONStringList func(string) ([]string, error) = marketresolver.ParseJSONStringList
+	_, _, _, _, _, _, _ = upDownTokenIDs, inferTimeframe, inferTimeframeFromWindow, windowFromSlug, assetSearchQueries, assetMentioned, parseJSONStringList
 	var marketOutcomeForToken func(marketresolver.CryptoMarket, string) string = marketresolver.CryptoMarket.OutcomeForToken
 	_, _, _, _, _, _, _, _, _ = geoblockClient, geoblockCheck, bookBestBid, bookBestAsk, bookAskDepth, tickSizeValue, outcomeForToken, normalizeOutcome, marketOutcomeForToken
 	var mcpTools []mcp.Tool = mcp.SafeTools()
