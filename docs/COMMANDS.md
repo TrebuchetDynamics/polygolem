@@ -134,7 +134,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
     market-flow - Summarize read-only market holder, trade, and open-interest flow
     wallet - Build a read-only wallet intelligence dossier
   live - Inspect live gate status
-    status
+    status - Inspect live gate status
   marketdata - Live CLOB orderbook and share-price snapshots
     crypto - Get live marketdata snapshots for crypto markets
     live - Stream enriched CLOB market-data snapshots
@@ -2297,7 +2297,7 @@ polygolem live [flags]
 
 | Command | Description |
 |---|---|
-| `polygolem live status` |   |
+| `polygolem live status` | Inspect live gate status |
 
 **Flags:**
 
@@ -2307,6 +2307,8 @@ polygolem live [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 
 ### polygolem live status
+
+Inspect live gate status
 
 **Usage:**
 
@@ -2318,6 +2320,7 @@ polygolem live status [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--confirm-live` | `bool` | `false` | include the live confirmation gate in status evaluation |
 | `-h, --help` | `bool` | `false` | help for status |
 | `--json` | `bool` | `false` | emit JSON output |
 

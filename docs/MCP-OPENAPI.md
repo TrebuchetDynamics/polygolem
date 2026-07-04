@@ -1,7 +1,26 @@
 # Polygolem MCP and OpenAPI Read-Only Deployment Notes
 
+## What this is
+
 Polygolem exposes agent-friendly read-only integration surfaces without adding
 Python, Node, hosted proxy, or live-trading risk.
+
+## Start here
+
+- Use MCP when an agent speaks JSON-RPC over stdio (`cmd/polygolem_mcp/main.go:13`).
+- Use OpenAPI when local proxy/tooling wants a static read-only route map (`cmd/polygolem_openapi/main.go:11`).
+- Use the regular CLI for anything mutating; MCP/OpenAPI v1 intentionally excludes trading, signing, approvals, withdrawals, and relayer submission (`pkg/openapi/openapi.go:6`).
+
+## Source anchors
+
+| Claim | Source |
+|---|---|
+| The stdio MCP binary creates `mcp.NewServer()` and handles one JSON-RPC request per input line. | `cmd/polygolem_mcp/main.go:14`, `cmd/polygolem_mcp/main.go:17`, `cmd/polygolem_mcp/main.go:27` |
+| The default MCP server exposes the manifest but does not execute tools until handlers are supplied. | `pkg/mcp/mcp.go:68`, `pkg/mcp/mcp.go:70`, `pkg/mcp/mcp.go:141` |
+| Safe MCP tools are declared in code, not hand-maintained in this page. | `pkg/mcp/mcp.go:86`, `pkg/mcp/mcp.go:89`, `pkg/mcp/mcp.go:94` |
+| Handler execution has a default timeout and requires configured read-only adapters. | `pkg/mcp/handlers.go:9`, `pkg/mcp/handlers.go:31`, `pkg/mcp/handlers.go:52` |
+| The OpenAPI binary pretty-prints `openapi.Spec()`. | `cmd/polygolem_openapi/main.go:13`, `cmd/polygolem_openapi/main.go:14` |
+| OpenAPI paths live in `pkg/openapi`. | `pkg/openapi/openapi.go:14`, `pkg/openapi/openapi.go:23`, `pkg/openapi/openapi.go:36` |
 
 ## Safety boundary
 
@@ -42,7 +61,7 @@ Current tool manifest:
 By default, `cmd/polygolem_mcp` exposes the manifest and rejects unconfigured
 execution. Embedders can use `pkg/mcp.NewServerWithHandlers` or
 `pkg/mcp.NewSDKReadOnlyHandlers` to wire concrete read-only SDK clients under a
-per-call timeout.
+per-call timeout (`pkg/mcp/mcp.go:75`, `pkg/mcp/sdk_handlers.go:18`).
 
 ## OpenAPI spec
 
@@ -79,4 +98,13 @@ _ = server
 
 For market-data snapshots, feed a `marketdata.Tracker` from your websocket
 reader and register `mcp.NewMarketDataSnapshotHandler(tracker)` as the
-`polygolem.marketdata_snapshot` handler.
+`polygolem.marketdata_snapshot` handler (`pkg/mcp/sdk_handlers.go:67`).
+
+## Update triggers
+
+Refresh this page when:
+
+- `pkg/mcp.SafeTools()` adds, removes, or renames a tool;
+- `pkg/openapi.Spec()` adds, removes, or renames a path;
+- `cmd/polygolem_mcp` changes transport behavior beyond stdio line JSON-RPC;
+- a mutating MCP/OpenAPI surface is proposed — update [SAFETY.md](SAFETY.md) and ADRs first.

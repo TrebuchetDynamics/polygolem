@@ -28,18 +28,29 @@ replace github.com/TrebuchetDynamics/polygolem => `+repoRoot+`
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/TrebuchetDynamics/polygolem/pkg/bridge"
+	"github.com/TrebuchetDynamics/polygolem/pkg/builder"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
+	"github.com/TrebuchetDynamics/polygolem/pkg/cryptoprice"
 	"github.com/TrebuchetDynamics/polygolem/pkg/ctf"
 	"github.com/TrebuchetDynamics/polygolem/pkg/data"
+	"github.com/TrebuchetDynamics/polygolem/pkg/enabletrading"
+	"github.com/TrebuchetDynamics/polygolem/pkg/funding"
 	"github.com/TrebuchetDynamics/polygolem/pkg/gamma"
+	"github.com/TrebuchetDynamics/polygolem/pkg/intel"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketdata"
+	"github.com/TrebuchetDynamics/polygolem/pkg/marketresolver"
+	"github.com/TrebuchetDynamics/polygolem/pkg/mcp"
 	"github.com/TrebuchetDynamics/polygolem/pkg/openapi"
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderbook"
+	"github.com/TrebuchetDynamics/polygolem/pkg/orderfills"
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderresults"
+	"github.com/TrebuchetDynamics/polygolem/pkg/pagination"
+	"github.com/TrebuchetDynamics/polygolem/pkg/plugins"
 	"github.com/TrebuchetDynamics/polygolem/pkg/relayer"
 	"github.com/TrebuchetDynamics/polygolem/pkg/rfq"
 	"github.com/TrebuchetDynamics/polygolem/pkg/settlement"
@@ -61,6 +72,9 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var bridgeWithdrawDryRun *bridge.WithdrawDryRun
 	var bridgeBuildWithdrawDryRun func(bridge.WithdrawRequest) (*bridge.WithdrawDryRun, error) = bridge.BuildWithdrawDryRun
 	var bridgeWithdraw func(*bridge.Client, context.Context, bridge.WithdrawRequest) (*bridge.WithdrawResponse, error) = (*bridge.Client).Withdraw
+	var builderSigner builder.Signer
+	var builderConfig builder.LocalSignerConfig
+	var builderNewLocal func(builder.LocalSignerConfig) (*builder.LocalSigner, error) = builder.NewLocalSigner
 	var clobClient *sdkclob.Client = sdkclob.NewClient(sdkclob.Config{})
 	var clobConfig sdkclob.Config = sdkclob.Config{BuilderCode: "0x1111111111111111111111111111111111111111111111111111111111111111"}
 	var clobMarkets func(*sdkclob.Client, context.Context, string) (*types.CLOBPaginatedMarkets, error) = (*sdkclob.Client).Markets
@@ -102,14 +116,29 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var marketDataSnapshot marketdata.Snapshot
 	var marketDataBestBidAsk func(*marketdata.Tracker, sdkstream.BestBidAskMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyBestBidAsk
 	var marketDataTickSize func(*marketdata.Tracker, sdkstream.TickSizeChangeMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyTickSizeChange
+	var marketResolver *marketresolver.Resolver = marketresolver.NewResolver("")
+	var marketResolverResult marketresolver.ResolveResult
+	var cryptoPriceClient *cryptoprice.Client = cryptoprice.NewClient(cryptoprice.Config{})
+	var cryptoPrice cryptoprice.CryptoPrice
+	var enableTradingParams enabletrading.EnableTradingParams
+	var enableTradingBuildCalls func() []enabletrading.DepositWalletCall = enabletrading.BuildEnableTradingApprovalCalls
+	var fundingTransfer func(context.Context, string, string, *big.Int, string) (string, error) = funding.TransferPUSD
+	var intelScore intel.WalletScore = intel.ScoreWallet(intel.ScoreInput{Wallet: "0xabc"})
+	var mcpTools []mcp.Tool = mcp.SafeTools()
+	var mcpServer *mcp.Server = mcp.NewServer()
 	var openAPISpec map[string]any = openapi.Spec()
 	var orderbookReader orderbook.Reader = orderbook.NewReader("")
 	var orderbookSnapshot orderbook.OrderBook
 	var orderbookLevel orderbook.Level
+	var orderFillsReader orderfills.Reader
+	var orderFillsQuery orderfills.Query
+	var orderFillsValidate func(orderfills.Query) error = orderfills.ValidateQuery
 	var orderResultsSource orderresults.Source
 	var orderResultsReport *orderresults.Report
 	var orderResultsOptions orderresults.Options
 	var orderResultsBuild func(context.Context, orderresults.DataReader, string, orderresults.Options) (*orderresults.Report, error) = orderresults.BuildReport
+	var paginationCollect func(context.Context, pagination.Page[int]) ([]int, error) = pagination.CollectAll[int]
+	var pluginsOrder plugins.Order
 	var ctfOperationRequest ctf.OperationRequest
 	var ctfOperationDryRun *ctf.OperationDryRun
 	var ctfReadinessGate ctf.ReadinessGate
@@ -186,14 +215,16 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var universalStreamWithConfig func(*universal.Client, sdkstream.Config) *sdkstream.MarketClient = (*universal.Client).StreamClientWithConfig
 
 	_, _, _, _, _ = bridgeClient, bridgeWithdrawRequest, bridgeWithdrawDryRun, bridgeBuildWithdrawDryRun, bridgeWithdraw
+	_, _, _ = builderSigner, builderConfig, builderNewLocal
 	_, _, _, _, _, _, _, _, _ = clobClient, clobConfig, clobMarkets, clobMarket, clobMarketByToken, clobOrderBook, clobOrderBooks, clobTickSize, clobPriceHistory
 	_, _, _, _, _, _, _, _, _, _ = clobAPIKey, clobDeriveAPIKey, clobBalanceParams, clobBalance, clobOrders, clobOrder, clobTrades, clobCancel, clobCancelMarketParams, clobCancelMarket
 	_, _, _, _ = clobCreateParams, clobCreate, clobMarketOrderParams, clobMarketOrder
 	_, _, _, _, _, _, _, _, _, _ = streamClient, streamConfig, streamConnect, streamSubscribe, streamClose, streamConnected, streamBook, streamPriceChange, streamLastTrade, streamTickSize
 	_, _, _, _, _, _ = streamBestBidAsk, streamNewMarket, streamMarketResolved, streamDeduplicator, marketDataTracker, marketDataSnapshot
 	_, _ = marketDataBestBidAsk, marketDataTickSize
-	_ = openAPISpec
-	_, _, _, _, _, _, _ = orderbookReader, orderbookSnapshot, orderbookLevel, orderResultsSource, orderResultsReport, orderResultsOptions, orderResultsBuild
+	_, _, _, _ = marketResolver, marketResolverResult, enableTradingParams, enableTradingBuildCalls
+	_, _, _, _, _, _, _ = cryptoPriceClient, cryptoPrice, fundingTransfer, intelScore, mcpTools, mcpServer, openAPISpec
+	_, _, _, _, _, _, _, _, _, _, _, _ = orderbookReader, orderbookSnapshot, orderbookLevel, orderFillsReader, orderFillsQuery, orderFillsValidate, orderResultsSource, orderResultsReport, orderResultsOptions, orderResultsBuild, paginationCollect, pluginsOrder
 	_, _, _, _, _, _, _, _ = ctfOperationRequest, ctfOperationDryRun, ctfReadinessGate, ctfSubmitPlan, ctfBuildDryRun, ctfBuildSubmitPlan, ctfBuildSplit, ctfBuildMerge
 	_, _, _, _, _ = contractsRegistry, contractStatus, contractDeployed, depositWalletDeployed, redeemAdapterFor
 	_, _, _, _, _ = rfqClient, rfqRequest, rfqQuote, rfqValidate, rfqSubmit

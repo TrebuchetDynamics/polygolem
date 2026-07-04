@@ -283,9 +283,12 @@ Every CLI subcommand is a thin wrapper around importable `pkg/` packages:
 | [`pkg/universal`](pkg/universal) | One typed client over Gamma + CLOB + Data API + Stream + Discovery (70+ methods) |
 | [`pkg/clob`](pkg/clob) | CLOB V2 — market data, orders, balances, builder fees |
 | [`pkg/gamma`](pkg/gamma) | Read-only Gamma market discovery (26 methods) |
+| [`pkg/data`](pkg/data) | Read-only Data API analytics: positions, trades, holders, value, volume |
 | [`pkg/stream`](pkg/stream) | Public CLOB WebSocket market stream |
 | [`pkg/marketdata`](pkg/marketdata) | Live share-price snapshots from stream events |
+| [`pkg/cryptoprice`](pkg/cryptoprice) | Read-only crypto reference prices for Up/Down resolution windows |
 | [`pkg/wallet`](pkg/wallet) | Deposit-wallet identity/readiness — derive the POLY_1271 wallet |
+| [`pkg/funding`](pkg/funding) | Explicit pUSD funding transfer helper for gated live flows |
 | [`pkg/contracts`](pkg/contracts) | Polygon contract registry plus trading/settlement/enable-trading approval sets |
 | [`pkg/relayer`](pkg/relayer) | V2 Relayer client — WALLET-CREATE, batch, nonce |
 | [`pkg/settlement`](pkg/settlement) | V2 winner redemption planning, adapter calls, readiness gates |
@@ -294,11 +297,16 @@ Every CLI subcommand is a thin wrapper around importable `pkg/` packages:
 | [`pkg/rfq`](pkg/rfq) | Typed RFQ request/quote/response models with positive-decimal validation |
 | [`pkg/signers`](pkg/signers) | Public signing seam with local, HTTP remote, KMS, and Turnkey adapters |
 | [`pkg/orderbook`](pkg/orderbook) | Order book reader interface |
+| [`pkg/orderfills`](pkg/orderfills) | On-chain `OrderFilled` truth models and readers |
+| [`pkg/orderresults`](pkg/orderresults) | Joined order/position/trade result reports |
 | [`pkg/builder`](pkg/builder) | Builder header signing — local EIP-712 and remote HTTP |
 | [`pkg/enabletrading`](pkg/enabletrading) | Headless enable-trading: ClobAuth and token-approval typed-data signing |
 | [`pkg/intel`](pkg/intel) | Wallet intelligence scoring — dossier alerts, shrinkage win rate, co-positioning signals |
 | [`pkg/mcp`](pkg/mcp) | Read-only Model Context Protocol server and SDK handler wiring |
 | [`pkg/openapi`](pkg/openapi) | Minimal read-only OpenAPI 3.1 spec generation |
+| [`pkg/pagination`](pkg/pagination) | Generic cursor, offset, and batch pagination helpers |
+| [`pkg/plugins`](pkg/plugins) | Market-data and risk plugin interfaces for embedders |
+| [`pkg/types`](pkg/types) | Shared public DTOs for SDK packages |
 | [`pkg/marketresolver`](pkg/marketresolver) | Deterministic crypto window resolution (BTC/ETH/SOL/XRP/BNB/DOGE/HYPE) |
 
 ```go
@@ -504,6 +512,7 @@ gofmt -w .
 
 | Document | What it covers |
 |---|---|
+| [Documentation Index](docs/README.md) | Canonical docs map and update triggers |
 | [5-Minute Crypto Markets Guide](POLYGOLEM-5M-CRYPTO-GUIDE.md) | End-user demo for discovering and paper trading 5m crypto markets |
 | [Operator One-Pager](docs/OPERATOR-ONE-PAGER.md) | Short no-wallet and pre-live checklist |
 | [Safe Happy Path](docs/SAFE-HAPPY-PATH.md) | Smallest path from read-only checks to a tiny capped live order |
@@ -518,6 +527,8 @@ gofmt -w .
 | [Contracts](docs/CONTRACTS.md) | Contract addresses, factory ABI, CREATE2 derivation |
 | [Architecture](docs/ARCHITECTURE.md) | Package boundaries and dependency direction |
 | [Commands](docs/COMMANDS.md) | Auto-generated CLI reference |
+| [JSON Contract](docs/JSON-CONTRACT.md) | Stable `--json` success/error envelope |
+| [MCP and OpenAPI](docs/MCP-OPENAPI.md) | Read-only agent/tooling integration surfaces |
 | [Deposit Wallet Migration](docs/DEPOSIT-WALLET-MIGRATION.md) | V1→V2 survival guide |
 | [polygolem.trebuchetdynamics.com](https://polygolem.trebuchetdynamics.com) | Searchable docs site |
 | [SKILL.md](SKILL.md) | AI agent skill manifest — every command, env var, safety rule, and JSON contract |

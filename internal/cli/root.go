@@ -124,9 +124,7 @@ func NewRootCommand(opts Options) *cobra.Command {
 	authCmd.AddCommand(newAuthHeadlessOnboardCommand(jsonOutput))
 	authCmd.AddCommand(newAuthExportKeyCommand(jsonOutput))
 	root.AddCommand(authCmd)
-	root.AddCommand(commandGroup("live", "Inspect live gate status",
-		skeleton("status"),
-	))
+	root.AddCommand(liveCmd(opts.Version))
 	installJSONContract(root)
 	return root
 }

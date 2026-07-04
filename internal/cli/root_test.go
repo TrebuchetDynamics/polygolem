@@ -139,26 +139,65 @@ func TestJSONGroupCommandUsesUsageErrorEnvelope(t *testing.T) {
 	}
 }
 
-func TestJSONSkeletonUsesInternalErrorEnvelope(t *testing.T) {
+func TestJSONLiveStatusReportsBlockedByDefault(t *testing.T) {
+	t.Setenv("POLYMARKET_LIVE_PROFILE", "")
+	t.Setenv("POLYMARKET_LIVE_TRADING_ENABLED", "false")
+
 	stdout, stderr, err := executeRootForTest("--json", "live", "status")
-	if err == nil {
-		t.Fatal("expected Execute to return internal error")
+	if err != nil {
+		t.Fatalf("Execute returned error: %v\nstderr=%s", err, stderr)
 	}
-	if stdout != "" {
-		t.Fatalf("stdout=%q, want empty", stdout)
+	if stderr != "" {
+		t.Fatalf("stderr=%q, want empty", stderr)
 	}
-	if got := ExitCode(err); got != 9 {
-		t.Fatalf("ExitCode=%d, want 9", got)
-	}
-	got := parseJSONEnvelopeForTest(t, stderr)
-	if got.OK {
-		t.Fatalf("ok=true, want false\nenvelope=%s", stderr)
+	got := parseJSONEnvelopeForTest(t, stdout)
+	if !got.OK {
+		t.Fatalf("ok=false, want true\nenvelope=%s", stdout)
 	}
 	if got.Meta.Command != "live status" {
 		t.Fatalf("meta.command=%q, want live status", got.Meta.Command)
 	}
-	if got.Error == nil || got.Error.Code != "INTERNAL_UNIMPLEMENTED" || got.Error.Category != "internal" {
-		t.Fatalf("unexpected error envelope: %+v\n%s", got.Error, stderr)
+	var data struct {
+		Allowed  bool `json:"allowed"`
+		Failures []struct {
+			Code string `json:"code"`
+		} `json:"failures"`
+	}
+	if err := json.Unmarshal(got.Data, &data); err != nil {
+		t.Fatalf("decode live status data: %v\n%s", err, got.Data)
+	}
+	if data.Allowed {
+		t.Fatal("live status allowed by default")
+	}
+	if len(data.Failures) == 0 {
+		t.Fatal("live status should explain blocked gates")
+	}
+}
+
+func TestJSONLiveStatusReportsAllowedWhenAllGatesPass(t *testing.T) {
+	t.Setenv("POLYMARKET_LIVE_PROFILE", "on")
+	t.Setenv("POLYMARKET_LIVE_TRADING_ENABLED", "true")
+
+	stdout, stderr, err := executeRootForTest("--json", "live", "status", "--confirm-live")
+	if err != nil {
+		t.Fatalf("Execute returned error: %v\nstderr=%s", err, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("stderr=%q, want empty", stderr)
+	}
+	got := parseJSONEnvelopeForTest(t, stdout)
+	var data struct {
+		Allowed  bool          `json:"allowed"`
+		Failures []interface{} `json:"failures"`
+	}
+	if err := json.Unmarshal(got.Data, &data); err != nil {
+		t.Fatalf("decode live status data: %v\n%s", err, got.Data)
+	}
+	if !data.Allowed {
+		t.Fatalf("allowed=false, want true; data=%s", got.Data)
+	}
+	if len(data.Failures) != 0 {
+		t.Fatalf("failures=%v, want none", data.Failures)
 	}
 }
 

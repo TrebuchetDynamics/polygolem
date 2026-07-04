@@ -1,8 +1,12 @@
 # Polygolem Documentation
 
-This directory contains the canonical documentation for polygolem. For a single source of truth, always prefer the docs listed here. Older or superseded docs reference these canonical versions.
+## What this is
 
-Canonical source docs are kept current. Historical plans under `docs/history/` and `docs/superpowers/` preserve audit context and may contain old wording; generated site output under `docs/docs-site/dist/` is not edited by hand.
+This is the canonical docs index for polygolem: a Go Polymarket CLI/SDK (`go.mod:1`, `go.mod:3`) with a Cobra command tree (`internal/cli/root.go:58`) and stable JSON command envelopes (`internal/output/output.go:32`).
+
+## Start here
+
+Use this page to choose the right doc. Prefer the canonical docs listed below over historical plans. Historical notes under `docs/history/` preserve audit context and may contain old wording; generated site output under `docs/docs-site/dist/` is not edited by hand.
 
 ## Quick Start
 
@@ -26,6 +30,16 @@ Canonical source docs are kept current. Historical plans under `docs/history/` a
 | Investigate upstream API drift | [UPSTREAM-DRIFT-RUNBOOK.md](./UPSTREAM-DRIFT-RUNBOOK.md) |
 | Build or deploy the public docs website | [docs-site/](./docs-site/) |
 | Review the open-source reinforcement roadmap | [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) |
+
+## Source-backed orientation
+
+| Area | Source of truth | Why it matters |
+|---|---|---|
+| CLI commands | `internal/cli/root.go:104`, `internal/cli/root.go:130` | Root command wires command groups and installs the JSON contract. |
+| Command reference | `cmd/polygolem_docs/main.go:23`, `internal/cli/docs_generation.go:22` | `docs/COMMANDS.md` is generated from Cobra metadata; do not edit it by hand. |
+| JSON envelope | `internal/cli/root.go:79`, `internal/output/output.go:54`, `internal/output/output.go:63` | Every command supports `--json`; success/error envelopes are rendered centrally. |
+| CLI/package boundary | `internal/cli/doc.go:1`, `internal/cli/doc.go:4` | Command handlers should delegate to typed packages instead of holding protocol logic. |
+| Runtime/deps | `go.mod:3`, `go.mod:8`, `go.mod:10` | Go version and core CLI/config dependencies live in the module manifest. |
 
 ## Canonical Docs (Single Source of Truth)
 
@@ -77,6 +91,15 @@ Canonical source docs are kept current. Historical plans under `docs/history/` a
 | [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) | End-to-end 2026-05-08 reference run: every tx hash, gas figure, and pUSD movement from EOA private key to a filled buy + sell. | **Canonical** |
 | [DEPOSIT-WALLET-REDEEM-VALIDATION.md](./DEPOSIT-WALLET-REDEEM-VALIDATION.md) | Scientific validation ladder and resolved live incident report for V2 settlement: official contracts, adapter readiness, redeem runbook, and deprecated fallback inventory. | **Canonical** |
 
+## Update triggers
+
+Refresh this index when:
+
+- a top-level command is added/removed in `internal/cli/root.go`;
+- `go run ./cmd/polygolem_docs` changes `docs/COMMANDS.md`;
+- a public SDK package is added, moved, or promoted from `pkg/experimental/`;
+- safety, onboarding, deposit-wallet, or JSON-contract behavior changes.
+
 ## Deleted Docs
 
 These docs contained outdated or false claims and have been removed:
@@ -96,4 +119,4 @@ These docs contained outdated or false claims and have been removed:
 
 ---
 
-*Last updated: 2026-05-11*
+*Last updated: 2026-06-30*

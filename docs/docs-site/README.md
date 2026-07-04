@@ -25,16 +25,15 @@ Requires Cloudflare/Wrangler auth for the `polygolem` Pages project.
 
 ## GitHub Actions
 
-`.github/workflows/docs-site.yml` builds the docsite on pull requests and main
-pushes that touch `docs/docs-site/**`. It also exposes a manual
-`workflow_dispatch` deploy path. Set `deploy=true` when running the workflow and
-provide these repository secrets:
+`.github/workflows/ci.yml` builds the docsite with `npm --prefix docs/docs-site ci`
+and `npm --prefix docs/docs-site run build` on pull requests and main pushes.
+The repository does not publish the docs site automatically; Cloudflare Pages
+publication remains an explicit local/operator action using `npm run deploy`.
+
+Deploy requires Cloudflare/Wrangler auth for the `polygolem` Pages project:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
-
-The workflow never deploys automatically on a push; Cloudflare Pages publication
-is an explicit manual step.
 
 ## Route map
 

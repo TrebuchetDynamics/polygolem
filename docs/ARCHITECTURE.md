@@ -1,8 +1,25 @@
 # Architecture
 
+## What this is
+
 `polygolem` is a Go SDK and CLI interface into Polymarket APIs and contracts.
-The CLI is a thin shell over typed, testable internal packages and a small
-public SDK in `pkg/`.
+The CLI is a thin shell over typed, testable internal packages and a public SDK
+in `pkg/`.
+
+## Start here
+
+- Need CLI wiring? Start at `internal/cli/root.go:58`; command handlers are documented as thin delegates in `internal/cli/doc.go:1`.
+- Need public import boundaries? Start with the `pkg/` table below and [ADR-0004](adr/0004-public-sdk-boundary.md).
+- Need safety boundaries? Read [SAFETY.md](SAFETY.md), then the mode and signature sections below.
+
+## Source anchors
+
+| Claim | Source |
+|---|---|
+| The root Cobra command owns global `--json` and command registration. | `internal/cli/root.go:58`, `internal/cli/root.go:79`, `internal/cli/root.go:104` |
+| CLI handlers should delegate; default mode is read-only; live uses deposit-wallet signing gates. | `internal/cli/doc.go:1`, `internal/cli/doc.go:4`, `internal/cli/doc.go:5` |
+| Contract approval capability sets live in `pkg/contracts`. | `pkg/contracts/contracts.go:96`, `pkg/contracts/contracts.go:104`, `pkg/contracts/contracts.go:116`, `pkg/contracts/contracts.go:122` |
+| MCP/OpenAPI are intentionally read-only agent surfaces. | `pkg/mcp/mcp.go:1`, `pkg/mcp/mcp.go:86`, `pkg/openapi/openapi.go:1` |
 
 ## Surface map
 
@@ -12,26 +29,33 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 
 | Package | Purpose |
 |---|---|
-| `pkg/clob` | CLOB market-data plus stable authenticated account/order transaction DTOs. |
-| `pkg/contracts` | Polygon contract registry, wallet approval capability sets, and contract-code deployment checks. |
-| `pkg/orderbook` | Read-only CLOB order-book reader. |
 | `pkg/bridge` | Bridge API client — supported assets, deposit addresses, quotes. |
 | `pkg/builder` | Builder attribution and fee configuration for order placement. |
+| `pkg/clob` | CLOB market-data plus stable authenticated account/order transaction DTOs. |
+| `pkg/contracts` | Polygon contract registry, wallet approval capability sets, and contract-code deployment checks. |
+| `pkg/cryptoprice` | Read-only Polymarket web crypto reference-price client (`pkg/cryptoprice/client.go:1`). |
 | `pkg/ctf` | Conditional Tokens Framework (CTF) helpers for position management. |
 | `pkg/data` | Read-only Data API analytics client returning `pkg/types` DTOs. |
 | `pkg/enabletrading` | Headless enable-trading flow: ClobAuth API keys and token approvals. |
 | `pkg/funding` | Deposit-wallet funding helpers (ERC-20 transfers and balance checks). |
-| `pkg/gamma` | Read-only Gamma API surface for embedded use (26 methods). |
+| `pkg/gamma` | Read-only Gamma API surface for embedded use. |
+| `pkg/intel` | Read-only wallet intelligence DTOs and pure scoring helpers (`pkg/intel/types.go:1`, `pkg/intel/score.go:48`). |
 | `pkg/marketdata` | Normalized live best bid, best ask, spread, midpoint, tick-size, last-trade, and book snapshots from public stream events. |
 | `pkg/marketresolver` | Resolve market identifiers (ID, slug, token-id) to a canonical view. |
+| `pkg/mcp` | Minimal read-only Model Context Protocol surface for agent integrations (`pkg/mcp/mcp.go:1`). |
+| `pkg/openapi` | Minimal OpenAPI description for safe read-only tooling (`pkg/openapi/openapi.go:1`). |
+| `pkg/orderbook` | Read-only CLOB order-book reader. |
+| `pkg/orderfills` | On-chain `OrderFilled` truth models and readers (`pkg/orderfills/orderfills.go:1`, `pkg/orderfills/orderfills.go:50`). |
 | `pkg/orderresults` | Order result types and response parsing for placement outcomes. |
 | `pkg/pagination` | Cursor and offset pagination with concurrent batching. |
 | `pkg/plugins` | Plugin interfaces for market data and risk extensibility. |
 | `pkg/relayer` | Builder relayer primitives for wallet create and wallet batch flows. |
+| `pkg/rfq` | Typed RFQ DTOs and validation; live submit is explicitly unsupported (`pkg/rfq/rfq.go:1`, `pkg/rfq/rfq.go:18`). |
 | `pkg/settlement` | V2 winner redemption planning, adapter calls, and readiness gates. |
+| `pkg/signers` | Public signing interfaces and safe local signer adapter (`pkg/signers/signers.go:1`, `pkg/signers/signers.go:21`). |
 | `pkg/stream` | Read-only public CLOB WebSocket market stream client, including V2 custom feature events. |
 | `pkg/types` | Public DTOs shared by SDK packages. |
-| `pkg/universal` | Single client wrapping Gamma + CLOB + Data API + Discovery + Stream (70+ methods). |
+| `pkg/universal` | Single client wrapping Gamma + CLOB + Data API + Discovery + Stream. |
 | `pkg/wallet` | Public deposit-wallet identity/readiness primitives — derive the POLY_1271 wallet and report wallet identity. |
 | `pkg/experimental/orders` | **Experimental helper only** — fluent `OrderIntent` validation; stable user-directed order transactions live in `pkg/clob` and `polygolem clob create-order`. |
 | `pkg/experimental/auth` | **Experimental** — EIP-712 domain helpers, signature type constants, and hex utilities (staged for SDK promotion). |
@@ -79,7 +103,7 @@ internal/{auth, transport, polytypes}                   ← cross-cutting primit
         |
 internal/{wallet, orders, execution, risk, paper, marketdiscovery}
         |
-pkg/{bridge, builder, clob, contracts, ctf, data, enabletrading, funding, gamma, marketdata, marketresolver, orderbook, orderresults, pagination, plugins, relayer, settlement, stream, types, universal, wallet}
+pkg/{bridge, builder, clob, contracts, cryptoprice, ctf, data, enabletrading, funding, gamma, intel, marketdata, marketresolver, mcp, openapi, orderbook, orderfills, orderresults, pagination, plugins, relayer, rfq, settlement, signers, stream, types, universal, wallet}
 pkg/experimental/{orders, auth}   ← experimental surfaces (staged for SDK promotion)
 ```
 
@@ -146,20 +170,19 @@ behind their own package seams.
 
 ## Public SDK boundary
 
-`pkg/` exists. It is small by design and grows when an internal capability
-proves stable enough to expose. Do not move code into `pkg/` without an
-SDK-level commitment to keep its API stable across minor versions.
+`pkg/` is the public import boundary. Adding a package there is an SDK-level
+commitment; keep unstable experiments under `pkg/experimental/` until their API
+shape is proven.
 
-Gamma, Data API, CLOB market/account/order DTOs, contract registry/readiness
-helpers, and public market stream DTOs are promoted public DTO families.
-`pkg/gamma`, `pkg/data`, `pkg/clob`, `pkg/contracts`, `pkg/stream`, `pkg/marketdata`, and the corresponding
-`pkg/universal` methods return `pkg/types` for markets, events, tags, series,
-comments, profiles, positions, trades, holders, leaderboards, open interest,
-live volume, CLOB market data, books, prices, and price history, or
-`pkg/clob` types for authenticated CLOB account/trading operations,
-`pkg/contracts` types for on-chain deployment checks, and
-`pkg/stream` types for WebSocket market events. Rewards, enrichment, and
-user-stream types still need dedicated public-contract slices.
+Promoted DTO families cover Gamma/Data/CLOB market reads, account/order DTOs,
+contract/readiness helpers, public/user streams, market data snapshots, crypto
+reference prices, on-chain order fills, read-only agent surfaces, and signing
+seams. Examples: `pkg/stream` exposes authenticated user-stream DTOs and a
+`UserClient` (`pkg/stream/user.go:20`, `pkg/stream/user.go:36`), `pkg/rfq`
+exposes DTO validation while live submit returns `ErrSubmitUnsupported`
+(`pkg/rfq/rfq.go:16`, `pkg/rfq/rfq.go:114`), and `pkg/openapi`/`pkg/mcp` expose
+read-only agent discovery surfaces (`pkg/openapi/openapi.go:14`,
+`pkg/mcp/mcp.go:86`).
 
 `pkg/experimental/` hosts APIs that are not yet SDK-stable. They follow the
 same importable package rules as `pkg/`, but their APIs may change without a
@@ -176,6 +199,15 @@ breaking changes.
   only type Polymarket V2 accepts.
 - Builder credentials and private keys are redacted by `internal/config`
   on every load.
+
+## Update triggers
+
+Refresh this page when:
+
+- `find pkg -maxdepth 2 -type f -name '*.go'` shows a new or removed public package;
+- a top-level command is added/removed in `internal/cli/root.go`;
+- `pkg/contracts` approval sets change;
+- any ADR changes the public SDK, bot/strategy boundary, or deposit-wallet-only model.
 
 See [Architecture and Taxonomy Improvement Plan](ARCHITECTURE-TAXONOMY-PLAN.md)
 for the next SDK naming and public-boundary cleanup work.
