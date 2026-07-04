@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pkg/marketresolver`: canonical outcome helpers `NormalizeOutcome`,
   `OutcomeForToken`, and `CryptoMarket.OutcomeForToken` mapping a winning
   token ID to `up`/`down`/`unknown`.
+- `pkg/contracts`: exported calldata builders for EOA and deposit-wallet
+  flows — `ERC20{Approve,Transfer,Allowance,BalanceOf}Calldata`,
+  `ERC1155{SetApprovalForAll,IsApprovedForAll}Calldata`,
+  `Ramp{Wrap,Unwrap}Calldata` for the V2 collateral on/offramp pUSD
+  conversion, plus `MaxUint256` and `Decode{Uint256,Bool}Result`.
+  Selectors are keccak-verified in tests and byte-identical to the
+  relayer's deposit-wallet batch encoding.
 
 ## [v0.2.1] — 2026-06-30
 
