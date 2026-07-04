@@ -283,6 +283,7 @@ Every CLI subcommand is a thin wrapper around importable `pkg/` packages:
 | [`pkg/universal`](pkg/universal) | One typed client over Gamma + CLOB + Data API + Stream + Discovery (70+ methods) |
 | [`pkg/clob`](pkg/clob) | CLOB V2 — market data, orders, balances, builder fees |
 | [`pkg/gamma`](pkg/gamma) | Read-only Gamma market discovery (26 methods) |
+| [`pkg/geoblock`](pkg/geoblock) | Geoblock verdict for the calling IP (blocked, country, region) |
 | [`pkg/data`](pkg/data) | Read-only Data API analytics: positions, trades, holders, value, volume |
 | [`pkg/stream`](pkg/stream) | Public CLOB WebSocket market stream |
 | [`pkg/marketdata`](pkg/marketdata) | Live share-price snapshots from stream events |

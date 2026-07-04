@@ -39,6 +39,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/enabletrading` | Headless enable-trading flow: ClobAuth API keys and token approvals. |
 | `pkg/funding` | Deposit-wallet funding helpers (ERC-20 transfers and balance checks). |
 | `pkg/gamma` | Read-only Gamma API surface for embedded use. |
+| `pkg/geoblock` | Polymarket geoblock verdict client (blocked flag plus caller IP/country/region). |
 | `pkg/intel` | Read-only wallet intelligence DTOs and pure scoring helpers (`pkg/intel/types.go:1`, `pkg/intel/score.go:48`). |
 | `pkg/marketdata` | Normalized live best bid, best ask, spread, midpoint, tick-size, last-trade, and book snapshots from public stream events. |
 | `pkg/marketresolver` | Resolve market identifiers (ID, slug, token-id) to a canonical view. |

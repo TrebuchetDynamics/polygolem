@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `pkg/geoblock`: read-only client for Polymarket's geoblock endpoint
+  (blocked flag plus caller IP/country/region), migrated from the mega-bot
+  consumer so all Polymarket HTTP lives in the SDK.
+- `pkg/types`: executable top-of-book math on `CLOBOrderBook` — `BestBid`,
+  `BestAsk`, and `AvailableAskSize(maxPrice)` — and `CLOBTickSize.Value()`
+  for a parsed positive tick size, replacing per-consumer string parsing.
+- `pkg/marketresolver`: canonical outcome helpers `NormalizeOutcome`,
+  `OutcomeForToken`, and `CryptoMarket.OutcomeForToken` mapping a winning
+  token ID to `up`/`down`/`unknown`.
+
 ## [v0.2.1] — 2026-06-30
 
 ### Added

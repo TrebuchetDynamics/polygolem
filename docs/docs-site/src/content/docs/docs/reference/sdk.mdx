@@ -367,6 +367,30 @@ func (c *Client) EventsKeyset(ctx context.Context, params *types.KeysetParams) (
 func (c *Client) MarketsKeyset(ctx context.Context, params *types.KeysetParams) ([]types.Market, string, error)
 ```
 
+## `pkg/geoblock` — Geoblock Verdict
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/geoblock"
+```
+
+Read-only client for Polymarket's public geoblock endpoint. It reports whether
+the caller's IP is blocked from trading and where it appears to be
+(`pkg/geoblock/geoblock.go:1`).
+
+```go
+const DefaultURL = "https://polymarket.com/api/geoblock"
+
+type Result struct {
+    Blocked bool
+    IP      string
+    Country string
+    Region  string
+}
+
+func New(baseURL string, httpClient *http.Client) *Client
+func (c *Client) Check(ctx context.Context) (Result, error)
+```
+
 ## `pkg/types` — Public DTOs
 
 ```go

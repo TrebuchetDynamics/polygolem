@@ -41,6 +41,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/pkg/enabletrading"
 	"github.com/TrebuchetDynamics/polygolem/pkg/funding"
 	"github.com/TrebuchetDynamics/polygolem/pkg/gamma"
+	"github.com/TrebuchetDynamics/polygolem/pkg/geoblock"
 	"github.com/TrebuchetDynamics/polygolem/pkg/intel"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketdata"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketresolver"
@@ -124,6 +125,16 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var enableTradingBuildCalls func() []enabletrading.DepositWalletCall = enabletrading.BuildEnableTradingApprovalCalls
 	var fundingTransfer func(context.Context, string, string, *big.Int, string) (string, error) = funding.TransferPUSD
 	var intelScore intel.WalletScore = intel.ScoreWallet(intel.ScoreInput{Wallet: "0xabc"})
+	var geoblockClient *geoblock.Client = geoblock.New("", nil)
+	var geoblockCheck func(*geoblock.Client, context.Context) (geoblock.Result, error) = (*geoblock.Client).Check
+	var bookBestBid func(types.CLOBOrderBook) (float64, bool) = types.CLOBOrderBook.BestBid
+	var bookBestAsk func(types.CLOBOrderBook) (float64, bool) = types.CLOBOrderBook.BestAsk
+	var bookAskDepth func(types.CLOBOrderBook, float64) float64 = types.CLOBOrderBook.AvailableAskSize
+	var tickSizeValue func(types.CLOBTickSize) (float64, error) = types.CLOBTickSize.Value
+	var outcomeForToken func(string, string, string) string = marketresolver.OutcomeForToken
+	var normalizeOutcome func(string) string = marketresolver.NormalizeOutcome
+	var marketOutcomeForToken func(marketresolver.CryptoMarket, string) string = marketresolver.CryptoMarket.OutcomeForToken
+	_, _, _, _, _, _, _, _, _ = geoblockClient, geoblockCheck, bookBestBid, bookBestAsk, bookAskDepth, tickSizeValue, outcomeForToken, normalizeOutcome, marketOutcomeForToken
 	var mcpTools []mcp.Tool = mcp.SafeTools()
 	var mcpServer *mcp.Server = mcp.NewServer()
 	var openAPISpec map[string]any = openapi.Spec()
