@@ -355,7 +355,7 @@ The relayer pays gas for all on-chain operations. Users need pUSD for trading am
 ```bash
 # Step 1: One-time manual — copy builder credentials from polymarket.com/settings?tab=builder
 # Step 2: Everything else automated
-POLYMARKET_PRIVATE_KEY="0x..." \
+SIGNER_PRIVATE_KEY="0x..." \
 POLYMARKET_BUILDER_API_KEY="..." \
 POLYMARKET_BUILDER_SECRET="..." \
 POLYMARKET_BUILDER_PASSPHRASE="..." \

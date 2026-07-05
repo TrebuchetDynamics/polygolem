@@ -12,7 +12,7 @@ polygolem paper trade --asset BTC --interval 5m --side up --size 1 --json
 polygolem paper positions --json
 ```
 
-This path should not need `POLYMARKET_PRIVATE_KEY`, CLOB credentials, relayer credentials, or Polygon RPC signing.
+This path should not need `SIGNER_PRIVATE_KEY`, CLOB credentials, relayer credentials, or Polygon RPC signing.
 
 ## Before live money
 

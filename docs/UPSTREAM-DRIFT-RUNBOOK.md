@@ -18,7 +18,7 @@ Only for a funded test wallet:
 
 ```bash
 export POLYGOLEM_SMOKE_LIVE_ORDER=1
-export POLYMARKET_PRIVATE_KEY=0x...
+export SIGNER_PRIVATE_KEY=0x...
 export POLYGOLEM_SMOKE_TOKEN_ID=<token>
 export POLYGOLEM_SMOKE_PRICE=0.01
 export POLYGOLEM_SMOKE_SIZE=1

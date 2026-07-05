@@ -20,7 +20,7 @@ func newAuthStatusCommand(jsonOut bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Check authentication readiness and API key status",
-		Long: `Inspects the current POLYMARKET_PRIVATE_KEY and reports:
+		Long: `Inspects the current SIGNER_PRIVATE_KEY and reports:
   - EOA address and deposit wallet address
   - Whether the deposit wallet is deployed
   - Whether EOA-bound CLOB credentials are present
@@ -122,7 +122,7 @@ func newAuthExportKeyCommand(jsonOut bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export-key",
 		Short: "HIGH RISK: display private key for wallet import",
-		Long: `Displays the current POLYMARKET_PRIVATE_KEY and derived addresses
+		Long: `Displays the current SIGNER_PRIVATE_KEY and derived addresses
 in formats suitable for wallet import. This is useful when a bot/agent
 generated the key and the user needs to import it into MetaMask/Rabby/etc.
 for the one-time Polymarket browser signup.

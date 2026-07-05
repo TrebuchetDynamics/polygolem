@@ -258,7 +258,7 @@ polygolem auth clob-probe [flags]
 
 HIGH RISK: display private key for wallet import
 
-Displays the current POLYMARKET_PRIVATE_KEY and derived addresses
+Displays the current SIGNER_PRIVATE_KEY and derived addresses
 in formats suitable for wallet import. This is useful when a bot/agent
 generated the key and the user needs to import it into MetaMask/Rabby/etc.
 for the one-time Polymarket browser signup.
@@ -296,7 +296,7 @@ polygolem auth export-key [flags]
 Run SIWE login + mint V2 Relayer API Key
 
 Compatibility name for 'polygolem auth login'. It signs the
-Polymarket SIWE login message with the EOA from POLYMARKET_PRIVATE_KEY,
+Polymarket SIWE login message with the EOA from SIGNER_PRIVATE_KEY,
 registers the EOA + maker profile, mints a V2 relayer key, and writes
 {RELAYER_API_KEY, RELAYER_API_KEY_ADDRESS} to a 0600 env file.
 
@@ -330,7 +330,7 @@ Sign in to Polymarket headlessly and mint V2 relayer credentials
 Signs in to Polymarket without a browser and prepares the
 deposit-wallet account relationship for automation.
 
-Polymarket login signs with the EOA from POLYMARKET_PRIVATE_KEY. That is the
+Polymarket login signs with the EOA from SIGNER_PRIVATE_KEY. That is the
 same address the website shows in its Sign-In With Ethereum prompt. The
 deposit wallet remains the trading wallet: it holds pUSD, appears as the
 POLY_1271 maker/signer in orders, receives CTF positions, and is used for
@@ -370,7 +370,7 @@ polygolem auth login [flags]
 
 Check authentication readiness and API key status
 
-Inspects the current POLYMARKET_PRIVATE_KEY and reports:
+Inspects the current SIGNER_PRIVATE_KEY and reports:
   - EOA address and deposit wallet address
   - Whether the deposit wallet is deployed
   - Whether EOA-bound CLOB credentials are present
@@ -528,7 +528,7 @@ polygolem builder [flags]
 Mint CLOB L2 creds via ClobAuth signature
 
 Signs the canonical ClobAuth EIP-712 message with the EOA loaded from
-POLYMARKET_PRIVATE_KEY, posts it to /auth/api-key, and persists the
+SIGNER_PRIVATE_KEY, posts it to /auth/api-key, and persists the
 returned {apiKey, secret, passphrase} to a 0600 env file.
 
 These are CLOB L2 trading creds — they authenticate book/balance reads,

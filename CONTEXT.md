@@ -69,8 +69,8 @@ Any operation that could move funds or mutate protocol state must ship through a
 _Avoid_: Ungated mutating endpoints, live-first implementation
 
 **Read-Only by Default**:
-Polygolem requires no credentials for market data, discovery, streaming, orderbook reads, data analytics, health checks, and diagnostics. All authenticated paths are opt-in through `POLYMARKET_PRIVATE_KEY`.
-_Avoid_: Authenticated-default mode, credential-required discovery
+Polygolem requires no credentials for market data, discovery, streaming, orderbook reads, data analytics, health checks, and diagnostics. All authenticated paths are opt-in through `SIGNER_PRIVATE_KEY` (legacy `POLYMARKET_PRIVATE_KEY` is accepted as a fallback).
+_Avoid_: Authenticated-default mode, credential-required discovery, POLYMARKET_PRIVATE_KEY as the primary credential name
 
 ## Example dialogue — Wallet Intelligence
 

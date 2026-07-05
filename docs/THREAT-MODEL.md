@@ -6,7 +6,7 @@ Short checklist for operating polygolem with funds. This is not legal or financi
 
 | Asset | Risk | Guardrail |
 |---|---|---|
-| `POLYMARKET_PRIVATE_KEY` | Full wallet compromise | Keep local, never paste into tickets/logs, use `diag` redaction, avoid `auth export-key` unless importing into a temporary browser wallet. |
+| `SIGNER_PRIVATE_KEY` (legacy alias `POLYMARKET_PRIVATE_KEY`) | Full wallet compromise | Keep local, never paste into tickets/logs, use `diag` redaction, avoid `auth export-key` unless importing into a temporary browser wallet. |
 | CLOB L2 API key/secret/passphrase | Authenticated account actions | Store outside source control, redact output, rotate if exposed. |
 | Relayer V2 key / builder credentials | Deposit-wallet deploy/batch authority | Treat as separate from CLOB auth; do not reuse or print. |
 | Deposit wallet pUSD and CTF positions | Direct trading funds | Verify deposit-wallet balance, not EOA balance. |

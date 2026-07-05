@@ -33,7 +33,7 @@ func newAuthHeadlessOnboardCommand(jsonOut bool) *cobra.Command {
 	cmd.Use = "headless-onboard"
 	cmd.Short = "Run SIWE login + mint V2 Relayer API Key"
 	cmd.Long = `Compatibility name for 'polygolem auth login'. It signs the
-Polymarket SIWE login message with the EOA from POLYMARKET_PRIVATE_KEY,
+Polymarket SIWE login message with the EOA from SIGNER_PRIVATE_KEY,
 registers the EOA + maker profile, mints a V2 relayer key, and writes
 {RELAYER_API_KEY, RELAYER_API_KEY_ADDRESS} to a 0600 env file.
 
@@ -50,7 +50,7 @@ func newAuthLoginCommand(jsonOut bool) *cobra.Command {
 	cmd.Long = `Signs in to Polymarket without a browser and prepares the
 deposit-wallet account relationship for automation.
 
-Polymarket login signs with the EOA from POLYMARKET_PRIVATE_KEY. That is the
+Polymarket login signs with the EOA from SIGNER_PRIVATE_KEY. That is the
 same address the website shows in its Sign-In With Ethereum prompt. The
 deposit wallet remains the trading wallet: it holds pUSD, appears as the
 POLY_1271 maker/signer in orders, receives CTF positions, and is used for
@@ -80,7 +80,7 @@ func newAuthLoginBaseCommand(jsonOut bool) *cobra.Command {
 		Short: "Sign in to Polymarket headlessly and mint V2 relayer credentials",
 		Long: `Headless replacement for the polymarket.com signup flow. Steps:
 
-  1. Sign a Polymarket SIWE message with the EOA from POLYMARKET_PRIVATE_KEY.
+  1. Sign a Polymarket SIWE message with the EOA from SIGNER_PRIVATE_KEY.
   2. Trade the signature for a polymarket session cookie at
      gamma-api.polymarket.com/login.
   3. Register the EOA + maker (proxy or deposit wallet, per --signature-type)

@@ -57,7 +57,8 @@ polygolem health
 ```
 
 No credentials needed. Read-only is the default for everything until you set
-`POLYMARKET_PRIVATE_KEY`. For a quick tour with zero setup, see
+`SIGNER_PRIVATE_KEY` (legacy `POLYMARKET_PRIVATE_KEY` still works as a
+fallback). For a quick tour with zero setup, see
 [Try It — No Credentials Needed](#try-it--no-credentials-needed) below.
 
 ---
@@ -443,7 +444,7 @@ lifecycle with real txes.
 ## Trade in Four Commands
 
 ```bash
-export POLYMARKET_PRIVATE_KEY="0x..."
+export SIGNER_PRIVATE_KEY="0x..."
 
 # One-command onboarding: auth + deploy + approve + fund
 polygolem deposit-wallet onboard --fund-amount 0.71

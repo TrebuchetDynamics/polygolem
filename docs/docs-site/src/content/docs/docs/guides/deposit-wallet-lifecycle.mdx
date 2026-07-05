@@ -170,7 +170,7 @@ positions, approvals, and redemption.
 # Full wallet onboarding:
 # derive + auto SIWE/profile/relayer auth + deploy + approvals
 # + UI Enable Trading signs + fund.
-POLYMARKET_PRIVATE_KEY="0x..." \
+SIGNER_PRIVATE_KEY="0x..." \
   polygolem deposit-wallet onboard --fund-amount 50 --json
 ```
 
@@ -191,7 +191,7 @@ Non-zero order attribution is configured separately with
 Then sync the CLOB balance:
 
 ```bash
-POLYMARKET_PRIVATE_KEY="0x..." \
+SIGNER_PRIVATE_KEY="0x..." \
   polygolem clob update-balance --asset-type collateral
 ```
 

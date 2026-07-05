@@ -37,7 +37,7 @@ Expected: local-only state changes. No private key, signing, CLOB auth, relayer 
 Only after paper behavior looks right:
 
 ```bash
-export POLYMARKET_PRIVATE_KEY="0x..."
+export SIGNER_PRIVATE_KEY="0x..."
 polygolem auth status --check-deposit-key --json
 polygolem deposit-wallet status --check-enable-trading --json
 polygolem clob update-balance --asset-type collateral --json

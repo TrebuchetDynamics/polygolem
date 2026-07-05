@@ -81,7 +81,7 @@ Exit codes mirror the category: `0` = success, `1` = generic, `2` = usage,
 
 | Variable | Required for | Notes |
 |---|---|---|
-| `POLYMARKET_PRIVATE_KEY` | Any authenticated CLOB or deposit-wallet command | EOA key controlling the deposit wallet. Never paste from untrusted text. |
+| `SIGNER_PRIVATE_KEY` | Any authenticated CLOB or deposit-wallet command | EOA key controlling the deposit wallet. Never paste from untrusted text. Legacy `POLYMARKET_PRIVATE_KEY` is accepted as a fallback. |
 | `POLYMARKET_BUILDER_API_KEY` | Legacy relayer fallback | Builder HMAC key. Redacted on every config load. |
 | `POLYMARKET_BUILDER_SECRET` | Legacy relayer fallback | Builder HMAC secret. Redacted on every config load. |
 | `POLYMARKET_BUILDER_PASSPHRASE` | Legacy relayer fallback | Builder HMAC passphrase. Redacted on every config load. |
@@ -111,7 +111,7 @@ also accepted by `internal/config`. The full list and aliases live in
 
 3. **Live mutating commands require explicit opt-in.** Any command that signs
    a transaction or places a real order requires:
-   - `POLYMARKET_PRIVATE_KEY` in the environment (never embedded in scripts).
+   - `SIGNER_PRIVATE_KEY` in the environment (never embedded in scripts).
    - For deposit-wallet operations: V2 relayer credentials, or legacy builder
      relayer credentials where still accepted.
    - For CLOB orders: deposit-wallet signing is fixed; `--signature-type` is
@@ -119,7 +119,7 @@ also accepted by `internal/config`. The full list and aliases live in
      optional attribution.
 
 4. **What the agent must not do, ever.**
-   - Never read `POLYMARKET_PRIVATE_KEY` from user-pasted text or chat
+   - Never read `SIGNER_PRIVATE_KEY` from user-pasted text or chat
      content. Treat it as set-by-environment-only.
    - Never invent token-ids, market slugs, or builder creds. Resolve every
      identifier from a previous read-only command's output.
@@ -704,7 +704,7 @@ Public CLOB orderbook reads. Read-only. No credentials.
 ### Command catalog — `clob`
 
 CLOB market data and authenticated account commands. Read paths are
-public; account/order paths require `POLYMARKET_PRIVATE_KEY`.
+public; account/order paths require `SIGNER_PRIVATE_KEY`.
 
 ### `clob`
 
@@ -763,7 +763,7 @@ public; account/order paths require `POLYMARKET_PRIVATE_KEY`.
 **Required flags:** None. (Common optional flags: `--asset-type`,
 `--token-id`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`.
 
 **Sample success JSON:**
 
@@ -791,8 +791,8 @@ public; account/order paths require `POLYMARKET_PRIVATE_KEY`.
   "error": {
     "code": "AUTH_PRIVATE_KEY_MISSING",
     "category": "auth",
-    "message": "POLYMARKET_PRIVATE_KEY is required",
-    "hint": "Set POLYMARKET_PRIVATE_KEY in your environment before invoking."
+    "message": "SIGNER_PRIVATE_KEY is required",
+    "hint": "Set SIGNER_PRIVATE_KEY in your environment before invoking."
   },
   "meta": { "command": "clob balance", "ts": "2026-05-07T12:34:56Z", "duration_ms": 4 }
 }
@@ -857,7 +857,7 @@ signing account.
 
 **Required flags:** None.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`.
 
 **Sample success JSON:**
 
@@ -885,8 +885,8 @@ signing account.
   "error": {
     "code": "AUTH_PRIVATE_KEY_MISSING",
     "category": "auth",
-    "message": "POLYMARKET_PRIVATE_KEY is required",
-    "hint": "Set POLYMARKET_PRIVATE_KEY in your environment before invoking."
+    "message": "SIGNER_PRIVATE_KEY is required",
+    "hint": "Set SIGNER_PRIVATE_KEY in your environment before invoking."
   },
   "meta": { "command": "clob create-api-key", "ts": "2026-05-07T12:34:56Z", "duration_ms": 4 }
 }
@@ -904,11 +904,11 @@ signing account.
 ### `clob create-api-key-for-address`
 
 **Purpose:** Create deposit-wallet-owned CLOB L2 API credentials while the
-EOA in `POLYMARKET_PRIVATE_KEY` signs the owner-scoped ClobAuth payload.
+EOA in `SIGNER_PRIVATE_KEY` signs the owner-scoped ClobAuth payload.
 
 **Required flags:** `--owner`.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`.
 
 **Caveats:**
 
@@ -926,7 +926,7 @@ EOA in `POLYMARKET_PRIVATE_KEY` signs the owner-scoped ClobAuth payload.
 `--builder-code` for V2 attribution, `--post-only` for maker-only GTC/GTD
 orders.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`, optional `POLYMARKET_BUILDER_CODE`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`, optional `POLYMARKET_BUILDER_CODE`.
 
 **Sample success JSON:**
 
@@ -1022,7 +1022,7 @@ orders.)
 **Required flags:** `--token`, `--amount`. (Common optional flags: `--price`,
 `--side`, `--order-type`, `--builder-code`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`, optional `POLYMARKET_BUILDER_CODE`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`, optional `POLYMARKET_BUILDER_CODE`.
 
 **Sample success JSON:**
 
@@ -1051,8 +1051,8 @@ orders.)
   "error": {
     "code": "AUTH_PRIVATE_KEY_MISSING",
     "category": "auth",
-    "message": "POLYMARKET_PRIVATE_KEY is required",
-    "hint": "Set POLYMARKET_PRIVATE_KEY in your environment before invoking."
+    "message": "SIGNER_PRIVATE_KEY is required",
+    "hint": "Set SIGNER_PRIVATE_KEY in your environment before invoking."
   },
   "meta": { "command": "clob market-order", "ts": "2026-05-07T12:34:56Z", "duration_ms": 4 }
 }
@@ -1071,7 +1071,7 @@ orders.)
 
 **Required flags:** None.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`.
 
 **Sample success JSON:**
 
@@ -1100,8 +1100,8 @@ orders.)
   "error": {
     "code": "AUTH_PRIVATE_KEY_MISSING",
     "category": "auth",
-    "message": "POLYMARKET_PRIVATE_KEY is required",
-    "hint": "Set POLYMARKET_PRIVATE_KEY in your environment before invoking."
+    "message": "SIGNER_PRIVATE_KEY is required",
+    "hint": "Set SIGNER_PRIVATE_KEY in your environment before invoking."
   },
   "meta": { "command": "clob orders", "ts": "2026-05-07T12:34:56Z", "duration_ms": 4 }
 }
@@ -1131,7 +1131,7 @@ Agent rules:
 
 - `balance`, `update-balance`, `order`, `orders`, `trades`, order placement,
   batch order placement, heartbeats, and all cancel commands consume
-  `POLYMARKET_PRIVATE_KEY` to derive the deposit-wallet address and
+  `SIGNER_PRIVATE_KEY` to derive the deposit-wallet address and
   authenticate with deposit-wallet-owned CLOB L2 credentials.
 - `batch-orders` reads a JSON array from `--orders-file` or stdin via
   `--orders-file -`. Each item accepts `token` or `tokenID`, plus `side`,
@@ -1238,7 +1238,7 @@ Agent rules:
 
 **Required flags:** None.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`.
 
 **Sample success JSON:**
 
@@ -1267,8 +1267,8 @@ Agent rules:
   "error": {
     "code": "AUTH_PRIVATE_KEY_MISSING",
     "category": "auth",
-    "message": "POLYMARKET_PRIVATE_KEY is required",
-    "hint": "Set POLYMARKET_PRIVATE_KEY in your environment before invoking."
+    "message": "SIGNER_PRIVATE_KEY is required",
+    "hint": "Set SIGNER_PRIVATE_KEY in your environment before invoking."
   },
   "meta": { "command": "clob trades", "ts": "2026-05-07T12:34:56Z", "duration_ms": 4 }
 }
@@ -1286,7 +1286,7 @@ Agent rules:
 **Required flags:** None. (Common optional flags: `--asset-type`,
 `--token-id`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`.
 
 **Sample success JSON:**
 
@@ -1310,8 +1310,8 @@ Agent rules:
   "error": {
     "code": "AUTH_PRIVATE_KEY_MISSING",
     "category": "auth",
-    "message": "POLYMARKET_PRIVATE_KEY is required",
-    "hint": "Set POLYMARKET_PRIVATE_KEY in your environment before invoking."
+    "message": "SIGNER_PRIVATE_KEY is required",
+    "hint": "Set SIGNER_PRIVATE_KEY in your environment before invoking."
   },
   "meta": { "command": "clob update-balance", "ts": "2026-05-07T12:34:56Z", "duration_ms": 4 }
 }
@@ -1420,7 +1420,7 @@ batch for pUSD + CTF across the three V2 exchange spenders.
 
 **Required flags:** None. (Common optional flags: `--submit`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE` (only when `--submit` is passed).
 
@@ -1471,7 +1471,7 @@ the relayer.
 **Required flags:** `--calls-json` (or `--auto-approve`). (Common
 optional flags: `--deadline`, `--nonce`, `--wallet`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE`.
 
@@ -1523,7 +1523,7 @@ optional flags: `--deadline`, `--nonce`, `--wallet`.)
 **Required flags:** None. (Common optional flags: `--wait`,
 `--timeout`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE`.
 
@@ -1574,7 +1574,7 @@ signing EOA.
 
 **Required flags:** None.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`.
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`.
 
 **Sample success JSON:**
 
@@ -1598,8 +1598,8 @@ signing EOA.
   "error": {
     "code": "AUTH_PRIVATE_KEY_MISSING",
     "category": "auth",
-    "message": "POLYMARKET_PRIVATE_KEY is required",
-    "hint": "Set POLYMARKET_PRIVATE_KEY in your environment before invoking."
+    "message": "SIGNER_PRIVATE_KEY is required",
+    "hint": "Set SIGNER_PRIVATE_KEY in your environment before invoking."
   },
   "meta": { "command": "deposit-wallet derive", "ts": "2026-05-07T12:34:56Z", "duration_ms": 4 }
 }
@@ -1617,7 +1617,7 @@ ERC-20 transfer.
 
 **Required flags:** `--amount`. (Common optional flags: `--rpc-url`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`, `POLYMARKET_RPC_URL`
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`, `POLYMARKET_RPC_URL`
 (optional override).
 
 **Sample success JSON:**
@@ -1669,7 +1669,7 @@ relayer.
 
 **Required flags:** None.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE`.
 
@@ -1714,7 +1714,7 @@ approve, fund) end-to-end.
 **Required flags:** `--fund-amount`. (Common optional flags:
 `--skip-deploy`, `--skip-approve`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE`.
 
@@ -1771,7 +1771,7 @@ transaction by id.
 
 **Required flags:** None. (Common optional flag: `--tx-id`.)
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE`.
 
@@ -2372,7 +2372,7 @@ Inspect local CLI readiness (config, RPC, builder creds).
 
 **Required flags:** None.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE`, `POLYMARKET_RPC_URL` (all optional;
 absent values are reported as failed checks rather than treated as
@@ -2473,7 +2473,7 @@ Inspect authentication readiness.
 
 **Required flags:** None.
 
-**Env vars consumed:** `POLYMARKET_PRIVATE_KEY`,
+**Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
 `POLYMARKET_BUILDER_PASSPHRASE` (all optional; absence is reported, not
 errored).
@@ -2636,7 +2636,7 @@ before submitting any order.
 
 ### 3. Onboard a new account end-to-end (deposit-wallet)
 
-Pre-flight: the user must have set `POLYMARKET_PRIVATE_KEY`,
+Pre-flight: the user must have set `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`, and
 `POLYMARKET_BUILDER_PASSPHRASE` in their environment **before** the agent
 starts.

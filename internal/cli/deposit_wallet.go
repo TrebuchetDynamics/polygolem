@@ -1168,7 +1168,7 @@ submission path, no raw ConditionalTokens path, and no SAFE/PROXY shortcut.`,
 }
 
 // depositWalletRedeemableCmd lists redeemable positions for the deposit
-// wallet derived from POLYMARKET_PRIVATE_KEY. Read-only — no signing.
+// wallet derived from SIGNER_PRIVATE_KEY. Read-only — no signing.
 // Positions live in the deposit wallet, not the EOA, so the Data API
 // `user` parameter must be the deposit wallet address.
 func depositWalletRedeemableCmd(jsonOut bool) *cobra.Command {
