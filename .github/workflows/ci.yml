@@ -49,7 +49,7 @@ jobs:
           go test -short -coverprofile=coverage.out ./...
           coverage=$(go tool cover -func=coverage.out | grep "^total:" | awk '{print $3}' | sed 's/%//')
           echo "Total coverage: ${coverage}%"
-          min=50
+          min=60
           if awk "BEGIN { exit !(${coverage} < ${min}) }"; then
             echo "FAIL: coverage ${coverage}% is below minimum ${min}%"
             exit 1

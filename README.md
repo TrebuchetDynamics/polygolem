@@ -261,6 +261,10 @@ Core trading flows validated today:
 - Advanced order types (FOK, GTD, post-only)
 - Market discovery, streaming, and paper trading
 
+Test coverage is measured on every CI run and enforced: the build fails below a
+60% statement-coverage floor (`.github/workflows/ci.yml`, Coverage step), with
+race-detector and `go vet` passes on Linux and macOS.
+
 ---
 
 ## Features
