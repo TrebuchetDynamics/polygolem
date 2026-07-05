@@ -76,6 +76,7 @@ Use this page to choose the right doc. Prefer the canonical docs listed below ov
 |-----|---------------|--------|
 | [SKILL.md](../SKILL.md) | CLI skill manifest for agentic consumers — every command, env var, safety rule, and JSON contract. | **Canonical** |
 | [MCP-OPENAPI.md](./MCP-OPENAPI.md) | Read-only MCP/OpenAPI deployment notes and excluded mutating surfaces. | **Canonical** |
+| [JSON-CONTRACT.md](./JSON-CONTRACT.md) | CLI v1 JSON envelope: success/error shapes, error codes, versioning rules. | **Canonical** |
 
 ### Planning
 
@@ -92,6 +93,28 @@ Use this page to choose the right doc. Prefer the canonical docs listed below ov
 | [LIVE-TRADING-BLOCKER-REPORT.md](./LIVE-TRADING-BLOCKER-REPORT.md) | Empirical live trading test results with real funds. | **Canonical** |
 | [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) | End-to-end 2026-05-08 reference run: every tx hash, gas figure, and pUSD movement from EOA private key to a filled buy + sell. | **Canonical** |
 | [DEPOSIT-WALLET-REDEEM-VALIDATION.md](./DEPOSIT-WALLET-REDEEM-VALIDATION.md) | Scientific validation ladder and resolved live incident report for V2 settlement: official contracts, adapter readiness, redeem runbook, and deprecated fallback inventory. | **Canonical** |
+
+### Sub-Projects & Internal Archaeology
+
+Not part of the operator path. These records stay at `docs/` top level because
+other documents cite them, but nothing here is required reading for running
+polygolem safely.
+
+| Doc | What It Covers | Status |
+|-----|---------------|--------|
+| [PRD.md](./PRD.md) | Original polygolem product requirements. | **Historical** |
+| [PRD_POLYDART.md](./PRD_POLYDART.md) | Polydart sub-project product requirements. | **Planning** |
+| [POLYGOLEM-POLYDART-PARITY.md](./POLYGOLEM-POLYDART-PARITY.md) | Polygolem/Polydart feature parity tracking. | **Planning** |
+| [V2-PARITY.md](./V2-PARITY.md) | V2 feature-parity notes; still cited by the coverage matrix. | **Historical** |
+| [AUDIT-FINDINGS.md](./AUDIT-FINDINGS.md) | Point-in-time audit findings and resolutions. | **Historical** |
+| [DEPOSIT-WALLET-MIGRATION.md](./DEPOSIT-WALLET-MIGRATION.md) | Record of the deposit-wallet migration work. | **Historical** |
+| [RUST-EVALUATION.md](./RUST-EVALUATION.md) | Evaluation of a Rust port; not pursued. | **Historical** |
+| [ARCHITECTURE-TAXONOMY-PLAN.md](./ARCHITECTURE-TAXONOMY-PLAN.md) | Architecture taxonomy planning notes. | **Historical** |
+| [ARTICLE_DRAFT.md](./ARTICLE_DRAFT.md) | Public article draft. | **Draft** |
+| [ARTICLE_DRAFT_OLD.md](./ARTICLE_DRAFT_OLD.md) | Superseded article draft. | **Draft** |
+
+Deeper archaeology (old blockers, phase notes, probes) lives under
+[history/](./history/) and [superpowers/](./superpowers/).
 
 ## Update triggers
 
@@ -121,4 +144,4 @@ These docs contained outdated or false claims and have been removed:
 
 ---
 
-*Last updated: 2026-06-30*
+*Last updated: 2026-07-05*
