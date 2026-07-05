@@ -4,6 +4,9 @@ This matrix tracks the Polymarket surfaces polygolem exposes through the Go
 SDK, CLI, docs, and tests. It is intentionally conservative: live order
 execution gates remain documented gaps until they have local tests.
 
+For the upstream view — what each official service is for and where its
+documentation lives — see [POLYMARKET-APIS.md](./POLYMARKET-APIS.md).
+
 | Surface | Capabilities | SDK | CLI | Docs | Tests |
 |---|---|---|---|---|---|
 | Gamma markets | Search, list markets, fetch market by ID/slug, enrich with CLOB data, scan read-only opportunity candidates | `internal/gamma`, `pkg/gamma`, `pkg/types`, `pkg/universal`, `internal/workflows/opportunities` | `discover search`, `discover markets`, `discover market`, `discover enrich`, `discover opportunities` | `README.md`, `docs/COMMANDS.md`, Starlight CLI/Gamma pages | Gamma `httptest` tests, opportunity workflow tests, external SDK boundary test, CLI command registration |

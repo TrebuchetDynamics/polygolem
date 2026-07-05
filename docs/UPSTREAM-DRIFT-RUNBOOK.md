@@ -43,5 +43,9 @@ Use it when CLOB/Gamma token mapping, book shape, fee fields, or market outcome 
 1. Save the JSON envelope and exact command.
 2. Compare the failing command with checked-in fixtures under `fixtures/`.
 3. Run `scripts/live-smoke.sh` to identify which upstream surface changed.
-4. If the change is real, update the smallest fixture/test first, then code.
-5. Do not bypass deposit-wallet, readiness, or order-cap gates to work around upstream errors.
+4. Re-check the official documentation for the affected endpoint: fetch the
+   page index at `https://docs.polymarket.com/llms.txt`, find the endpoint's
+   page, and append `.md` to its URL for a Markdown version. Service-to-docs
+   mapping: [POLYMARKET-APIS.md](./POLYMARKET-APIS.md).
+5. If the change is real, update the smallest fixture/test first, then code.
+6. Do not bypass deposit-wallet, readiness, or order-cap gates to work around upstream errors.

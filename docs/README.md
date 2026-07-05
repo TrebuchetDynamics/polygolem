@@ -18,6 +18,7 @@ Use this page to choose the right doc. Prefer the canonical docs listed below ov
 | See a real EOA-to-filled-sell trade with every tx and gas figure | [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) |
 | See all CLI commands | [COMMANDS.md](./COMMANDS.md) |
 | Understand the architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Map Polymarket's official APIs (Gamma/CLOB/Data) to polygolem | [POLYMARKET-APIS.md](./POLYMARKET-APIS.md) |
 | Follow the smallest safe path from read-only to tiny live order | [SAFE-HAPPY-PATH.md](./SAFE-HAPPY-PATH.md) |
 | Read the one-page operator quickstart | [OPERATOR-ONE-PAGER.md](./OPERATOR-ONE-PAGER.md) |
 | Review safety and risk features | [SAFETY.md](./SAFETY.md) |
@@ -64,6 +65,7 @@ Use this page to choose the right doc. Prefer the canonical docs listed below ov
 | [adr/](./adr/) | Architecture decision records, including the non-bot Polymarket API interface boundary. | **Canonical** |
 | [CONTRACTS.md](./CONTRACTS.md) | All smart contract addresses, factory ABI, CREATE2 derivation. | **Canonical** |
 | [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md) | How POLY_1271 / deposit wallet signing works. | **Canonical** |
+| [POLYMARKET-APIS.md](./POLYMARKET-APIS.md) | Official Polymarket API architecture (Gamma, CLOB, Data API, Relayer, Bridge, WebSocket) with official-doc links and polygolem source citations. | **Canonical** |
 | [POLYMARKET-COVERAGE-MATRIX.md](./POLYMARKET-COVERAGE-MATRIX.md) | Conservative SDK/CLI/docs/test coverage across Polymarket surfaces. | **Canonical** |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Why the binary has crypto-heavy Go dependencies while keeping no runtime sidecars. | **Canonical** |
 | [UPSTREAM-DRIFT-RUNBOOK.md](./UPSTREAM-DRIFT-RUNBOOK.md) | Live smoke and fixture-first response plan for Gamma/CLOB/Data/Relayer drift. | **Canonical** |

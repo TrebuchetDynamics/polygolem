@@ -80,7 +80,10 @@ A useful Polymarket integration touches several surfaces:
 | Relayer + contracts | How do deposit-wallet deploys, approvals, settlement, and signatures work? | Relayer auth / wallet signatures |
 
 Polygolem wraps these pieces in a Go CLI and SDK while keeping read-only paths
-credential-free and mutating paths explicit.
+credential-free and mutating paths explicit. For the upstream view — what each
+official service is for, its auth model, and where its documentation lives on
+[docs.polymarket.com](https://docs.polymarket.com) — see
+[docs/POLYMARKET-APIS.md](docs/POLYMARKET-APIS.md).
 
 ---
 
