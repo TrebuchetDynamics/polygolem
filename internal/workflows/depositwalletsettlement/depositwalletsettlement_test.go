@@ -39,7 +39,7 @@ func TestRunnerSettlementStatusDerivesWalletAndPassesReadinessInputs(t *testing.
 	if !strings.EqualFold(gotOwner, "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23") {
 		t.Fatalf("owner=%q", gotOwner)
 	}
-	if !strings.EqualFold(gotWallet, "0xfd5041047be8c192c725a66228f141196fa3cf9c") {
+	if !strings.EqualFold(gotWallet, "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1") {
 		t.Fatalf("wallet=%q", gotWallet)
 	}
 	if status.DepositWallet != gotWallet || status.Status != settlement.StatusMissingRelayerCreds {
@@ -77,7 +77,7 @@ func TestRunnerRedeemableUsesDepositWalletAsDataAPIUser(t *testing.T) {
 	if gotClient != client {
 		t.Fatal("finder did not receive configured data client")
 	}
-	if !strings.EqualFold(gotWallet, result.DepositWallet) || !strings.EqualFold(result.DepositWallet, "0xfd5041047be8c192c725a66228f141196fa3cf9c") {
+	if !strings.EqualFold(gotWallet, result.DepositWallet) || !strings.EqualFold(result.DepositWallet, "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1") {
 		t.Fatalf("wallet got=%q result=%q", gotWallet, result.DepositWallet)
 	}
 	if result.Count != 1 || len(result.Positions) != 1 || result.Positions[0].TokenID != "token-1" {

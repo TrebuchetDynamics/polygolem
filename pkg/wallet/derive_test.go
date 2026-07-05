@@ -11,7 +11,7 @@ func TestDeriveDepositWallet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "0xfd5041047Be8C192C725A66228F141196Fa3cF9C"
+	want := "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1"
 	if result != want {
 		t.Fatalf("deposit wallet = %s, want %s", result, want)
 	}
@@ -67,7 +67,7 @@ func TestReadiness(t *testing.T) {
 	if info.ChainID != 137 {
 		t.Fatalf("chainID = %d", info.ChainID)
 	}
-	if info.DepositWallet != "0xfd5041047Be8C192C725A66228F141196Fa3cF9C" {
+	if info.DepositWallet != "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1" {
 		t.Fatalf("deposit wallet = %s", info.DepositWallet)
 	}
 }

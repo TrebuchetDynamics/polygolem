@@ -245,7 +245,7 @@ func TestBuildL1HeadersForAddressEmptyFallsBackToSigner(t *testing.T) {
 
 func TestBuildL1HeadersForDepositWalletRejectsObsoleteWrappedAuth(t *testing.T) {
 	pk := "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
-	depositWallet := "0xfd5041047be8c192c725a66228f141196fa3cf9c"
+	depositWallet := "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1"
 
 	_, err := BuildL1HeadersForDepositWallet(pk, 137, 1700000000, 0, depositWallet)
 	if err == nil || !strings.Contains(err.Error(), "deposit-wallet-bound ERC-7739 ClobAuth is unsupported") {

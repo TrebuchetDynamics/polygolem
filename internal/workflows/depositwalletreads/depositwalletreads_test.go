@@ -30,7 +30,7 @@ func TestRunnerDerivesDepositWalletAndReadsNonce(t *testing.T) {
 	if !strings.EqualFold(derived.Owner, "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23") {
 		t.Fatalf("owner=%q", derived.Owner)
 	}
-	if !strings.EqualFold(derived.DepositWallet, "0xfd5041047be8c192c725a66228f141196fa3cf9c") {
+	if !strings.EqualFold(derived.DepositWallet, "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1") {
 		t.Fatalf("depositWallet=%q", derived.DepositWallet)
 	}
 

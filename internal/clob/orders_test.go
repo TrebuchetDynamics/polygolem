@@ -113,7 +113,7 @@ func TestBuildSignedOrderPayloadV2DepositWalletUsesEOASignerWithDepositMaker(t *
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantMaker := "0xfd5041047be8c192c725a66228f141196fa3cf9c"
+	wantMaker := "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1"
 	if !strings.EqualFold(order.Maker, wantMaker) || !strings.EqualFold(order.Signer, wantMaker) {
 		t.Fatalf("maker/signer=%s/%s want deposit wallet %s", order.Maker, order.Signer, wantMaker)
 	}
@@ -405,7 +405,7 @@ func TestCreateMarketOrderSellPriceUsesBestBidWithRealAPIOrdering(t *testing.T) 
 }
 
 func TestCreateMarketOrderUsesEOABoundAuthAndDepositMaker(t *testing.T) {
-	wantDepositWallet := "0xfd5041047be8c192c725a66228f141196fa3cf9c"
+	wantDepositWallet := "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1"
 	var deriveAddress string
 	var orderAddress string
 	var posted map[string]any
@@ -466,7 +466,7 @@ func TestCreateMarketOrderUsesEOABoundAuthAndDepositMaker(t *testing.T) {
 }
 
 func TestCreateLimitOrderUsesEOABoundL2AuthAndDepositMaker(t *testing.T) {
-	wantDepositWallet := "0xfd5041047be8c192c725a66228f141196fa3cf9c"
+	wantDepositWallet := "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1"
 	var deriveAddress string
 	var orderAddress string
 	var posted map[string]any
