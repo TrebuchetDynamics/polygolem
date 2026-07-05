@@ -1106,11 +1106,7 @@ func relayerEnvFileCandidates() []string {
 }
 
 func requirePrivateKey() (string, error) {
-	key := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-	if key == "" {
-		return "", fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
-	}
-	return key, nil
+	return privateKeyFromEnv()
 }
 
 func firstEnv(names ...string) string {

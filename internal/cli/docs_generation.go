@@ -50,7 +50,7 @@ func writeEnvironmentVariablesSection(b *strings.Builder) {
 	b.WriteString("## Environment Variables\n\n")
 	b.WriteString("| Variable | Required for |\n")
 	b.WriteString("|---|---|\n")
-	b.WriteString("| `POLYMARKET_PRIVATE_KEY` | All authenticated CLOB and deposit-wallet commands. |\n")
+	b.WriteString("| `SIGNER_PRIVATE_KEY` | All authenticated CLOB and deposit-wallet commands. Legacy `POLYMARKET_PRIVATE_KEY` is still accepted as a fallback. |\n")
 	b.WriteString("| `RELAYER_API_KEY` | Optional pre-provisioned V2 relayer auth. Live deposit-wallet commands auto-mint and persist this key when it is missing. |\n")
 	b.WriteString("| `RELAYER_API_KEY_ADDRESS` | Owner address for `RELAYER_API_KEY`. |\n")
 	b.WriteString("| `POLYGOLEM_RELAYER_ENV_FILE` | Optional target/source env file for auto-minted V2 relayer credentials. |\n")

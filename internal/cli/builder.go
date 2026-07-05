@@ -90,9 +90,9 @@ The endpoint is idempotent per EOA. Use 'builder onboard' for the
 manual browser-capture flow.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			privateKey := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-			if privateKey == "" {
-				return errors.New("POLYMARKET_PRIVATE_KEY is required")
+			privateKey, err := privateKeyFromEnv()
+			if err != nil {
+				return err
 			}
 			target := envFile
 			if target == "" {

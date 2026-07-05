@@ -108,11 +108,13 @@ func builderCodeFromFlagOrEnv(flagValue string) string {
 }
 
 func privateKeyFromEnv() (string, error) {
-	key := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-	if key == "" {
-		return "", fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
+	if key := strings.TrimSpace(os.Getenv("SIGNER_PRIVATE_KEY")); key != "" {
+		return key, nil
 	}
-	return key, nil
+	if key := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY")); key != "" {
+		return key, nil
+	}
+	return "", fmt.Errorf("SIGNER_PRIVATE_KEY is required")
 }
 
 func clobL2CredentialsFromEnv() (auth.APIKey, bool) {

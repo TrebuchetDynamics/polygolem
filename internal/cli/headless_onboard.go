@@ -95,9 +95,9 @@ get HTTP 400 "maker address not allowed"). See docs/history/BLOCKERS.md "CORRECT
 2026-05-08" for the captured signup flow this command replicates.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			privateKey := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-			if privateKey == "" {
-				return fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
+			privateKey, err := privateKeyFromEnv()
+			if err != nil {
+				return err
 			}
 			signer, err := auth.NewPrivateKeySigner(privateKey, 137)
 			if err != nil {

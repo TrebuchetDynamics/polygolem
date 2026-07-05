@@ -259,11 +259,7 @@ func clobCmd(jsonOut bool) *cobra.Command {
 	addOutput := addCLOBOutputFlag
 	checkOutput := checkCLOBOutput
 	privateKey := func() (string, error) {
-		key := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-		if key == "" {
-			return "", fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
-		}
-		return key, nil
+		return privateKeyFromEnv()
 	}
 	marketData := clobmarketdata.New(w.clob)
 	accountReads := clobaccountreads.New(clobaccountreads.Config{Reader: w.clob, PrivateKey: privateKey})

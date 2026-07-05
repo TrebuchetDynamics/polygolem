@@ -45,7 +45,7 @@ mutation was required by this script.
 
 To opt into one tiny live order, set all of:
   POLYGOLEM_SMOKE_LIVE_ORDER=1
-  POLYMARKET_PRIVATE_KEY=0x...
+  SIGNER_PRIVATE_KEY=0x...
   POLYGOLEM_SMOKE_TOKEN_ID=<clob token id>
   POLYGOLEM_SMOKE_PRICE=0.01
   POLYGOLEM_SMOKE_SIZE=1
@@ -56,7 +56,7 @@ MSG
   exit 0
 fi
 
-require_env POLYMARKET_PRIVATE_KEY
+require_env SIGNER_PRIVATE_KEY
 require_env POLYGOLEM_SMOKE_TOKEN_ID
 : "${POLYGOLEM_SMOKE_PRICE:=0.01}"
 : "${POLYGOLEM_SMOKE_SIZE:=1}"

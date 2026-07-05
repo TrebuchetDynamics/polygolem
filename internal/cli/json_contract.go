@@ -219,12 +219,12 @@ func classifyCommandError(err error) output.Error {
 	}
 
 	switch {
-	case strings.Contains(msg, "POLYMARKET_PRIVATE_KEY is required"):
+	case strings.Contains(msg, "SIGNER_PRIVATE_KEY is required") || strings.Contains(msg, "POLYMARKET_PRIVATE_KEY is required"):
 		return output.Error{
 			Code:     "AUTH_PRIVATE_KEY_MISSING",
 			Category: "auth",
-			Message:  "POLYMARKET_PRIVATE_KEY is required.",
-			Hint:     "Set POLYMARKET_PRIVATE_KEY in the environment before running authenticated commands.",
+			Message:  "SIGNER_PRIVATE_KEY is required.",
+			Hint:     "Set SIGNER_PRIVATE_KEY in the environment before running authenticated commands.",
 		}
 	case strings.Contains(msg, "builder credentials not configured"):
 		return output.Error{

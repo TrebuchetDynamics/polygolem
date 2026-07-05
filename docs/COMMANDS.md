@@ -15,7 +15,7 @@ Generated command reference for `polygolem`.
 
 | Variable | Required for |
 |---|---|
-| `POLYMARKET_PRIVATE_KEY` | All authenticated CLOB and deposit-wallet commands. |
+| `SIGNER_PRIVATE_KEY` | All authenticated CLOB and deposit-wallet commands. Legacy `POLYMARKET_PRIVATE_KEY` is still accepted as a fallback. |
 | `RELAYER_API_KEY` | Optional pre-provisioned V2 relayer auth. Live deposit-wallet commands auto-mint and persist this key when it is missing. |
 | `RELAYER_API_KEY_ADDRESS` | Owner address for `RELAYER_API_KEY`. |
 | `POLYGOLEM_RELAYER_ENV_FILE` | Optional target/source env file for auto-minted V2 relayer credentials. |

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
@@ -142,9 +141,9 @@ Recommended flow for bot-generated keys:
   5. Clear terminal history: history -c && clear`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			privateKey := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-			if privateKey == "" {
-				return fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
+			privateKey, err := privateKeyFromEnv()
+			if err != nil {
+				return err
 			}
 
 			signer, err := auth.NewPrivateKeySigner(privateKey, 137)
