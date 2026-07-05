@@ -1,7 +1,7 @@
 <h1 align="center">polygolem</h1>
 
 <p align="center">
-  <b>Production-safe Polymarket CLI and Go SDK</b>
+  <b>Go CLI and SDK for safe Polymarket V2 deposit-wallet trading</b>
 </p>
 
 <p align="center">

@@ -6,7 +6,7 @@ These notes came from a blunt review of what looks wrong or fragile about the pr
 
 ### Public positioning
 
-- [ ] Narrow the homepage/README promise to one clear claim: **"Go CLI/SDK for safe Polymarket V2 bot infrastructure."**
+- [x] Narrow the homepage/README promise to one clear claim: **"Go CLI and SDK for safe Polymarket V2 deposit-wallet trading."** (README header, 2026-07-05; wording adjusted from the original "bot infrastructure" draft to respect the CONTEXT.md Polymarket API Interface avoid-list)
 - [x] Replace broad marketing language such as "only production-ready option" with evidence-backed claims.
 - [x] Add a visible "Known limitations" section near the top of the README.
 - [x] Clearly distinguish what is proven from what is experimental, research, or internal archaeology.
@@ -38,7 +38,7 @@ These notes came from a blunt review of what looks wrong or fragile about the pr
 - [x] Separate the public reader path from internal archaeology: move obsolete investigations, correction notes, PRDs, probes, and historical blockers out of the main path. (`docs/README.md` canonical-vs-historical split; archaeology lives under `docs/history/`)
 - [x] Keep `docs/history/BLOCKERS.md`/history useful but avoid making new users parse old wrong conclusions before they can run the happy path.
 - [ ] Re-evaluate whether Polydart, docs site, live probes, open-source project analysis, paper trading, SDK, CLI, and deposit-wallet flows should all be presented at once.
-- [ ] Define the core thing polygolem does better than anything else.
+- [x] Define the core thing polygolem does better than anything else: safe Polymarket V2 deposit-wallet (POLY_1271) trading from Go. (settled with the one-claim README promise, 2026-07-05)
 
 ### Dependency and version story
 
@@ -55,4 +55,4 @@ Checked every unchecked item against the doc tree and code; items marked done ab
 
 1. Compatibility matrix (Go version, CLOB versioning, wallet type, signature type, relayer/deposit-wallet support, supported flows). Accepted approach (2026-07-05): generate `docs/COMPATIBILITY.md` from `pkg/capabilities` once that package lands, following the generated-`COMMANDS.md` precedent (deterministic generator + drift test); extend the package with the Go-version/CLOB-version/signature-type axes rather than hand-writing a third matrix.
 2. Published test-coverage numbers to complete the proof-points item.
-3. Owner wording decisions: the one-claim README promise, whether to present all sub-projects at once, and the "core thing polygolem does best" definition.
+3. Owner wording decisions: whether to present all sub-projects (Polydart, docs site, probes, paper trading, SDK, CLI, deposit-wallet flows) at once. (The one-claim promise and core-thing definition were settled 2026-07-05 — see checked items above.)
