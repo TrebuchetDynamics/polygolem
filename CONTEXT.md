@@ -72,6 +72,10 @@ _Avoid_: Ungated mutating endpoints, live-first implementation
 Polygolem requires no credentials for market data, discovery, streaming, orderbook reads, data analytics, health checks, and diagnostics. All authenticated paths are opt-in through `SIGNER_PRIVATE_KEY` (legacy `POLYMARKET_PRIVATE_KEY` is accepted as a fallback).
 _Avoid_: Authenticated-default mode, credential-required discovery, POLYMARKET_PRIVATE_KEY as the primary credential name
 
+**Capability Map**:
+The typed `pkg/capabilities` metadata describing each Polymarket surface Polygolem exposes: service, auth requirement, wallet mode, and read-only/mutating classification. It is the single source of truth for surface/auth/wallet-mode/version claims; `docs/COMPATIBILITY.md` is generated from it rather than hand-written.
+_Avoid_: Feature flags, compatibility table (for the package itself), hand-maintained surface list, capability meaning CLI permissions
+
 ## Example dialogue — Wallet Intelligence
 
 Developer: "Should this high score call the wallet an insider?"

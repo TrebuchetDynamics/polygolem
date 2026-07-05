@@ -53,6 +53,6 @@ The project has value, especially the Polymarket V2/deposit-wallet knowledge enc
 
 Checked every unchecked item against the doc tree and code; items marked done above carry their evidence pointers. Still genuinely open, in priority order:
 
-1. Compatibility matrix (Go version, CLOB versioning, wallet type, signature type, relayer/deposit-wallet support, supported flows).
+1. Compatibility matrix (Go version, CLOB versioning, wallet type, signature type, relayer/deposit-wallet support, supported flows). Accepted approach (2026-07-05): generate `docs/COMPATIBILITY.md` from `pkg/capabilities` once that package lands, following the generated-`COMMANDS.md` precedent (deterministic generator + drift test); extend the package with the Go-version/CLOB-version/signature-type axes rather than hand-writing a third matrix.
 2. Published test-coverage numbers to complete the proof-points item.
 3. Owner wording decisions: the one-claim README promise, whether to present all sub-projects at once, and the "core thing polygolem does best" definition.
