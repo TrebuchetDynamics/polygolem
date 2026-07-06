@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.0] — 2026-07-06
+
+Safety and usability release from a skeptical funds-safety review.
+
 ### Changed
 
 - **Breaking:** deposit-wallet commands that submit real transactions now
@@ -16,6 +20,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--confirm APPROVE_TRADING`, and `deposit-wallet onboard` requires
   `--confirm ONBOARD_WALLET`. The token is checked before the private key is
   loaded. Scripts that call these commands must add the flag.
+
+### Added
+
+- Rich CLI help. `polygolem --help` now opens with a "what this is / start
+  here" guide, worked examples, and a command list grouped by safety posture
+  (read-only market data separated from the commands that move real funds).
+  Every command group carries orientation text and a runnable example.
+- Weekly read-only upstream smoke workflow (`.github/workflows/smoke.yml`):
+  runs the credential-free smoke path plus `drift llms` on a schedule to catch
+  Polymarket API/docs drift early.
+
+### Fixed
+
+- `clob batch-orders` enforces `POLYGOLEM_MAX_LIVE_ORDER_USD` per order and on
+  the summed batch notional before signing (previously only `create-order` and
+  `market-order` were capped).
+- Rewrote `docs/SAFETY.md`, which described a Phase-1 state with no live
+  execution; it now documents the real guard set. Corrected the README
+  circuit-breaker claim: the breaker is an SDK-only `TradeGate`, not a CLI
+  default.
+
+### Internal
+
+- Extracted `internal/livegate`, the single home for the live-order cap and the
+  typed confirmation token, and routed every mutating command through it. Added
+  a fail-closed coverage test that enumerates every live-money command and
+  proves each rejects a violating invocation before the private key loads.
 
 ## [v0.3.0] — 2026-07-05
 
