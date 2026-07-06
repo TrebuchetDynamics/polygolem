@@ -54,7 +54,7 @@ Use this page to choose the right doc. Prefer the canonical docs listed below ov
 | [COMMANDS.md](./COMMANDS.md) | Auto-generated CLI reference. Every command, flag, and example. | **Auto-generated** |
 | [OPERATOR-ONE-PAGER.md](./OPERATOR-ONE-PAGER.md) | One-page path for no-wallet checks and pre-live stop conditions. | **Canonical** |
 | [SAFE-HAPPY-PATH.md](./SAFE-HAPPY-PATH.md) | Minimal operator path: health, discovery, paper, readiness, tiny capped live order. | **Canonical** |
-| [SAFETY.md](./SAFETY.md) | Read-only default, deposit wallet safety, risk breaker, circuit breaker. | **Canonical** |
+| [SAFETY.md](./SAFETY.md) | Read-only default, live-order cap, typed confirm tokens, deposit-wallet safety, credential handling. | **Canonical** |
 | [THREAT-MODEL.md](./THREAT-MODEL.md) | Private key, API key, relayer key, approvals, token ID, and stale-market checklist. | **Canonical** |
 
 ### Technical Reference

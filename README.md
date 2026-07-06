@@ -383,7 +383,8 @@ Assets supported: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE.
 | **Deposit-wallet only** | Cannot accidentally sign as EOA, proxy, or Safe |
 | **Local signing** | Private key never leaves the process |
 | **No external SDKs** | All wallet derivation, EIP-712, ERC-7739, and relayer code is in this repo |
-| **Transaction safety caps + circuit breaker** | Guard user-directed transactions without selecting markets, sides, prices, or timing |
+| **Live-order cap + confirm tokens** | Every order enforces `POLYGOLEM_MAX_LIVE_ORDER_USD` before signing; live-money wallet commands require a typed `--confirm` token |
+| **Circuit breaker (SDK)** | `pkg/clob` accepts a `TradeGate`; `internal/risk.Breaker` halts order submission on repeated errors for SDK consumers. Not attached by the CLI default |
 | **Secret redaction** | API keys and signatures are redacted in logs |
 
 See [docs/SAFETY.md](docs/SAFETY.md) for the full model.
