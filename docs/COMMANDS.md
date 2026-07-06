@@ -44,7 +44,7 @@ polygolem --json version | jq .
 ## Command Tree
 
 ```text
-polygolem - Safe Polymarket SDK and CLI for Go
+polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
   auth - Inspect authentication readiness
     clob-probe - Probe configured CLOB L2 credentials with read-only calls
     export-key - HIGH RISK: display private key for wallet import
@@ -169,7 +169,25 @@ polygolem - Safe Polymarket SDK and CLI for Go
 
 ### polygolem
 
-Safe Polymarket SDK and CLI for Go
+Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
+
+polygolem is a Go CLI and SDK for safe Polymarket V2 deposit-wallet trading.
+
+Read-only by default: market data, discovery, streaming, order books, data
+analytics, health checks, and diagnostics need no credentials. Authenticated
+paths are opt-in only when SIGNER_PRIVATE_KEY is set, and every command that
+moves funds gates on an explicit cap and a typed --confirm token.
+
+Start here (no credentials needed):
+  polygolem health                 # is the API reachable?
+  polygolem discover search --query "Will BTC" --limit 5
+  polygolem orderbook get --token-id <id>
+  polygolem paper reset --cash 100 # simulate trading with zero risk
+
+When you are ready to trade with real funds, read the safety model first:
+  docs/SAFETY.md and docs/SAFE-HAPPY-PATH.md
+
+Every command accepts --json for a stable {ok,version,data,meta} envelope.
 
 **Usage:**
 
