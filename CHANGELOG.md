@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** deposit-wallet commands that submit real transactions now
+  require a typed live-money confirmation token, matching the existing
+  `approve-adapters`/`redeem` gate: `deposit-wallet batch` requires
+  `--confirm SUBMIT_BATCH`, `deposit-wallet approve --submit` requires
+  `--confirm APPROVE_TRADING`, and `deposit-wallet onboard` requires
+  `--confirm ONBOARD_WALLET`. The token is checked before the private key is
+  loaded. Scripts that call these commands must add the flag.
+
 ## [v0.3.0] — 2026-07-05
 
 Cut to restore a correct `go install @latest` channel: `v0.2.1` predated the

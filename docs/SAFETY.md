@@ -43,19 +43,21 @@ flag that bypasses it.
 
 ## Typed live-money confirmation
 
-The highest-risk deposit-wallet operations require a typed confirmation token in
-addition to `--submit`, so a live submission cannot happen from a single
+Every deposit-wallet command that signs and submits real transactions requires a
+typed confirmation token, so a live submission cannot happen from a single
 mistyped flag:
 
-- `deposit-wallet approve-adapters` requires `--confirm APPROVE_ADAPTERS`.
-- `deposit-wallet redeem` requires `--confirm REDEEM_WINNERS`.
+| Command | Required token |
+|---|---|
+| `deposit-wallet approve-adapters` (with `--submit`) | `--confirm APPROVE_ADAPTERS` |
+| `deposit-wallet redeem` (with `--submit`) | `--confirm REDEEM_WINNERS` |
+| `deposit-wallet approve` (with `--submit`) | `--confirm APPROVE_TRADING` |
+| `deposit-wallet batch` | `--confirm SUBMIT_BATCH` |
+| `deposit-wallet onboard` | `--confirm ONBOARD_WALLET` |
 
-Both default to dry-run and print calldata for review before submission.
-
-**Known gap (tracked):** `deposit-wallet batch`, `approve --submit`, and
-`onboard` currently sign and submit without a typed confirmation token — they
-rely on `--submit` plus explicit calldata/amount input. Treat these as live-money
-commands and script them with care until uniform confirmation tokens are added.
+The dry-run-capable commands (`approve`, `approve-adapters`, `redeem`) print
+calldata for review when run without `--submit`. The confirmation token is
+checked before the private key is loaded.
 
 ## Preflight and readiness
 

@@ -24,7 +24,7 @@ expected. Polygolem derives the corresponding deposit wallet separately.
 export SIGNER_PRIVATE_KEY="0x..."
 
 # 1. Deposit wallet deploy + relayer auth + approvals + UI Enable Trading signs + funding.
-polygolem deposit-wallet onboard --fund-amount 0.71
+polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
 
 # 2. Sync CLOB cache and verify readiness.
 polygolem clob update-balance --asset-type collateral

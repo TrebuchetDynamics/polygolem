@@ -456,7 +456,7 @@ lifecycle with real txes.
 export SIGNER_PRIVATE_KEY="0x..."
 
 # One-command onboarding: auth + deploy + approve + fund
-polygolem deposit-wallet onboard --fund-amount 0.71
+polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
 
 # Sync CLOB balance
 polygolem clob update-balance --asset-type collateral

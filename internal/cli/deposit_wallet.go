@@ -242,11 +242,23 @@ func depositWalletStatusCmd(jsonOut bool) *cobra.Command {
 	return cmd
 }
 
+// requireLiveConfirm enforces a typed live-money confirmation token so that a
+// command which signs and submits real transactions cannot fire from a single
+// mistyped flag. The token must match exactly. Mirrors the gate already used by
+// approve-adapters (APPROVE_ADAPTERS) and redeem (REDEEM_WINNERS).
+func requireLiveConfirm(confirm, token string) error {
+	if confirm != token {
+		return fmt.Errorf("this live-money command requires --confirm %s (got %q)", token, confirm)
+	}
+	return nil
+}
+
 func depositWalletBatchCmd(jsonOut bool) *cobra.Command {
 	var callsJSON string
 	var walletAddress string
 	var nonce string
 	var deadline int64
+	var confirm string
 	cmd := &cobra.Command{
 		Use:   "batch",
 		Short: "Sign and submit a deposit wallet WALLET batch",
@@ -255,10 +267,13 @@ func depositWalletBatchCmd(jsonOut bool) *cobra.Command {
 The --calls-json must be a JSON array of DepositWalletCall objects:
   [{"target":"0x...","value":"0","data":"0x..."}, ...]
 
-Use --auto-approve to build and submit the standard 6-call approval batch
-(pUSD + CTF for all 3 V2 exchange spenders).`,
+This command submits real transactions from the deposit wallet: it requires
+--confirm SUBMIT_BATCH to authorize the live-money WALLET batch.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireLiveConfirm(confirm, "SUBMIT_BATCH"); err != nil {
+				return err
+			}
 			key, err := requirePrivateKey()
 			if err != nil {
 				return err
@@ -324,18 +339,21 @@ Use --auto-approve to build and submit the standard 6-call approval batch
 	cmd.Flags().StringVar(&walletAddress, "wallet", "", "deposit wallet address (default: derived from EOA)")
 	cmd.Flags().StringVar(&nonce, "nonce", "", "WALLET nonce (default: fetched from relayer)")
 	cmd.Flags().Int64Var(&deadline, "deadline", relayer.MinWalletBatchDeadlineSeconds, "deadline seconds from now")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'SUBMIT_BATCH'")
 	return cmd
 }
 
 func depositWalletApproveCmd(jsonOut bool) *cobra.Command {
 	var autoApprove bool
+	var confirm string
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "Build and optionally submit approval calls for the deposit wallet",
 		Long: `Build the standard 6-call approval batch (pUSD + CTF for all 3 V2 exchange spenders).
 
 Without --submit, prints the calldata JSON for review.
-With --submit, signs and submits the WALLET batch via the relayer.`,
+With --submit, the operator must also pass --confirm APPROVE_TRADING to
+authorize the live-money WALLET batch.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			callsJSON, err := relayer.BuildApprovalCallsJSON()
@@ -346,8 +364,11 @@ With --submit, signs and submits the WALLET batch via the relayer.`,
 				raw := json.RawMessage(callsJSON)
 				return printJSON(cmd, map[string]interface{}{
 					"calls": raw,
-					"note":  "review calldata, then run with --submit to sign and send",
+					"note":  "review calldata, then run with --submit --confirm APPROVE_TRADING to sign and send",
 				})
+			}
+			if err := requireLiveConfirm(confirm, "APPROVE_TRADING"); err != nil {
+				return err
 			}
 			key, err := requirePrivateKey()
 			if err != nil {
@@ -391,7 +412,8 @@ With --submit, signs and submits the WALLET batch via the relayer.`,
 			})
 		},
 	}
-	cmd.Flags().BoolVar(&autoApprove, "submit", false, "sign and submit the approval batch")
+	cmd.Flags().BoolVar(&autoApprove, "submit", false, "sign and submit the approval batch (requires --confirm APPROVE_TRADING)")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'APPROVE_TRADING' when --submit is set")
 	return cmd
 }
 
@@ -636,6 +658,7 @@ func depositWalletOnboardCmd(jsonOut bool) *cobra.Command {
 	var skipApprove bool
 	var skipEnableTrading bool
 	var fundAmount string
+	var confirm string
 	cmd := &cobra.Command{
 		Use:   "onboard",
 		Short: "Full deposit wallet onboarding: deploy + approve + enable trading + fund",
@@ -654,9 +677,15 @@ After onboarding, sync CLOB:
 
 If relayer credentials are missing, Polygolem signs SIWE locally, registers
 the profile if needed, mints and persists the V2 relayer key, then continues
-automatically.`,
+automatically.
+
+This command deploys, approves, and (with --fund-amount) moves real funds, so
+it requires --confirm ONBOARD_WALLET to authorize the live-money sequence.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := requireLiveConfirm(confirm, "ONBOARD_WALLET"); err != nil {
+				return err
+			}
 			key, err := requirePrivateKey()
 			if err != nil {
 				return err
@@ -758,6 +787,7 @@ automatically.`,
 	cmd.Flags().BoolVar(&skipApprove, "skip-approve", false, "skip approval batch")
 	cmd.Flags().BoolVar(&skipEnableTrading, "skip-enable-trading", false, "skip ClobAuth and UI Enable Trading token approval signs")
 	cmd.Flags().StringVar(&fundAmount, "fund-amount", "", "pUSD amount to transfer from EOA to deposit wallet (e.g. 0.71)")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'ONBOARD_WALLET'")
 	return cmd
 }
 

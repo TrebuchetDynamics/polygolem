@@ -327,6 +327,50 @@ func TestDepositWalletApproveAdaptersRequiresConfirm(t *testing.T) {
 	}
 }
 
+func TestDepositWalletBatchRequiresConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "batch", "--calls-json", `[{"target":"0x0000000000000000000000000000000000000001","value":"0","data":"0x"}]`)
+	if err == nil {
+		t.Fatalf("expected error when batch runs without --confirm; stderr=%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "SUBMIT_BATCH") {
+		t.Fatalf("error must mention SUBMIT_BATCH confirm token: %v", err)
+	}
+}
+
+func TestDepositWalletApproveSubmitRequiresConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve", "--submit")
+	if err == nil {
+		t.Fatalf("expected error when --submit is set without --confirm; stderr=%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "APPROVE_TRADING") {
+		t.Fatalf("error must mention APPROVE_TRADING confirm token: %v", err)
+	}
+}
+
+func TestDepositWalletOnboardRequiresConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy")
+	if err == nil {
+		t.Fatalf("expected error when onboard runs without --confirm; stderr=%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "ONBOARD_WALLET") {
+		t.Fatalf("error must mention ONBOARD_WALLET confirm token: %v", err)
+	}
+}
+
+func TestDepositWalletApproveDryRunNeedsNoConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve")
+	if err != nil {
+		t.Fatalf("dry-run approve should not error: %v\nstderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "APPROVE_TRADING") {
+		t.Fatalf("dry-run note should mention APPROVE_TRADING: %s", stdout)
+	}
+}
+
 func TestDepositWalletApproveAdaptersSubmitsBatch(t *testing.T) {
 	const privateKey = "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
 	var submitCalls int
@@ -451,7 +495,7 @@ func TestDepositWalletOnboardIncludesEnableTradingSigns(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "v2-uuid")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy")
+	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy", "--confirm", "ONBOARD_WALLET")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}

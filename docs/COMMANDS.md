@@ -1418,7 +1418,8 @@ Build and optionally submit approval calls for the deposit wallet
 Build the standard 6-call approval batch (pUSD + CTF for all 3 V2 exchange spenders).
 
 Without --submit, prints the calldata JSON for review.
-With --submit, signs and submits the WALLET batch via the relayer.
+With --submit, the operator must also pass --confirm APPROVE_TRADING to
+authorize the live-money WALLET batch.
 
 **Usage:**
 
@@ -1430,9 +1431,10 @@ polygolem deposit-wallet approve [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_TRADING' when --submit is set |
 | `-h, --help` | `bool` | `false` | help for approve |
 | `--json` | `bool` | `false` | emit JSON output |
-| `--submit` | `bool` | `false` | sign and submit the approval batch |
+| `--submit` | `bool` | `false` | sign and submit the approval batch (requires --confirm APPROVE_TRADING) |
 
 ### polygolem deposit-wallet approve-adapters
 
@@ -1481,8 +1483,8 @@ Sign an EIP-712 DepositWallet.Batch message and submit to the relayer.
 The --calls-json must be a JSON array of DepositWalletCall objects:
   [{"target":"0x...","value":"0","data":"0x..."}, ...]
 
-Use --auto-approve to build and submit the standard 6-call approval batch
-(pUSD + CTF for all 3 V2 exchange spenders).
+This command submits real transactions from the deposit wallet: it requires
+--confirm SUBMIT_BATCH to authorize the live-money WALLET batch.
 
 **Usage:**
 
@@ -1495,6 +1497,7 @@ polygolem deposit-wallet batch [flags]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--calls-json` | `string` | `""` | JSON array of DepositWalletCall objects |
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'SUBMIT_BATCH' |
 | `--deadline` | `int64` | `1800` | deadline seconds from now |
 | `-h, --help` | `bool` | `false` | help for batch |
 | `--json` | `bool` | `false` | emit JSON output |
@@ -1634,6 +1637,9 @@ If relayer credentials are missing, Polygolem signs SIWE locally, registers
 the profile if needed, mints and persists the V2 relayer key, then continues
 automatically.
 
+This command deploys, approves, and (with --fund-amount) moves real funds, so
+it requires --confirm ONBOARD_WALLET to authorize the live-money sequence.
+
 **Usage:**
 
 ```bash
@@ -1644,6 +1650,7 @@ polygolem deposit-wallet onboard [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'ONBOARD_WALLET' |
 | `--fund-amount` | `string` | `""` | pUSD amount to transfer from EOA to deposit wallet (e.g. 0.71) |
 | `-h, --help` | `bool` | `false` | help for onboard |
 | `--json` | `bool` | `false` | emit JSON output |

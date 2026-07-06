@@ -1468,8 +1468,9 @@ batch for pUSD + CTF across the three V2 exchange spenders.
 **Purpose:** Sign an EIP-712 DepositWallet.Batch message and submit to
 the relayer.
 
-**Required flags:** `--calls-json` (or `--auto-approve`). (Common
-optional flags: `--deadline`, `--nonce`, `--wallet`.)
+**Required flags:** `--calls-json` and `--confirm SUBMIT_BATCH` (the typed
+live-money confirmation token). (Common optional flags: `--deadline`,
+`--nonce`, `--wallet`.)
 
 **Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
@@ -1711,8 +1712,9 @@ relayer.
 **Purpose:** Run the full deposit-wallet setup sequence (derive, deploy,
 approve, fund) end-to-end.
 
-**Required flags:** `--fund-amount`. (Common optional flags:
-`--skip-deploy`, `--skip-approve`.)
+**Required flags:** `--fund-amount` and `--confirm ONBOARD_WALLET` (the typed
+live-money confirmation token). (Common optional flags: `--skip-deploy`,
+`--skip-approve`.)
 
 **Env vars consumed:** `SIGNER_PRIVATE_KEY`,
 `POLYMARKET_BUILDER_API_KEY`, `POLYMARKET_BUILDER_SECRET`,
@@ -2645,7 +2647,7 @@ starts.
 ./polygolem preflight --json
 ./polygolem deposit-wallet derive --json
 ./polygolem deposit-wallet status --json
-./polygolem deposit-wallet onboard --fund-amount 25 --json
+./polygolem deposit-wallet onboard --fund-amount 25 --confirm ONBOARD_WALLET --json
 ```
 
 Decision rule:
