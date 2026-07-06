@@ -21,6 +21,8 @@ func main() {
 	root := cli.NewRootCommand(cli.Options{Version: "dev"})
 	files := []generatedFile{
 		{path: "docs/COMMANDS.md", body: cli.GenerateCommandsMarkdown(root)},
+		{path: "docs/COMPATIBILITY.md", body: cli.GenerateCompatibilityMarkdown()},
+		{path: "docs/COMPATIBILITY.json", body: cli.GenerateCompatibilityJSON()},
 		{path: "docs/docs-site/src/content/docs/docs/reference/cli.mdx", body: cli.GenerateCLIReferenceMDX(root)},
 	}
 

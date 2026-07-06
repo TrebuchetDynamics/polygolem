@@ -13,6 +13,8 @@ func TestDocumentationSafety(t *testing.T) {
 	requiredDocs := []string{
 		"docs/ARCHITECTURE.md",
 		"docs/COMMANDS.md",
+		"docs/COMPATIBILITY.md",
+		"docs/COMPATIBILITY.json",
 		"docs/SAFETY.md",
 		"docs/MCP-OPENAPI.md",
 		"docs/POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md",
@@ -131,6 +133,11 @@ func TestDocumentationSafety(t *testing.T) {
 	for _, required := range []string{
 		"RFQ | Typed RFQ request/quote/response models",
 		"Public signer adapters",
+		"Polymarket error normalization",
+		"Reconciliation report",
+		"docs/COMPATIBILITY.md",
+		"generated compatibility contract",
+		"upstream docs drift checker",
 		"Agent/OpenAPI surfaces",
 		"CTF split/merge/redeem helpers",
 	} {
@@ -158,6 +165,8 @@ func TestDocumentationSafety(t *testing.T) {
 		"ERC-7739 Wrapped Order Signature",
 		"Safety-First Mutating Surface",
 		"Read-Only by Default",
+		"Capability Map",
+		"Reconciliation Report",
 	} {
 		if !strings.Contains(contextMD, required) {
 			t.Fatalf("CONTEXT.md must include core domain term %q", required)

@@ -24,11 +24,11 @@ These notes came from a blunt review of what looks wrong or fragile about the pr
 - [x] Add one end-to-end demo path: read-only check → paper trade → live-readiness check → tiny live order with warnings. (`docs/SAFE-HAPPY-PATH.md`)
 - [x] Make the deposit-wallet/new-user onboarding limitation explicit: one-time browser login is still required for some flows.
 - [x] Clarify what is fully headless versus what requires browser/manual setup.
-- [ ] Provide a compatibility matrix for Go version, CLOB versioning, wallet type, signature type, relayer/deposit-wallet support, and supported flows.
+- [x] Provide a compatibility matrix for Go version, CLOB versioning, wallet type, signature type, relayer/deposit-wallet support, and supported flows. (`docs/COMPATIBILITY.md`, generated from the `pkg/capabilities` Capability Map by `cmd/polygolem_docs`; machine-readable twin at `docs/COMPATIBILITY.json`)
 
 ### Evidence and validation
 
-- [ ] Show proof points rather than claims: CI, test coverage, live smoke tests, compatibility matrix, known limitations, and failure cases. (CI badge, live smoke, known limitations, failure docs, and the CI-enforced 60% coverage floor documented in README Production Validation all exist; remaining: compatibility matrix, blocked on `pkg/capabilities` landing)
+- [x] Show proof points rather than claims: CI, test coverage, live smoke tests, compatibility matrix, known limitations, and failure cases. (All elements now exist: CI badge, CI-enforced 60% coverage floor in README Production Validation, `scripts/live-smoke.sh`, generated `docs/COMPATIBILITY.md`, README Known Limitations, and the failure-case docs under Research & Findings)
 - [x] Add or document aggressive live smoke tests for Polymarket API/relayer behavior changes. (`scripts/live-smoke.sh`, `docs/UPSTREAM-DRIFT-RUNBOOK.md` weekly smoke)
 - [x] Add a safe live-order walkthrough with exact preconditions and maximum spend caps. (`docs/LIVE-TRADE-WALKTHROUGH.md`; `POLYGOLEM_MAX_LIVE_ORDER_USD` cap)
 - [x] Link at least one bot or paper-trading example that uses polygolem in practice. (`examples/boring-paper-bot/`, `examples/bot-basic/`, `examples/tradegate-bot/`)
@@ -53,6 +53,6 @@ The project has value, especially the Polymarket V2/deposit-wallet knowledge enc
 
 Checked every unchecked item against the doc tree and code; items marked done above carry their evidence pointers. Still genuinely open, in priority order:
 
-1. Compatibility matrix (Go version, CLOB versioning, wallet type, signature type, relayer/deposit-wallet support, supported flows). Accepted approach (2026-07-05): generate `docs/COMPATIBILITY.md` from `pkg/capabilities` once that package lands, following the generated-`COMMANDS.md` precedent (deterministic generator + drift test); extend the package with the Go-version/CLOB-version/signature-type axes rather than hand-writing a third matrix.
+1. ~~Compatibility matrix~~ — delivered 2026-07-05: `docs/COMPATIBILITY.md` + `.json` generated from the `pkg/capabilities` Capability Map, exactly per the accepted generate-don't-hand-write approach.
 2. ~~Published test-coverage numbers~~ — settled 2026-07-05: CI already measured and gated coverage; the floor is raised to 60% (62.9% actual at decision time) and documented in README Production Validation.
 3. ~~Owner wording decisions~~ — all three settled 2026-07-05: one-claim promise, core-thing definition, and sub-project presentation (see checked items above).

@@ -80,6 +80,8 @@ Current paths:
 - `GET /orderbook/{token_id}`
 - `GET /marketdata/snapshot?token_id=...`
 
+The spec also includes `x-polygolem-capabilities`, generated from `pkg/capabilities`, so agents can see the read-only capability IDs without inferring them from prose. Mutating capability IDs such as `clob.trading`, `bridge.funding`, and `relayer.deposit_wallet` are intentionally excluded from this OpenAPI surface.
+
 This is a spec artifact for local proxy/tooling experiments. Polygolem does not
 ship a hosted proxy service.
 
@@ -106,5 +108,6 @@ Refresh this page when:
 
 - `pkg/mcp.SafeTools()` adds, removes, or renames a tool;
 - `pkg/openapi.Spec()` adds, removes, or renames a path;
+- `pkg/capabilities.All()` adds, removes, or reclassifies a read-only capability;
 - `cmd/polygolem_mcp` changes transport behavior beyond stdio line JSON-RPC;
 - a mutating MCP/OpenAPI surface is proposed — update [SAFETY.md](SAFETY.md) and ADRs first.

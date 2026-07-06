@@ -67,6 +67,7 @@ Use this page to choose the right doc. Prefer the canonical docs listed below ov
 | [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md) | How POLY_1271 / deposit wallet signing works. | **Canonical** |
 | [POLYMARKET-APIS.md](./POLYMARKET-APIS.md) | Official Polymarket API architecture (Gamma, CLOB, Data API, Relayer, Bridge, WebSocket) with official-doc links and polygolem source citations. | **Canonical** |
 | [POLYMARKET-COVERAGE-MATRIX.md](./POLYMARKET-COVERAGE-MATRIX.md) | Conservative SDK/CLI/docs/test coverage across Polymarket surfaces. | **Canonical** |
+| [COMPATIBILITY.md](./COMPATIBILITY.md) | Generated compatibility contract: per-surface service, auth, wallet mode, and error kinds from the Capability Map (`pkg/capabilities`). Regenerate with `go run ./cmd/polygolem_docs`. | **Auto-generated** |
 | [DEPENDENCIES.md](./DEPENDENCIES.md) | Why the binary has crypto-heavy Go dependencies while keeping no runtime sidecars. | **Canonical** |
 | [UPSTREAM-DRIFT-RUNBOOK.md](./UPSTREAM-DRIFT-RUNBOOK.md) | Live smoke and fixture-first response plan for Gamma/CLOB/Data/Relayer drift. | **Canonical** |
 
