@@ -211,6 +211,20 @@ tc := transport.New(nil, transport.DefaultConfig("https://..."))
 
 Per-trade caps, daily loss limits, circuit breaker.
 
+### `internal/livegate`
+
+The single home for the CLI's live-money guards: `EnforceNotionalCap` (the
+`POLYGOLEM_MAX_LIVE_ORDER_USD` order cap) and `RequireConfirm` (the typed
+confirmation token). Every mutating CLI command routes through it, and a
+fail-closed coverage test proves each live-money command rejects a violating
+invocation before the private key loads.
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/internal/livegate"
+// EnforceNotionalCap(notional *big.Rat) error
+// RequireConfirm(confirm, token string) error
+```
+
 ### `internal/execution`
 
 Paper executor (local-only) and live executor surface.
