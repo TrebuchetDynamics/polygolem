@@ -100,6 +100,7 @@ polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
   deposit-wallet - Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
     approve - Build and optionally submit approval calls for the deposit wallet
     approve-adapters - Approve V2 collateral adapters for redeem (one-shot per wallet)
+    approve-auto-redeem - Enable Get Paid Instantly auto-redemption (one-shot per wallet)
     batch - Sign and submit a deposit wallet WALLET batch
     deploy - Deploy the deposit wallet via relayer WALLET-CREATE
     derive - Derive the deterministic deposit wallet address
@@ -1455,6 +1456,7 @@ polygolem deposit-wallet [flags]
 |---|---|
 | `polygolem deposit-wallet approve` | Build and optionally submit approval calls for the deposit wallet |
 | `polygolem deposit-wallet approve-adapters` | Approve V2 collateral adapters for redeem (one-shot per wallet) |
+| `polygolem deposit-wallet approve-auto-redeem` | Enable Get Paid Instantly auto-redemption (one-shot per wallet) |
 | `polygolem deposit-wallet batch` | Sign and submit a deposit wallet WALLET batch |
 | `polygolem deposit-wallet deploy` | Deploy the deposit wallet via relayer WALLET-CREATE |
 | `polygolem deposit-wallet derive` | Derive the deterministic deposit wallet address |
@@ -1538,6 +1540,40 @@ polygolem deposit-wallet approve-adapters [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--submit` | `bool` | `false` | sign and submit the adapter approval batch (requires --confirm APPROVE_ADAPTERS) |
 
+### polygolem deposit-wallet approve-auto-redeem
+
+Enable Get Paid Instantly auto-redemption (one-shot per wallet)
+
+Submits the 3-call auto-redeem approval batch (CTF setApprovalForAll for
+CtfAutoRedeem and AutoRedeemer, plus PositionManager setApprovalForAll for
+AutoRedeemer). This is Polymarket's "Get Paid Instantly" one-time approval:
+once mined, winning positions are redeemed automatically after resolution
+and the payout lands in the wallet balance with no manual redeem step.
+
+Auto-redemption starts after the wallet's next trade; positions that
+already resolved before enabling must be redeemed manually one last time
+(see deposit-wallet redeem). The grant stays on permanently until the
+wallet revokes the operators. Idempotent.
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm APPROVE_AUTO_REDEEM to
+authorize the live-money WALLET batch.
+
+**Usage:**
+
+```bash
+polygolem deposit-wallet approve-auto-redeem [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_AUTO_REDEEM' when --submit is set |
+| `-h, --help` | `bool` | `false` | help for approve-auto-redeem |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--submit` | `bool` | `false` | sign and submit the auto-redeem approval batch (requires --confirm APPROVE_AUTO_REDEEM) |
+
 ### polygolem deposit-wallet batch
 
 Sign and submit a deposit wallet WALLET batch
@@ -1612,8 +1648,10 @@ Complete the UI Enable Trading signs for an existing deposit wallet
 Signs the same two prompts polymarket.com shows after deposit-wallet deploy:
 
 1. ClobAuth — EOA-signed message to create or derive CLOB API keys.
-2. Approve Tokens — DepositWallet.Batch signing for the 2-call UI token
-   approval batch: pUSD -> CTF and USDC.e -> CollateralOnramp.
+2. Approve Tokens — DepositWallet.Batch signing for the 6-call UI token
+   approval batch: pUSD -> CTF, USDC.e -> CollateralOnramp, and the Combos
+   grants (pUSD approve + PositionManager setApprovalForAll for both the
+   Combos Router and Combos Exchange).
 
 Use this when the wallet is already deployed but the UI still shows
 "Enable Trading" or "Approve Tokens". If relayer credentials are missing,

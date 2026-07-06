@@ -36,12 +36,13 @@ func buildApproveCall(tokenAddress, spenderAddress string) DepositWalletCall {
 	}
 }
 
-func buildCTFApprovalCall(operatorAddress string) DepositWalletCall {
+func buildSetApprovalForAllCall(tokenAddress, operatorAddress string) DepositWalletCall {
+	token := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(tokenAddress), "0x"))
 	operator := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(operatorAddress), "0x"))
 	data := "0x" + erc1155SetApprovalForAllSel + pad32Bytes(operator) +
 		"0000000000000000000000000000000000000000000000000000000000000001"
 	return DepositWalletCall{
-		Target: common.HexToAddress(contracts.CTF).Hex(),
+		Target: common.HexToAddress(token).Hex(),
 		Value:  "0",
 		Data:   data,
 	}
@@ -101,13 +102,36 @@ func BuildAdapterApprovalCallsJSON() (string, error) {
 	return string(raw), nil
 }
 
-// BuildEnableTradingApprovalCalls returns the two ERC-20 approvals observed
-// in polymarket.com's "Enable Trading" UI after deposit-wallet deployment:
-// pUSD -> CTF and USDC.e -> CollateralOnramp, both max uint256. This batch is
-// distinct from the six-call exchange trading approval set and the four-call
-// V2 collateral-adapter approval set.
+// BuildEnableTradingApprovalCalls returns the six calls observed in
+// polymarket.com's "Enable Trading" / "Approve Tokens" UI after
+// deposit-wallet deployment: the original pUSD -> CTF and USDC.e ->
+// CollateralOnramp max-uint approvals, plus the Combos grants (pUSD
+// approve and PositionManager setApprovalForAll for both CombosRouter
+// and CombosExchange). This batch is distinct from the six-call exchange
+// trading approval set and the four-call V2 collateral-adapter approval
+// set.
 func BuildEnableTradingApprovalCalls() []DepositWalletCall {
 	return buildApprovalCalls(contracts.EnableTradingApprovals())
+}
+
+// BuildAutoRedeemApprovalCalls returns the 3 setApprovalForAll calls that
+// enable Polymarket's "Get Paid Instantly" auto-redemption for a deposit
+// wallet: CTF -> CtfAutoRedeem, CTF -> AutoRedeemer, and PositionManager ->
+// AutoRedeemer. Matches the batch polymarket.com signs for the feature.
+// Idempotent, and permanent until the wallet revokes the operators.
+func BuildAutoRedeemApprovalCalls() []DepositWalletCall {
+	return buildApprovalCalls(contracts.AutoRedeemApprovals())
+}
+
+// BuildAutoRedeemApprovalCallsJSON mirrors BuildApprovalCallsJSON for the
+// auto-redeem approval set so a CLI dry-run path can print the calldata
+// without signing.
+func BuildAutoRedeemApprovalCallsJSON() (string, error) {
+	raw, err := marshalCalls(BuildAutoRedeemApprovalCalls())
+	if err != nil {
+		return "", err
+	}
+	return string(raw), nil
 }
 
 func buildApprovalCalls(approvals []contracts.Approval) []DepositWalletCall {
@@ -117,7 +141,7 @@ func buildApprovalCalls(approvals []contracts.Approval) []DepositWalletCall {
 		case contracts.ApprovalERC20Approve:
 			calls = append(calls, buildApproveCall(approval.Token, approval.Spender))
 		case contracts.ApprovalERC1155ForAll:
-			calls = append(calls, buildCTFApprovalCall(approval.Spender))
+			calls = append(calls, buildSetApprovalForAllCall(approval.Token, approval.Spender))
 		}
 	}
 	return calls

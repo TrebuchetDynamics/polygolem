@@ -436,15 +436,20 @@ func EnableTradingHeadless(ctx context.Context, params EnableTradingParams) (*En
 }
 
 func ValidateEnableTradingApprovalCalls(calls []DepositWalletCall) error {
-	if len(calls) != 2 {
-		return fmt.Errorf("enabletrading: expected 2 approval calls, got %d", len(calls))
-	}
 	expected := []struct {
-		target  string
-		spender string
+		target      string
+		spender     string
+		setApproval bool // true: ERC-1155 setApprovalForAll, false: ERC-20 approve
 	}{
-		{contracts.PUSD, contracts.CTF},
-		{contracts.USDCE, contracts.CollateralOnramp},
+		{contracts.PUSD, contracts.CTF, false},
+		{contracts.USDCE, contracts.CollateralOnramp, false},
+		{contracts.PositionManager, contracts.CombosRouter, true},
+		{contracts.PUSD, contracts.CombosExchange, false},
+		{contracts.PUSD, contracts.CombosRouter, false},
+		{contracts.PositionManager, contracts.CombosExchange, true},
+	}
+	if len(calls) != len(expected) {
+		return fmt.Errorf("enabletrading: expected %d approval calls, got %d", len(expected), len(calls))
 	}
 	for i, call := range calls {
 		if !strings.EqualFold(call.Target, expected[i].target) {
@@ -453,7 +458,13 @@ func ValidateEnableTradingApprovalCalls(calls []DepositWalletCall) error {
 		if strings.TrimSpace(call.Value) != "0" {
 			return fmt.Errorf("enabletrading: approval call %d value must be 0", i)
 		}
-		if err := validateApproveCalldata(call.Data, expected[i].spender); err != nil {
+		var err error
+		if expected[i].setApproval {
+			err = validateSetApprovalForAllCalldata(call.Data, expected[i].spender)
+		} else {
+			err = validateApproveCalldata(call.Data, expected[i].spender)
+		}
+		if err != nil {
 			return fmt.Errorf("enabletrading: approval call %d: %w", i, err)
 		}
 	}
@@ -523,6 +534,25 @@ func validateApproveCalldata(data, expectedSpender string) error {
 	}
 	if clean[8+64:] != strings.Repeat("f", 64) {
 		return fmt.Errorf("approval amount is not max uint256")
+	}
+	return nil
+}
+
+func validateSetApprovalForAllCalldata(data, expectedOperator string) error {
+	clean := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(data), "0x"))
+	if len(clean) != 8+64+64 {
+		return fmt.Errorf("setApprovalForAll calldata has length %d", len(clean))
+	}
+	if !strings.HasPrefix(clean, "a22cb465") {
+		return fmt.Errorf("calldata is not ERC1155 setApprovalForAll")
+	}
+	operatorWord := clean[8 : 8+64]
+	operator := "0x" + operatorWord[24:]
+	if !strings.EqualFold(operator, expectedOperator) {
+		return fmt.Errorf("operator %s is not allowed", operator)
+	}
+	if clean[8+64:] != strings.Repeat("0", 63)+"1" {
+		return fmt.Errorf("approved flag is not true")
 	}
 	return nil
 }

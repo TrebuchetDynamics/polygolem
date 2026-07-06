@@ -80,6 +80,7 @@ Quickest path (deploy + approve + enable trading + fund):
 	cmd.AddCommand(depositWalletBatchCmd(jsonOut))
 	cmd.AddCommand(depositWalletApproveCmd(jsonOut))
 	cmd.AddCommand(depositWalletApproveAdaptersCmd(jsonOut))
+	cmd.AddCommand(depositWalletApproveAutoRedeemCmd(jsonOut))
 	cmd.AddCommand(depositWalletEnableTradingCmd(jsonOut))
 	cmd.AddCommand(depositWalletSettlementStatusCmd(jsonOut))
 	cmd.AddCommand(depositWalletRedeemableCmd(jsonOut))
@@ -523,6 +524,103 @@ V2 deposit-wallet redeem must route through the collateral adapters.`,
 	return cmd
 }
 
+// depositWalletApproveAutoRedeemCmd enables Polymarket's "Get Paid
+// Instantly" auto-redemption for the deposit wallet. It submits the 3-call
+// setApprovalForAll batch polymarket.com signs for the feature: CTF ->
+// CtfAutoRedeem, CTF -> AutoRedeemer, PositionManager -> AutoRedeemer.
+//
+// Live-money safety: dry-run by default (prints calldata only). To submit,
+// the operator must pass BOTH --submit AND --confirm APPROVE_AUTO_REDEEM.
+func depositWalletApproveAutoRedeemCmd(jsonOut bool) *cobra.Command {
+	var submit bool
+	var confirm string
+	cmd := &cobra.Command{
+		Use:   "approve-auto-redeem",
+		Short: "Enable Get Paid Instantly auto-redemption (one-shot per wallet)",
+		Long: `Submits the 3-call auto-redeem approval batch (CTF setApprovalForAll for
+CtfAutoRedeem and AutoRedeemer, plus PositionManager setApprovalForAll for
+AutoRedeemer). This is Polymarket's "Get Paid Instantly" one-time approval:
+once mined, winning positions are redeemed automatically after resolution
+and the payout lands in the wallet balance with no manual redeem step.
+
+Auto-redemption starts after the wallet's next trade; positions that
+already resolved before enabling must be redeemed manually one last time
+(see deposit-wallet redeem). The grant stays on permanently until the
+wallet revokes the operators. Idempotent.
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm APPROVE_AUTO_REDEEM to
+authorize the live-money WALLET batch.`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			callsJSON, err := relayer.BuildAutoRedeemApprovalCallsJSON()
+			if err != nil {
+				return fmt.Errorf("build auto-redeem approval calls: %w", err)
+			}
+			if !submit {
+				raw := json.RawMessage(callsJSON)
+				return printJSON(cmd, map[string]interface{}{
+					"calls":     raw,
+					"operators": []string{contracts.CtfAutoRedeem, contracts.AutoRedeemer},
+					"note":      "review calldata, then run with --submit --confirm APPROVE_AUTO_REDEEM to sign and send",
+				})
+			}
+			if err := livegate.RequireConfirm(confirm, "APPROVE_AUTO_REDEEM"); err != nil {
+				return err
+			}
+			key, err := requirePrivateKey()
+			if err != nil {
+				return err
+			}
+			signer, err := auth.NewPrivateKeySigner(key, 137)
+			if err != nil {
+				return fmt.Errorf("init signer: %w", err)
+			}
+			owner := signer.Address()
+			walletAddress, err := auth.MakerAddressForSignatureType(owner, 137, 3)
+			if err != nil {
+				return fmt.Errorf("derive deposit wallet: %w", err)
+			}
+			var calls []relayer.DepositWalletCall
+			if err := json.Unmarshal([]byte(callsJSON), &calls); err != nil {
+				return fmt.Errorf("parse auto-redeem approval calls: %w", err)
+			}
+
+			rc, _, err := relayerClientForAutomation(cmd.Context(), cmd.ErrOrStderr(), key)
+			if err != nil {
+				return fmt.Errorf("init relayer client: %w", err)
+			}
+			nonce, err := rc.GetNonce(cmd.Context(), owner)
+			if err != nil {
+				return fmt.Errorf("fetch nonce: %w", err)
+			}
+			dl := relayer.BuildDeadline(240)
+			sig, err := relayer.SignWalletBatch(signer, walletAddress, nonce, dl, calls)
+			if err != nil {
+				return fmt.Errorf("sign batch: %w", err)
+			}
+			tx, err := rc.SubmitWalletBatch(cmd.Context(), owner, walletAddress, nonce, sig, dl, calls)
+			if err != nil {
+				if errors.Is(err, relayer.ErrRelayerAllowlistBlocked) {
+					return printJSON(cmd, upstreamRelayerBlockJSON(walletAddress, "approve-auto-redeem", err))
+				}
+				return fmt.Errorf("submit auto-redeem approval batch: %w", err)
+			}
+			return printJSON(cmd, map[string]interface{}{
+				"transactionID": tx.TransactionID,
+				"state":         tx.State,
+				"wallet":        walletAddress,
+				"approvals":     len(calls),
+				"operators":     []string{contracts.CtfAutoRedeem, contracts.AutoRedeemer},
+				"path":          "relayer",
+			})
+		},
+	}
+	cmd.Flags().BoolVar(&submit, "submit", false, "sign and submit the auto-redeem approval batch (requires --confirm APPROVE_AUTO_REDEEM)")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'APPROVE_AUTO_REDEEM' when --submit is set")
+	return cmd
+}
+
 func depositWalletEnableTradingCmd(jsonOut bool) *cobra.Command {
 	var dryRun bool
 	cmd := &cobra.Command{
@@ -531,8 +629,10 @@ func depositWalletEnableTradingCmd(jsonOut bool) *cobra.Command {
 		Long: `Signs the same two prompts polymarket.com shows after deposit-wallet deploy:
 
 1. ClobAuth — EOA-signed message to create or derive CLOB API keys.
-2. Approve Tokens — DepositWallet.Batch signing for the 2-call UI token
-   approval batch: pUSD -> CTF and USDC.e -> CollateralOnramp.
+2. Approve Tokens — DepositWallet.Batch signing for the 6-call UI token
+   approval batch: pUSD -> CTF, USDC.e -> CollateralOnramp, and the Combos
+   grants (pUSD approve + PositionManager setApprovalForAll for both the
+   Combos Router and Combos Exchange).
 
 Use this when the wallet is already deployed but the UI still shows
 "Enable Trading" or "Approve Tokens". If relayer credentials are missing,

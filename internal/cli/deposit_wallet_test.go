@@ -461,8 +461,8 @@ func TestDepositWalletOnboardIncludesEnableTradingSigns(t *testing.T) {
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"transactionID": "tx-standard-approve", "state": "STATE_NEW"})
 			case 2:
-				if len(body.DepositWalletParams.Calls) != 2 {
-					t.Errorf("second batch call count=%d want 2", len(body.DepositWalletParams.Calls))
+				if len(body.DepositWalletParams.Calls) != 6 {
+					t.Errorf("second batch call count=%d want 6", len(body.DepositWalletParams.Calls))
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"transactionID": "tx-enable-trading", "state": "STATE_NEW"})
 			default:
@@ -514,11 +514,11 @@ func TestDepositWalletOnboardIncludesEnableTradingSigns(t *testing.T) {
 	if enableTrading["clobAuthSigned"] != true || enableTrading["apiKeysCreatedOrDerived"] != true || enableTrading["tokenApprovalsSigned"] != true || enableTrading["tokenApprovalsSubmitted"] != true {
 		t.Fatalf("enableTrading flags unexpected: %v", enableTrading)
 	}
-	if enableTrading["callCount"] != float64(2) {
-		t.Fatalf("enableTrading callCount=%v want 2", enableTrading["callCount"])
+	if enableTrading["callCount"] != float64(6) {
+		t.Fatalf("enableTrading callCount=%v want 6", enableTrading["callCount"])
 	}
-	if len(submitCallCounts) != 2 || submitCallCounts[0] != 10 || submitCallCounts[1] != 2 {
-		t.Fatalf("submit call counts=%v want [10 2]", submitCallCounts)
+	if len(submitCallCounts) != 2 || submitCallCounts[0] != 10 || submitCallCounts[1] != 6 {
+		t.Fatalf("submit call counts=%v want [10 6]", submitCallCounts)
 	}
 }
 
@@ -541,8 +541,8 @@ func TestDepositWalletEnableTradingSubmitsSigns(t *testing.T) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			if len(body.DepositWalletParams.Calls) != 2 {
-				t.Errorf("enable-trading call count=%d want 2", len(body.DepositWalletParams.Calls))
+			if len(body.DepositWalletParams.Calls) != 6 {
+				t.Errorf("enable-trading call count=%d want 6", len(body.DepositWalletParams.Calls))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"transactionID": "tx-enable-trading", "state": "STATE_NEW"})
 		default:
@@ -586,8 +586,8 @@ func TestDepositWalletEnableTradingSubmitsSigns(t *testing.T) {
 	if data["clobAuthSigned"] != true || data["apiKeysCreatedOrDerived"] != true || data["tokenApprovalsSubmitted"] != true {
 		t.Fatalf("enable-trading flags unexpected: %v", data)
 	}
-	if data["callCount"] != float64(2) {
-		t.Fatalf("callCount=%v want 2", data["callCount"])
+	if data["callCount"] != float64(6) {
+		t.Fatalf("callCount=%v want 6", data["callCount"])
 	}
 	if submitCalls != 1 {
 		t.Fatalf("submitCalls=%d want 1", submitCalls)

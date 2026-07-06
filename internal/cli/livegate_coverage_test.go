@@ -48,6 +48,7 @@ func TestLiveMoneyCommandsFailClosed(t *testing.T) {
 		{"deposit-wallet approve --submit", []string{"deposit-wallet", "approve", "--submit"}, "APPROVE_TRADING"},
 		{"deposit-wallet onboard", []string{"deposit-wallet", "onboard", "--skip-deploy"}, "ONBOARD_WALLET"},
 		{"deposit-wallet approve-adapters --submit", []string{"deposit-wallet", "approve-adapters", "--submit"}, "APPROVE_ADAPTERS"},
+		{"deposit-wallet approve-auto-redeem --submit", []string{"deposit-wallet", "approve-auto-redeem", "--submit"}, "APPROVE_AUTO_REDEEM"},
 	}
 
 	for _, tc := range cases {

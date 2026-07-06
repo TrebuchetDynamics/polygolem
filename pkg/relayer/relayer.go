@@ -122,10 +122,28 @@ func BuildAdapterApprovalCallsJSON() (string, error) {
 	return internalrelayer.BuildAdapterApprovalCallsJSON()
 }
 
-// BuildEnableTradingApprovalCalls returns the two ERC-20 approve calls
-// observed in polymarket.com's Enable Trading UI: pUSD -> CTF and
-// USDC.e -> CollateralOnramp, both max uint256. This is distinct from
-// BuildApprovalCalls and BuildAdapterApprovalCalls.
+// BuildAutoRedeemApprovalCalls returns the three setApprovalForAll calls
+// that enable Polymarket's "Get Paid Instantly" auto-redemption: CTF ->
+// CtfAutoRedeem, CTF -> AutoRedeemer, and PositionManager -> AutoRedeemer.
+// Once mined, winning positions are redeemed automatically after
+// resolution; the grant is permanent until the wallet revokes the
+// operators. Idempotent.
+func BuildAutoRedeemApprovalCalls() []DepositWalletCall {
+	return internalrelayer.BuildAutoRedeemApprovalCalls()
+}
+
+// BuildAutoRedeemApprovalCallsJSON returns the auto-redeem approval calls
+// as a JSON-marshalable slice for CLI dry-run paths.
+func BuildAutoRedeemApprovalCallsJSON() (string, error) {
+	return internalrelayer.BuildAutoRedeemApprovalCallsJSON()
+}
+
+// BuildEnableTradingApprovalCalls returns the six calls observed in
+// polymarket.com's Enable Trading "Approve Tokens" UI: pUSD -> CTF and
+// USDC.e -> CollateralOnramp max-uint approvals, plus pUSD approve and
+// PositionManager setApprovalForAll for both CombosRouter and
+// CombosExchange. This is distinct from BuildApprovalCalls and
+// BuildAdapterApprovalCalls.
 func BuildEnableTradingApprovalCalls() []DepositWalletCall {
 	return internalrelayer.BuildEnableTradingApprovalCalls()
 }
