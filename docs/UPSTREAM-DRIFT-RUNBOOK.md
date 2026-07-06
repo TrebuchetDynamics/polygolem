@@ -38,14 +38,30 @@ go test ./tests -run TestBTCFiveMinuteLiveCLOBContracts -count=1 -v
 
 Use it when CLOB/Gamma token mapping, book shape, fee fields, or market outcome behavior looks suspicious.
 
+## Official docs index check
+
+Save the official docs index, then run the offline checker:
+
+```bash
+curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/polymarket-llms.txt
+polygolem drift llms --file /tmp/polymarket-llms.txt
+```
+
+For CI or air-gapped review, check in or pass a saved fixture instead of fetching
+live. The command is read-only, uses no credentials, and only verifies that the
+official docs sections Polygolem depends on are still advertised by `llms.txt`.
+Use `--json` when another tool needs `ok`, `checked`, and `missing` fields.
+
 ## When drift is suspected
 
 1. Save the JSON envelope and exact command.
 2. Compare the failing command with checked-in fixtures under `fixtures/`.
 3. Run `scripts/live-smoke.sh` to identify which upstream surface changed.
-4. Re-check the official documentation for the affected endpoint: fetch the
-   page index at `https://docs.polymarket.com/llms.txt`, find the endpoint's
-   page, and append `.md` to its URL for a Markdown version. Service-to-docs
-   mapping: [POLYMARKET-APIS.md](./POLYMARKET-APIS.md).
-5. If the change is real, update the smallest fixture/test first, then code.
-6. Do not bypass deposit-wallet, readiness, or order-cap gates to work around upstream errors.
+4. Run `polygolem drift llms --file <saved-llms.txt>` against the saved official
+   page index. If the affected service is missing, inspect the new upstream docs
+   index before changing code.
+5. Re-check the official documentation for the affected endpoint: find the
+   endpoint's page in `llms.txt`, and append `.md` to its URL for a Markdown
+   version. Service-to-docs mapping: [POLYMARKET-APIS.md](./POLYMARKET-APIS.md).
+6. If the change is real, update the smallest fixture/test first, then code.
+7. Do not bypass deposit-wallet, readiness, or order-cap gates to work around upstream errors.

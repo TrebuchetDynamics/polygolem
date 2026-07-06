@@ -125,6 +125,8 @@ polygolem - Safe Polymarket SDK and CLI for Go
     search - Search markets and events
     series - List or fetch Gamma series
     tags - List or fetch Gamma tags/categories
+  drift - Check read-only upstream Polymarket drift
+    llms - Check a saved docs.polymarket.com llms.txt index
   events - List Polymarket events
     list - List events
   health - Check Gamma and CLOB API reachability
@@ -187,6 +189,7 @@ polygolem [flags]
 | `polygolem deposit-wallet` | Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status) |
 | `polygolem diag` | Print redacted local diagnostics |
 | `polygolem discover` | Market discovery via Polymarket Gamma API |
+| `polygolem drift` | Check read-only upstream Polymarket drift |
 | `polygolem events` | List Polymarket events |
 | `polygolem health` | Check Gamma and CLOB API reachability |
 | `polygolem intel` | Read-only wallet intelligence |
@@ -2124,6 +2127,47 @@ polygolem discover tags [flags]
 | `--limit` | `int` | `100` | max tags |
 | `--offset` | `int` | `0` | pagination offset |
 | `--slug` | `string` | `""` | tag slug |
+
+### polygolem drift
+
+Check read-only upstream Polymarket drift
+
+**Usage:**
+
+```bash
+polygolem drift [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem drift llms` | Check a saved docs.polymarket.com llms.txt index |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for drift |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem drift llms
+
+Check a saved docs.polymarket.com llms.txt index
+
+**Usage:**
+
+```bash
+polygolem drift llms [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--file` | `string` | `""` | saved docs.polymarket.com/llms.txt file; reads stdin when empty |
+| `-h, --help` | `bool` | `false` | help for llms |
+| `--json` | `bool` | `false` | emit JSON output |
 
 ### polygolem events
 

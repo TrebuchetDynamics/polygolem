@@ -107,6 +107,7 @@ func NewRootCommand(opts Options) *cobra.Command {
 	root.AddCommand(dataCmd(jsonOutput))
 	root.AddCommand(intelCmd(jsonOutput))
 	root.AddCommand(diagCmd(jsonOutput, opts.Version))
+	root.AddCommand(driftCmd(jsonOutput))
 	root.AddCommand(healthCmd(jsonOutput))
 	root.AddCommand(eventsCmd(jsonOutput))
 	root.AddCommand(bridgeCmd(jsonOutput))
