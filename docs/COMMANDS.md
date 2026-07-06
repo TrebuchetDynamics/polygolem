@@ -231,6 +231,13 @@ polygolem [flags]
 
 Inspect authentication readiness
 
+Authentication readiness and login for Polymarket.
+
+Read-only: 'auth status' and 'auth clob-probe' report credential readiness.
+Live: 'auth login' and 'auth headless-onboard' sign SIWE and mint/persist V2
+relayer credentials. 'auth export-key' prints your private key and is
+double-confirmed — avoid it unless importing into a temporary browser wallet.
+
 **Usage:**
 
 ```bash
@@ -418,6 +425,12 @@ polygolem auth status [flags]
 ### polygolem bridge
 
 Polymarket Bridge API
+
+Cross-chain deposits into Polymarket USD (pUSD) via the bridge.
+
+Read-only: assets (supported tokens/chains), status, quote. Deposit-address
+creation is supported. Live withdrawal/offramp submission is intentionally
+unsupported and returns an explicit error rather than moving funds.
 
 **Usage:**
 
@@ -2197,6 +2210,13 @@ polygolem discover tags [flags]
 
 Check read-only upstream Polymarket drift
 
+Check whether Polymarket's official docs still advertise the surfaces polygolem
+depends on. Read-only, credential-free, and offline: it runs against a saved
+llms.txt index, so it is safe in CI or air-gapped review.
+
+  curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/llms.txt
+  polygolem drift llms --file /tmp/llms.txt
+
 **Usage:**
 
 ```bash
@@ -2237,6 +2257,11 @@ polygolem drift llms [flags]
 ### polygolem events
 
 List Polymarket events
+
+List Polymarket events. Read-only; no credentials.
+
+An event groups related markets under one question set. Browse events, then drill
+into a specific market with 'polygolem discover market'.
 
 **Usage:**
 
@@ -2401,6 +2426,11 @@ polygolem intel wallet <wallet> [flags]
 ### polygolem live
 
 Inspect live gate status
+
+Inspect the advisory live-trading gates (POLYMARKET_LIVE_PROFILE, --confirm-live,
+preflight). Read-only: this reports whether you have opted into a live posture; it
+does not itself authorize spending. The enforced money guards are the per-order cap
+and the typed --confirm tokens documented in docs/SAFETY.md.
 
 **Usage:**
 
@@ -2873,6 +2903,12 @@ polygolem preflight [flags]
 ### polygolem relayer
 
 Inspect Polymarket relayer state
+
+Inspect Polymarket V2 relayer state. Read-only.
+
+Look up a relayer transaction by id to see its state and on-chain hash. The
+wallet lifecycle mutations the relayer sponsors (deploy, batch, approvals) are
+driven from 'polygolem deposit-wallet', not here.
 
 **Usage:**
 

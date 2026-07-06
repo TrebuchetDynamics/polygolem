@@ -25,6 +25,13 @@ func bridgeCmd(jsonOut bool) *cobra.Command {
 
 func newBridgeCommand(assetsRunner bridgeAssetsRunner, bc bridgeClient) *cobra.Command {
 	cmd := commandGroup("bridge", "Polymarket Bridge API")
+	cmd.Long = `Cross-chain deposits into Polymarket USD (pUSD) via the bridge.
+
+Read-only: assets (supported tokens/chains), status, quote. Deposit-address
+creation is supported. Live withdrawal/offramp submission is intentionally
+unsupported and returns an explicit error rather than moving funds.`
+	cmd.Example = `  polygolem bridge assets --json
+  polygolem bridge status <address> --json`
 	cmd.AddCommand(&cobra.Command{
 		Use: "assets", Short: "List supported bridge assets", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

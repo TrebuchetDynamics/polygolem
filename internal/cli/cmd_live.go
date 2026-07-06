@@ -25,7 +25,12 @@ type liveStatusData struct {
 }
 
 func liveCmd(version string) *cobra.Command {
-	return commandGroup("live", "Inspect live gate status", newLiveStatusCommand(version))
+	cmd := commandGroup("live", "Inspect live gate status", newLiveStatusCommand(version))
+	cmd.Long = `Inspect the advisory live-trading gates (POLYMARKET_LIVE_PROFILE, --confirm-live,
+preflight). Read-only: this reports whether you have opted into a live posture; it
+does not itself authorize spending. The enforced money guards are the per-order cap
+and the typed --confirm tokens documented in docs/SAFETY.md.`
+	return cmd
 }
 
 func newLiveStatusCommand(version string) *cobra.Command {

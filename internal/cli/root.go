@@ -165,6 +165,12 @@ Every command accepts --json for a stable {ok,version,data,meta} envelope.`,
 	authCmd := commandGroup("auth", "Inspect authentication readiness",
 		newAuthStatusCommand(jsonOutput),
 	)
+	authCmd.Long = `Authentication readiness and login for Polymarket.
+
+Read-only: 'auth status' and 'auth clob-probe' report credential readiness.
+Live: 'auth login' and 'auth headless-onboard' sign SIWE and mint/persist V2
+relayer credentials. 'auth export-key' prints your private key and is
+double-confirmed — avoid it unless importing into a temporary browser wallet.`
 	authCmd.AddCommand(newAuthCLOBProbeCommand(jsonOutput))
 	authCmd.AddCommand(newAuthLoginCommand(jsonOutput))
 	authCmd.AddCommand(newAuthHeadlessOnboardCommand(jsonOutput))
