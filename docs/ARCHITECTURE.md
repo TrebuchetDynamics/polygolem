@@ -56,6 +56,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/reconciliation` | Read-only operator report comparing CLOB order, Data API position/trade, relayer, and on-chain fill evidence (`pkg/reconciliation/reconciliation.go:1`). |
 | `pkg/relayer` | Builder relayer primitives for wallet create and wallet batch flows. |
 | `pkg/rfq` | Typed RFQ DTOs and validation; live submit is explicitly unsupported (`pkg/rfq/rfq.go:1`, `pkg/rfq/rfq.go:18`). |
+| `pkg/rtds` | Real-Time Data Service WebSocket client for Chainlink oracle price ticks. |
 | `pkg/settlement` | V2 winner redemption planning, adapter calls, and readiness gates. |
 | `pkg/signers` | Public signing interfaces and safe local signer adapter (`pkg/signers/signers.go:1`, `pkg/signers/signers.go:21`). |
 | `pkg/stream` | Read-only public CLOB WebSocket market stream client, including V2 custom feature events. |
@@ -109,7 +110,7 @@ internal/{auth, transport, polytypes}                   ← cross-cutting primit
         |
 internal/{wallet, orders, execution, risk, paper, marketdiscovery}
         |
-pkg/{bridge, builder, clob, contracts, cryptoprice, ctf, data, enabletrading, funding, gamma, intel, marketdata, marketresolver, mcp, openapi, orderbook, orderfills, orderresults, pagination, plugins, relayer, rfq, settlement, signers, stream, types, universal, wallet}
+pkg/{bridge, builder, clob, contracts, cryptoprice, ctf, data, enabletrading, funding, gamma, intel, marketdata, marketresolver, mcp, openapi, orderbook, orderfills, orderresults, pagination, plugins, relayer, rfq, rtds, settlement, signers, stream, types, universal, wallet}
 pkg/experimental/{orders, auth}   ← experimental surfaces (staged for SDK promotion)
 ```
 

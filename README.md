@@ -294,6 +294,7 @@ Every CLI subcommand is a thin wrapper around importable `pkg/` packages:
 | [`pkg/geoblock`](pkg/geoblock) | Geoblock verdict for the calling IP (blocked, country, region) |
 | [`pkg/data`](pkg/data) | Read-only Data API analytics: positions, trades, holders, value, volume |
 | [`pkg/stream`](pkg/stream) | Public CLOB WebSocket market stream |
+| [`pkg/rtds`](pkg/rtds) | Real-Time Data Service Chainlink oracle price stream |
 | [`pkg/marketdata`](pkg/marketdata) | Live share-price snapshots from stream events |
 | [`pkg/cryptoprice`](pkg/cryptoprice) | Read-only crypto reference prices for Up/Down resolution windows |
 | [`pkg/wallet`](pkg/wallet) | Deposit-wallet identity/readiness — derive the POLY_1271 wallet |

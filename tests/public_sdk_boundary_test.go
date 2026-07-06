@@ -59,6 +59,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/pkg/reconciliation"
 	"github.com/TrebuchetDynamics/polygolem/pkg/relayer"
 	"github.com/TrebuchetDynamics/polygolem/pkg/rfq"
+	"github.com/TrebuchetDynamics/polygolem/pkg/rtds"
 	"github.com/TrebuchetDynamics/polygolem/pkg/settlement"
 	"github.com/TrebuchetDynamics/polygolem/pkg/signers"
 	httpsigner "github.com/TrebuchetDynamics/polygolem/pkg/signers/http"
@@ -122,6 +123,9 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var streamNewMarket sdkstream.NewMarketMessage
 	var streamMarketResolved sdkstream.MarketResolvedMessage
 	var streamDeduplicator *sdkstream.Deduplicator = sdkstream.NewDeduplicator(100, 0)
+	var rtdsClient *rtds.Client = rtds.NewClient(rtds.Config{}, []string{"btc/usd"})
+	var rtdsConfig rtds.Config = rtds.DefaultConfig("")
+	var rtdsPrice rtds.ChainlinkPriceEvent
 	var marketDataTracker *marketdata.Tracker = marketdata.NewTracker()
 	var marketDataSnapshot marketdata.Snapshot
 	var marketDataBestBidAsk func(*marketdata.Tracker, sdkstream.BestBidAskMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyBestBidAsk
@@ -263,7 +267,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	_, _, _, _, _, _, _, _, _, _ = clobAPIKey, clobDeriveAPIKey, clobBalanceParams, clobBalance, clobOrders, clobOrder, clobTrades, clobCancel, clobCancelMarketParams, clobCancelMarket
 	_, _, _, _ = clobCreateParams, clobCreate, clobMarketOrderParams, clobMarketOrder
 	_, _, _, _, _, _, _, _, _, _ = streamClient, streamConfig, streamConnect, streamSubscribe, streamClose, streamConnected, streamBook, streamPriceChange, streamLastTrade, streamTickSize
-	_, _, _, _, _, _ = streamBestBidAsk, streamNewMarket, streamMarketResolved, streamDeduplicator, marketDataTracker, marketDataSnapshot
+	_, _, _, _, _, _, _, _, _ = streamBestBidAsk, streamNewMarket, streamMarketResolved, streamDeduplicator, rtdsClient, rtdsConfig, rtdsPrice, marketDataTracker, marketDataSnapshot
 	_, _ = marketDataBestBidAsk, marketDataTickSize
 	_, _, _, _ = marketResolver, marketResolverResult, enableTradingParams, enableTradingBuildCalls
 	_, _, _, _, _, _, _ = cryptoPriceClient, cryptoPrice, fundingTransfer, intelScore, mcpTools, mcpServer, openAPISpec

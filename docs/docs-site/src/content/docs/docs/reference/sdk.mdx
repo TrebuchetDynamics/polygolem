@@ -230,6 +230,39 @@ exposes each deduplicated market payload for append-only JSONB recorders, and
 `Stats()` includes `last_message_at` plus per-event `event_counts` for
 coverage/freshness receipts.
 
+## `pkg/rtds` — Real-Time Data Service Chainlink Prices
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/rtds"
+```
+
+### Contract: Constructors
+
+```go
+type Client struct { /* unexported fields */ }
+
+func NewClient(cfg Config, feeds []string) *Client
+func DefaultConfig(url string) Config
+```
+
+### Contract: Methods
+
+```go
+func (c *Client) Connect(ctx context.Context) error
+func (c *Client) Connected() bool
+func (c *Client) Close() error
+```
+
+### Contract: DTOs
+
+```go
+type Config struct
+type ChainlinkPriceEvent struct
+```
+
+`pkg/rtds` connects to Polymarket's Real-Time Data Service and exposes the
+`crypto_prices_chainlink` feed used by crypto Up/Down markets.
+
 ## `pkg/marketdata` — Live Share-Price Snapshots
 
 ```go
