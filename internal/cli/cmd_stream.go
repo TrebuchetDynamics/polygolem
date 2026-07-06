@@ -12,6 +12,13 @@ import (
 func streamCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
 	cmd := commandGroup("stream", "Polymarket WebSocket streams")
+	cmd.Long = `Subscribe to Polymarket's real-time WebSocket channels.
+
+'stream market' and 'stream crypto' need no credentials; 'stream user' streams your
+own order/trade events and needs CLOB L2 credentials. These emit raw channel events —
+for a normalized latest-snapshot view, use 'polygolem marketdata live' instead.`
+	cmd.Example = `  polygolem stream market --asset-ids <id> --stats
+  polygolem stream crypto --asset BTC --stats`
 
 	var assetsRaw string
 	var url string

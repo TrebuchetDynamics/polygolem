@@ -11,6 +11,12 @@ import (
 func marketDataCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
 	cmd := commandGroup("marketdata", "Live CLOB orderbook and share-price snapshots")
+	cmd.Long = `Live, normalized market-data snapshots per token. Read-only; no credentials.
+
+'marketdata live' subscribes to the public CLOB stream and reports the latest best
+bid/ask, spread, midpoint, tick size, last trade, and book levels as they update —
+a higher-level, normalized view than the raw 'stream' events.`
+	cmd.Example = `  polygolem marketdata live --asset-ids <id>`
 
 	var assetsRaw string
 	var url string

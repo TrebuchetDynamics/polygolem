@@ -1171,6 +1171,12 @@ polygolem clob update-balance [flags]
 
 Polymarket Data API analytics
 
+Wallet- and market-level analytics from Polymarket's Data API. Read-only; keyed by
+wallet address, no credentials required.
+
+Query any wallet's positions, closed positions, trades, activity, and portfolio
+value, plus market-level holders, open interest, live volume, and leaderboards.
+
 **Usage:**
 
 ```bash
@@ -2289,6 +2295,12 @@ polygolem health [flags]
 
 Read-only wallet intelligence
 
+Reproducible, read-only statistical signals about public wallet activity.
+
+Scores are computed only from public Data API rows (trades, activity, closed
+positions) with a named formula version and the source rows exposed. A signal is
+research context, not trading advice and not a finding of misconduct.
+
 **Usage:**
 
 ```bash
@@ -2431,6 +2443,12 @@ polygolem live status [flags]
 
 Live CLOB orderbook and share-price snapshots
 
+Live, normalized market-data snapshots per token. Read-only; no credentials.
+
+'marketdata live' subscribes to the public CLOB stream and reports the latest best
+bid/ask, spread, midpoint, tick size, last trade, and book levels as they update —
+a higher-level, normalized view than the raw 'stream' events.
+
 **Usage:**
 
 ```bash
@@ -2503,6 +2521,12 @@ polygolem marketdata live [flags]
 ### polygolem orderbook
 
 Read CLOB order book data
+
+Read the live CLOB order book for a token. Read-only; no credentials.
+
+Fetch bids/asks, best bid/ask, midpoint, and spread for a token id (get one from
+'polygolem discover'). For a continuously updated view, see 'polygolem marketdata
+live'; for the raw event stream, see 'polygolem stream'.
 
 **Usage:**
 
@@ -2889,6 +2913,12 @@ polygolem relayer transaction <tx-id> [flags]
 ### polygolem stream
 
 Polymarket WebSocket streams
+
+Subscribe to Polymarket's real-time WebSocket channels.
+
+'stream market' and 'stream crypto' need no credentials; 'stream user' streams your
+own order/trade events and needs CLOB L2 credentials. These emit raw channel events —
+for a normalized latest-snapshot view, use 'polygolem marketdata live' instead.
 
 **Usage:**
 

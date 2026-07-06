@@ -267,8 +267,8 @@ Live-money (signs and submits): create-order, market-order, batch-orders, and th
 cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
 (default $1) before signing.`
 	cmd.Example = `  # Read-only
-  polygolem clob book --token-id <id>
-  polygolem clob price-history --token-id <id> --interval 1h
+  polygolem clob book <token-id>
+  polygolem clob price-history <token-id> --interval 1h
 
   # Live, capped (needs a funded deposit wallet)
   POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem clob create-order --token <id> --side buy --price 0.40 --size 2`
