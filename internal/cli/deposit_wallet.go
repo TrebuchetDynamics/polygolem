@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
+	"github.com/TrebuchetDynamics/polygolem/internal/livegate"
 	"github.com/TrebuchetDynamics/polygolem/internal/relayer"
 	"github.com/TrebuchetDynamics/polygolem/internal/rpc"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletfunding"
@@ -256,17 +257,6 @@ func depositWalletStatusCmd(jsonOut bool) *cobra.Command {
 	return cmd
 }
 
-// requireLiveConfirm enforces a typed live-money confirmation token so that a
-// command which signs and submits real transactions cannot fire from a single
-// mistyped flag. The token must match exactly. Mirrors the gate already used by
-// approve-adapters (APPROVE_ADAPTERS) and redeem (REDEEM_WINNERS).
-func requireLiveConfirm(confirm, token string) error {
-	if confirm != token {
-		return fmt.Errorf("this live-money command requires --confirm %s (got %q)", token, confirm)
-	}
-	return nil
-}
-
 func depositWalletBatchCmd(jsonOut bool) *cobra.Command {
 	var callsJSON string
 	var walletAddress string
@@ -285,7 +275,7 @@ This command submits real transactions from the deposit wallet: it requires
 --confirm SUBMIT_BATCH to authorize the live-money WALLET batch.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireLiveConfirm(confirm, "SUBMIT_BATCH"); err != nil {
+			if err := livegate.RequireConfirm(confirm, "SUBMIT_BATCH"); err != nil {
 				return err
 			}
 			key, err := requirePrivateKey()
@@ -381,7 +371,7 @@ authorize the live-money WALLET batch.`,
 					"note":  "review calldata, then run with --submit --confirm APPROVE_TRADING to sign and send",
 				})
 			}
-			if err := requireLiveConfirm(confirm, "APPROVE_TRADING"); err != nil {
+			if err := livegate.RequireConfirm(confirm, "APPROVE_TRADING"); err != nil {
 				return err
 			}
 			key, err := requirePrivateKey()
@@ -477,8 +467,8 @@ V2 deposit-wallet redeem must route through the collateral adapters.`,
 					"note":     "review calldata, then run with --submit --confirm APPROVE_ADAPTERS to sign and send",
 				})
 			}
-			if confirm != "APPROVE_ADAPTERS" {
-				return fmt.Errorf("--submit requires --confirm APPROVE_ADAPTERS (got %q)", confirm)
+			if err := livegate.RequireConfirm(confirm, "APPROVE_ADAPTERS"); err != nil {
+				return err
 			}
 			key, err := requirePrivateKey()
 			if err != nil {
@@ -697,7 +687,7 @@ This command deploys, approves, and (with --fund-amount) moves real funds, so
 it requires --confirm ONBOARD_WALLET to authorize the live-money sequence.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := requireLiveConfirm(confirm, "ONBOARD_WALLET"); err != nil {
+			if err := livegate.RequireConfirm(confirm, "ONBOARD_WALLET"); err != nil {
 				return err
 			}
 			key, err := requirePrivateKey()
@@ -1321,8 +1311,8 @@ positions.`,
 					"note":          "review calldata, then run with --submit --confirm REDEEM_WINNERS to sign and send",
 				})
 			}
-			if confirm != "REDEEM_WINNERS" {
-				return fmt.Errorf("--submit requires --confirm REDEEM_WINNERS (got %q)", confirm)
+			if err := livegate.RequireConfirm(confirm, "REDEEM_WINNERS"); err != nil {
+				return err
 			}
 
 			// Adapter approval pre-check (fail-closed).

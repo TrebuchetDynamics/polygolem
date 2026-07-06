@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"os"
 	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/clob"
+	"github.com/TrebuchetDynamics/polygolem/internal/livegate"
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobaccountreads"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobbalances"
@@ -41,8 +41,6 @@ type clobDiagnosticCommandRunner interface {
 	ListBuilderFeeKeys(context.Context, clobdiagnostics.Request) ([]clob.BuilderFeeKeyRecord, error)
 	MarketTradesProbe(context.Context, clobdiagnostics.ProbeRequest) (*clob.MarketTradesProbeResult, error)
 }
-
-const defaultMaxLiveOrderUSD = "1"
 
 func addCLOBOutputFlag(c *cobra.Command, output *string) {
 	c.Flags().StringVar(output, "output", "json", "output format (json)")
@@ -654,7 +652,7 @@ func enforceLimitOrderCap(price, size string) error {
 	if err != nil {
 		return err
 	}
-	return enforceLiveOrderCap(new(big.Rat).Mul(p, s))
+	return livegate.EnforceNotionalCap(new(big.Rat).Mul(p, s))
 }
 
 // enforceBatchOrderCap applies the live-order cap to each order in a batch and
@@ -672,12 +670,12 @@ func enforceBatchOrderCap(orders []clob.CreateOrderParams) error {
 			return err
 		}
 		notional := new(big.Rat).Mul(p, s)
-		if err := enforceLiveOrderCap(notional); err != nil {
+		if err := livegate.EnforceNotionalCap(notional); err != nil {
 			return err
 		}
 		total.Add(total, notional)
 	}
-	return enforceLiveOrderCap(total)
+	return livegate.EnforceNotionalCap(total)
 }
 
 func enforceMarketOrderCap(amount string) error {
@@ -685,22 +683,7 @@ func enforceMarketOrderCap(amount string) error {
 	if err != nil {
 		return err
 	}
-	return enforceLiveOrderCap(a)
-}
-
-func enforceLiveOrderCap(notional *big.Rat) error {
-	capValue := strings.TrimSpace(os.Getenv("POLYGOLEM_MAX_LIVE_ORDER_USD"))
-	if capValue == "" {
-		capValue = defaultMaxLiveOrderUSD
-	}
-	capRat, err := decimalRat("POLYGOLEM_MAX_LIVE_ORDER_USD", capValue)
-	if err != nil {
-		return err
-	}
-	if notional.Cmp(capRat) > 0 {
-		return fmt.Errorf("live order notional %s exceeds POLYGOLEM_MAX_LIVE_ORDER_USD=%s", notional.FloatString(6), capRat.FloatString(6))
-	}
-	return nil
+	return livegate.EnforceNotionalCap(a)
 }
 
 func decimalRat(name, value string) (*big.Rat, error) {
