@@ -34,7 +34,9 @@ import (
 
 	"github.com/TrebuchetDynamics/polygolem/pkg/bridge"
 	"github.com/TrebuchetDynamics/polygolem/pkg/builder"
+	"github.com/TrebuchetDynamics/polygolem/pkg/capabilities"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
+	"github.com/TrebuchetDynamics/polygolem/pkg/compat"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 	"github.com/TrebuchetDynamics/polygolem/pkg/cryptoprice"
 	"github.com/TrebuchetDynamics/polygolem/pkg/ctf"
@@ -53,6 +55,8 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderresults"
 	"github.com/TrebuchetDynamics/polygolem/pkg/pagination"
 	"github.com/TrebuchetDynamics/polygolem/pkg/plugins"
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
+	"github.com/TrebuchetDynamics/polygolem/pkg/reconciliation"
 	"github.com/TrebuchetDynamics/polygolem/pkg/relayer"
 	"github.com/TrebuchetDynamics/polygolem/pkg/rfq"
 	"github.com/TrebuchetDynamics/polygolem/pkg/settlement"
@@ -63,6 +67,7 @@ import (
 	sdkstream "github.com/TrebuchetDynamics/polygolem/pkg/stream"
 	"github.com/TrebuchetDynamics/polygolem/pkg/types"
 	"github.com/TrebuchetDynamics/polygolem/pkg/universal"
+	"github.com/TrebuchetDynamics/polygolem/pkg/upstreamdrift"
 	"github.com/TrebuchetDynamics/polygolem/pkg/wallet"
 	"github.com/TrebuchetDynamics/polygolem/pkg/experimental/orders"
 	"github.com/TrebuchetDynamics/polygolem/pkg/experimental/auth"
@@ -77,6 +82,9 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var builderSigner builder.Signer
 	var builderConfig builder.LocalSignerConfig
 	var builderNewLocal func(builder.LocalSignerConfig) (*builder.LocalSigner, error) = builder.NewLocalSigner
+	var capabilityList []capabilities.Capability = capabilities.All()
+	var readOnlyCapabilities []string = capabilities.ReadOnlyIDs()
+	var compatibilityContract compat.CompatibilityContract = compat.Contract()
 	var clobClient *sdkclob.Client = sdkclob.NewClient(sdkclob.Config{})
 	var clobConfig sdkclob.Config = sdkclob.Config{BuilderCode: "0x1111111111111111111111111111111111111111111111111111111111111111"}
 	var clobMarkets func(*sdkclob.Client, context.Context, string) (*types.CLOBPaginatedMarkets, error) = (*sdkclob.Client).Markets
@@ -184,6 +192,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var contractDeployed func(context.Context, string, string) (contracts.DeploymentStatus, error) = contracts.ContractDeployed
 	var depositWalletDeployed func(context.Context, string, string) (contracts.DeploymentStatus, error) = contracts.DepositWalletDeployed
 	var redeemAdapterFor func(bool) string = contracts.RedeemAdapterFor
+	var reconciliationReport reconciliation.Report = reconciliation.BuildReport(reconciliation.Input{Order: &reconciliation.OrderEvidence{ID: "order-1"}})
 	var rfqClient *rfq.Client = rfq.NewClient()
 	var rfqRequest rfq.Request
 	var rfqQuote rfq.Quote
@@ -227,6 +236,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var universalSearch func(*universal.Client, context.Context, *types.SearchParams) (*types.SearchResponse, error) = (*universal.Client).Search
 	var universalComments func(*universal.Client, context.Context, *types.CommentQuery) ([]types.Comment, error) = (*universal.Client).Comments
 	var universalConfig universal.Config = universal.Config{BuilderCode: "0x1111111111111111111111111111111111111111111111111111111111111111"}
+	var driftReport upstreamdrift.Report = upstreamdrift.CheckLLMS("https://docs.polymarket.com/trading/overview")
 	var universalCLOBMarkets func(*universal.Client, context.Context, string) (*types.CLOBPaginatedMarkets, error) = (*universal.Client).CLOBMarkets
 	var universalCLOBMarket func(*universal.Client, context.Context, string) (*types.CLOBMarket, error) = (*universal.Client).CLOBMarket
 	var universalCLOBMarketByToken func(*universal.Client, context.Context, string) (*types.CLOBMarketByTokenResponse, error) = (*universal.Client).CLOBMarketByToken
@@ -248,6 +258,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 
 	_, _, _, _, _ = bridgeClient, bridgeWithdrawRequest, bridgeWithdrawDryRun, bridgeBuildWithdrawDryRun, bridgeWithdraw
 	_, _, _ = builderSigner, builderConfig, builderNewLocal
+	_, _, _ = capabilityList, readOnlyCapabilities, compatibilityContract
 	_, _, _, _, _, _, _, _, _ = clobClient, clobConfig, clobMarkets, clobMarket, clobMarketByToken, clobOrderBook, clobOrderBooks, clobTickSize, clobPriceHistory
 	_, _, _, _, _, _, _, _, _, _ = clobAPIKey, clobDeriveAPIKey, clobBalanceParams, clobBalance, clobOrders, clobOrder, clobTrades, clobCancel, clobCancelMarketParams, clobCancelMarket
 	_, _, _, _ = clobCreateParams, clobCreate, clobMarketOrderParams, clobMarketOrder
@@ -256,10 +267,12 @@ func TestPublicSDKSignatures(t *testing.T) {
 	_, _ = marketDataBestBidAsk, marketDataTickSize
 	_, _, _, _ = marketResolver, marketResolverResult, enableTradingParams, enableTradingBuildCalls
 	_, _, _, _, _, _, _ = cryptoPriceClient, cryptoPrice, fundingTransfer, intelScore, mcpTools, mcpServer, openAPISpec
+	var normalizedError polyerrors.Error = polyerrors.Normalize(polyerrors.Input{HTTPStatus: 429})
+	_ = normalizedError
 	_, _, _, _, _, _, _, _, _, _, _, _ = orderbookReader, orderbookSnapshot, orderbookLevel, orderFillsReader, orderFillsQuery, orderFillsValidate, orderResultsSource, orderResultsReport, orderResultsOptions, orderResultsBuild, paginationCollect, pluginsOrder
 	_, _, _, _, _, _, _, _ = ctfOperationRequest, ctfOperationDryRun, ctfReadinessGate, ctfSubmitPlan, ctfBuildDryRun, ctfBuildSubmitPlan, ctfBuildSplit, ctfBuildMerge
 	_, _, _, _, _ = contractsRegistry, contractStatus, contractDeployed, depositWalletDeployed, redeemAdapterFor
-	_, _, _, _, _ = rfqClient, rfqRequest, rfqQuote, rfqValidate, rfqSubmit
+	_, _, _, _, _, _ = reconciliationReport, rfqClient, rfqRequest, rfqQuote, rfqValidate, rfqSubmit
 	_, _, _, _, _, _, _, _, _ = settlementPosition, settlementResult, settlementReadiness, settlementReadinessOptions, settlementAdapterApproval, settlementFind, settlementBuild, settlementSubmit, settlementCheck
 	_, _, _, _, _, _, _ = localSigner, signerInterface, newLocalSigner, redactSecret, httpSigner, httpSignerConfig, newHTTPSigner
 	_, _, _ = kmsSigner, kmsSignerConfig, newKMSSigner
@@ -267,6 +280,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	_, _, _, _, _ = relayerClient, relayerV2Key, relayerOnboardOptions, relayerOnboard, relayerNewV2
 	_, _, _, _ = dataPositions, universalPositions, dataLeaderboard, universalLiveVolume
 	_, _, _, _, _, _, _ = gammaMarkets, gammaSearch, gammaComments, universalMarkets, universalSearch, universalComments, universalConfig
+	_ = driftReport
 	_, _, _, _, _, _, _ = universalCLOBMarkets, universalCLOBMarket, universalCLOBMarketByToken, universalOrderBook, universalOrderBooks, universalTickSize, universalPriceHistory
 	_, _, _, _, _, _, _, _, _ = universalDeriveAPIKey, universalBalance, universalOrders, universalOrder, universalTrades, universalCancel, universalCancelMarket, universalCreate, universalMarketOrder
 	_, _ = universalStream, universalStreamWithConfig

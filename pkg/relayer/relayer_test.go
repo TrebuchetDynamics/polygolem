@@ -3,12 +3,15 @@ package relayer
 import (
 	"context"
 	"encoding/json"
+	goerrors "errors"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
 )
 
 const testPrivateKey = "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
@@ -26,6 +29,27 @@ func validBuilderConfig() BuilderConfig {
 		Key:        testBuilderKey,
 		Secret:     testBuilderSecret,
 		Passphrase: testBuilderPass,
+	}
+}
+
+func TestClientReturnsNormalizedRelayerErrors(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`api key expired`))
+	}))
+	defer srv.Close()
+
+	c, err := NewV2(srv.URL, V2APIKey{Key: "v2-key", Address: "0xabc"}, 137)
+	if err != nil {
+		t.Fatalf("NewV2 error: %v", err)
+	}
+	_, err = c.GetNonce(context.Background(), "0xb72dbe5d44c1b549351bef276ba48a1cca5df662")
+	var normalized polyerrors.Error
+	if !goerrors.As(err, &normalized) {
+		t.Fatalf("expected polyerrors.Error, got %T %v", err, err)
+	}
+	if normalized.Kind != polyerrors.AuthRejected {
+		t.Fatalf("normalized=%#v", normalized)
 	}
 }
 

@@ -2,10 +2,13 @@ package transport
 
 import (
 	"context"
+	goerrors "errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
 )
 
 func TestRateLimiterAcquire(t *testing.T) {
@@ -157,6 +160,42 @@ func TestTransportGetNoRetryOn404(t *testing.T) {
 	err := client.Get(context.Background(), "/test", nil)
 	if err == nil {
 		t.Fatal("expected error for 404")
+	}
+}
+
+func TestTransportNormalizesHTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"error":"geoblock: restricted jurisdiction"}`))
+	}))
+	defer server.Close()
+
+	client := New(server.Client(), DefaultConfig(server.URL))
+	err := client.Get(context.Background(), "/test", nil)
+	var normalized polyerrors.Error
+	if !goerrors.As(err, &normalized) {
+		t.Fatalf("expected polyerrors.Error, got %T %v", err, err)
+	}
+	if normalized.Kind != polyerrors.Geoblocked || normalized.HTTPStatus != http.StatusForbidden {
+		t.Fatalf("normalized=%#v", normalized)
+	}
+}
+
+func TestTransportRawNormalizesAndRedactsHTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`POLY_API_KEY=abc POLY_SIGNATURE=def`))
+	}))
+	defer server.Close()
+
+	client := New(server.Client(), DefaultConfig(server.URL))
+	_, _, err := client.GetRawWithHeadersStatus(context.Background(), "/", nil)
+	var normalized polyerrors.Error
+	if !goerrors.As(err, &normalized) {
+		t.Fatalf("expected polyerrors.Error, got %T %v", err, err)
+	}
+	if normalized.Kind != polyerrors.AuthRejected || normalized.Message != "[redacted]" {
+		t.Fatalf("normalized=%#v", normalized)
 	}
 }
 

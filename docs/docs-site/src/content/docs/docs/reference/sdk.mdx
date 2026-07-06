@@ -1271,6 +1271,84 @@ type MarketDataPlugin interface { Resolve(...); Filter(...) }
 type RiskPlugin interface { CheckOrder(ctx context.Context, order Order) error }
 ```
 
+## `pkg/capabilities` — Typed Capability Map
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/capabilities"
+```
+
+The Capability Map: typed metadata for every Polymarket surface polygolem
+exposes — service, auth requirement, wallet mode, and read-only/mutating
+classification (`pkg/capabilities/capabilities.go:1`). Single source of truth
+for surface claims; `docs/COMPATIBILITY.md` is generated from it.
+
+```go
+func All() []Capability
+func ByID() map[string]Capability
+func ReadOnlyIDs() []string
+```
+
+## `pkg/compat` — Compatibility Contract
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/compat"
+```
+
+Machine-readable compatibility contract assembled from the Capability Map and
+normalized error kinds, for downstream services and UIs
+(`pkg/compat/compat.go:1`).
+
+```go
+func Contract() CompatibilityContract
+func JSON() ([]byte, error)
+```
+
+## `pkg/polyerrors` — Stable Error Kinds
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
+```
+
+Normalizes upstream Polymarket failures (rate limits, geoblock, auth
+rejection, tick-size mismatch, closed markets, insufficient funds, outages)
+into stable kinds for operators, agents, and UI adapters
+(`pkg/polyerrors/polyerrors.go:1`).
+
+```go
+func Normalize(in Input) Error
+func Kinds() []Kind
+```
+
+## `pkg/reconciliation` — Read-Only Reconciliation Report
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/reconciliation"
+```
+
+Builds a Reconciliation Report: read-only status labels and conflict detection
+across CLOB order records, Data API positions/trades, relayer transaction
+state, and optional on-chain fills (`pkg/reconciliation/reconciliation.go:1`).
+It labels observed status and source disagreement; it does not declare
+economic truth unless a source authority is named.
+
+```go
+func BuildReport(in Input) Report
+```
+
+## `pkg/upstreamdrift` — Official Docs Drift Checker
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/upstreamdrift"
+```
+
+Checks a saved official Polymarket docs index (`llms.txt`) against the
+polygolem compatibility surface (`pkg/upstreamdrift/llms.go:1`). Read-only and
+credential-free; backs the `polygolem drift llms` command.
+
+```go
+func CheckLLMS(text string) Report
+```
+
 ## Known Public SDK Gaps
 
 The following are intentional gaps in the current stable `pkg/` contract:

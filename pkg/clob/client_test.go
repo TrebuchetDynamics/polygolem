@@ -3,12 +3,14 @@ package clob
 import (
 	"context"
 	"encoding/json"
+	goerrors "errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
 	"github.com/TrebuchetDynamics/polygolem/pkg/types"
 )
 
@@ -20,6 +22,23 @@ const testDepositWallet = "0x19bE70b1e4F59C0663a999C0dC6f5b3C68CFCaF3"
 // CLOB POLY_ADDRESS is always the EOA at the HTTP layer; the
 // deposit-wallet identity rides on the order body's signatureType=3.
 const testEOA = "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23"
+
+func TestClientReturnsNormalizedCLOBErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`invalid tick size`))
+	}))
+	defer server.Close()
+
+	_, err := NewClient(Config{BaseURL: server.URL}).OrderBook(context.Background(), "token-1")
+	var normalized polyerrors.Error
+	if !goerrors.As(err, &normalized) {
+		t.Fatalf("expected polyerrors.Error, got %T %v", err, err)
+	}
+	if normalized.Kind != polyerrors.TickSizeMismatch {
+		t.Fatalf("normalized=%#v", normalized)
+	}
+}
 
 func TestPublicOrderRecordDecodesCamelCaseAliases(t *testing.T) {
 	var row OrderRecord

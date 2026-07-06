@@ -3,12 +3,31 @@ package data
 import (
 	"context"
 	"encoding/json"
+	goerrors "errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
 	"github.com/TrebuchetDynamics/polygolem/pkg/types"
 )
+
+func TestClientReturnsNormalizedDataAPIErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`geoblock: restricted jurisdiction`))
+	}))
+	defer server.Close()
+
+	_, err := NewClient(Config{BaseURL: server.URL}).CurrentPositions(context.Background(), "0xuser")
+	var normalized polyerrors.Error
+	if !goerrors.As(err, &normalized) {
+		t.Fatalf("expected polyerrors.Error, got %T %v", err, err)
+	}
+	if normalized.Kind != polyerrors.Geoblocked {
+		t.Fatalf("normalized=%#v", normalized)
+	}
+}
 
 func TestClientCurrentPositionsReturnsPublicTypes(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

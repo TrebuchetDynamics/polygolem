@@ -308,11 +308,16 @@ Every CLI subcommand is a thin wrapper around importable `pkg/` packages:
 | [`pkg/orderbook`](pkg/orderbook) | Order book reader interface |
 | [`pkg/orderfills`](pkg/orderfills) | On-chain `OrderFilled` truth models and readers |
 | [`pkg/orderresults`](pkg/orderresults) | Joined order/position/trade result reports |
+| [`pkg/reconciliation`](pkg/reconciliation) | Read-only reconciliation report across order, position, relayer, and fill evidence |
 | [`pkg/builder`](pkg/builder) | Builder header signing — local EIP-712 and remote HTTP |
 | [`pkg/enabletrading`](pkg/enabletrading) | Headless enable-trading: ClobAuth and token-approval typed-data signing |
 | [`pkg/intel`](pkg/intel) | Wallet intelligence scoring — dossier alerts, shrinkage win rate, co-positioning signals |
 | [`pkg/mcp`](pkg/mcp) | Read-only Model Context Protocol server and SDK handler wiring |
 | [`pkg/openapi`](pkg/openapi) | Minimal read-only OpenAPI 3.1 spec generation |
+| [`pkg/capabilities`](pkg/capabilities) | Typed Capability Map — per-surface service, auth, wallet mode, read-only/mutating |
+| [`pkg/compat`](pkg/compat) | Machine-readable compatibility contract (source of `docs/COMPATIBILITY.md`) |
+| [`pkg/upstreamdrift`](pkg/upstreamdrift) | Official docs index (`llms.txt`) drift checker |
+| [`pkg/polyerrors`](pkg/polyerrors) | Stable error kinds normalized from upstream Polymarket failures |
 | [`pkg/pagination`](pkg/pagination) | Generic cursor, offset, and batch pagination helpers |
 | [`pkg/plugins`](pkg/plugins) | Market-data and risk plugin interfaces for embedders |
 | [`pkg/types`](pkg/types) | Shared public DTOs for SDK packages |

@@ -31,7 +31,9 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 |---|---|
 | `pkg/bridge` | Bridge API client — supported assets, deposit addresses, quotes. |
 | `pkg/builder` | Builder attribution and fee configuration for order placement. |
+| `pkg/capabilities` | Typed Capability Map: per-surface service, auth requirement, wallet mode, and read-only/mutating classification (`pkg/capabilities/capabilities.go:1`). |
 | `pkg/clob` | CLOB market-data plus stable authenticated account/order transaction DTOs. |
+| `pkg/compat` | Machine-readable compatibility contract assembled from the Capability Map and error kinds (`pkg/compat/compat.go:1`). |
 | `pkg/contracts` | Polygon contract registry, wallet approval capability sets, and contract-code deployment checks. |
 | `pkg/cryptoprice` | Read-only Polymarket web crypto reference-price client (`pkg/cryptoprice/client.go:1`). |
 | `pkg/ctf` | Conditional Tokens Framework (CTF) helpers for position management. |
@@ -50,6 +52,8 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/orderresults` | Order result types and response parsing for placement outcomes. |
 | `pkg/pagination` | Cursor and offset pagination with concurrent batching. |
 | `pkg/plugins` | Plugin interfaces for market data and risk extensibility. |
+| `pkg/polyerrors` | Normalizes upstream Polymarket errors into stable kinds for operators, agents, and UI adapters (`pkg/polyerrors/polyerrors.go:1`). |
+| `pkg/reconciliation` | Read-only operator report comparing CLOB order, Data API position/trade, relayer, and on-chain fill evidence (`pkg/reconciliation/reconciliation.go:1`). |
 | `pkg/relayer` | Builder relayer primitives for wallet create and wallet batch flows. |
 | `pkg/rfq` | Typed RFQ DTOs and validation; live submit is explicitly unsupported (`pkg/rfq/rfq.go:1`, `pkg/rfq/rfq.go:18`). |
 | `pkg/settlement` | V2 winner redemption planning, adapter calls, and readiness gates. |
@@ -57,6 +61,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/stream` | Read-only public CLOB WebSocket market stream client, including V2 custom feature events. |
 | `pkg/types` | Public DTOs shared by SDK packages. |
 | `pkg/universal` | Single client wrapping Gamma + CLOB + Data API + Discovery + Stream. |
+| `pkg/upstreamdrift` | Checks saved official Polymarket docs indexes (`llms.txt`) against the Polygolem compatibility surface (`pkg/upstreamdrift/llms.go:1`). |
 | `pkg/wallet` | Public deposit-wallet identity/readiness primitives — derive the POLY_1271 wallet and report wallet identity. |
 | `pkg/experimental/orders` | **Experimental helper only** — fluent `OrderIntent` validation; stable user-directed order transactions live in `pkg/clob` and `polygolem clob create-order`. |
 | `pkg/experimental/auth` | **Experimental** — EIP-712 domain helpers, signature type constants, and hex utilities (staged for SDK promotion). |
