@@ -1,0 +1,33 @@
+name: Upstream Smoke
+
+# Weekly read-only smoke against live Polymarket surfaces to catch upstream
+# drift early (the drift runbook's "weekly read-only smoke", turned into a
+# scheduled gate). No credentials, no signing, no funds: the default
+# live-smoke.sh path and `drift llms` only read public endpoints. This job is
+# not merge-gating; it alerts the maintainer when upstream changes break us.
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build binary
+        run: go build -o /tmp/polygolem ./cmd/polygolem
+      - name: Read-only smoke
+        env:
+          POLYGOLEM_BIN: /tmp/polygolem
+        run: scripts/live-smoke.sh
+      - name: Official docs drift check
+        run: |
+          curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/llms.txt
+          /tmp/polygolem drift llms --file /tmp/llms.txt --json
