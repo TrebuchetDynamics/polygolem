@@ -538,6 +538,9 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 			if err != nil {
 				return err
 			}
+			if err := enforceBatchOrderCap(orders); err != nil {
+				return err
+			}
 			w.clob.SetBuilderCode(builderCode)
 			key, err := privateKey()
 			if err != nil {
@@ -635,6 +638,29 @@ func enforceLimitOrderCap(price, size string) error {
 		return err
 	}
 	return enforceLiveOrderCap(new(big.Rat).Mul(p, s))
+}
+
+// enforceBatchOrderCap applies the live-order cap to each order in a batch and
+// to the batch's summed notional, so a batch cannot exceed the per-order limit
+// individually or in aggregate.
+func enforceBatchOrderCap(orders []clob.CreateOrderParams) error {
+	total := new(big.Rat)
+	for i, o := range orders {
+		p, err := decimalRat(fmt.Sprintf("order[%d].price", i), o.Price)
+		if err != nil {
+			return err
+		}
+		s, err := decimalRat(fmt.Sprintf("order[%d].size", i), o.Size)
+		if err != nil {
+			return err
+		}
+		notional := new(big.Rat).Mul(p, s)
+		if err := enforceLiveOrderCap(notional); err != nil {
+			return err
+		}
+		total.Add(total, notional)
+	}
+	return enforceLiveOrderCap(total)
 }
 
 func enforceMarketOrderCap(amount string) error {

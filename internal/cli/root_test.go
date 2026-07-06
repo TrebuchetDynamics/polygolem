@@ -7,6 +7,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -853,6 +855,57 @@ func TestCLOBMarketOrderCapRejectsBeforePrivateKey(t *testing.T) {
 	_, _, err := executeRootForTest("clob", "market-order", "--token", "1", "--amount", "0.51")
 	if err == nil {
 		t.Fatal("expected live order cap error")
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
+	}
+}
+
+func TestCLOBBatchOrdersCapRejectsAggregateNotional(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "1")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	// Each order is 0.60 notional (under the 1.00 cap individually) but the
+	// batch sums to 1.20, which must be rejected.
+	dir := t.TempDir()
+	ordersFile := filepath.Join(dir, "orders.json")
+	body := `[{"tokenID":"1","side":"buy","price":"0.30","size":"2"},{"tokenID":"1","side":"buy","price":"0.30","size":"2"}]`
+	if err := os.WriteFile(ordersFile, []byte(body), 0o600); err != nil {
+		t.Fatalf("write orders file: %v", err)
+	}
+
+	stdout, _, err := executeRootForTest("clob", "batch-orders", "--orders-file", ordersFile)
+	if err == nil {
+		t.Fatal("expected live order cap error for aggregate notional")
+	}
+	if stdout != "" {
+		t.Fatalf("stdout=%q, want empty", stdout)
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
+	}
+}
+
+func TestCLOBBatchOrdersCapRejectsSingleOversizedOrder(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "1")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	dir := t.TempDir()
+	ordersFile := filepath.Join(dir, "orders.json")
+	body := `[{"tokenID":"1","side":"buy","price":"0.50","size":"1"},{"tokenID":"1","side":"buy","price":"0.90","size":"3"}]`
+	if err := os.WriteFile(ordersFile, []byte(body), 0o600); err != nil {
+		t.Fatalf("write orders file: %v", err)
+	}
+
+	_, _, err := executeRootForTest("clob", "batch-orders", "--orders-file", ordersFile)
+	if err == nil {
+		t.Fatal("expected live order cap error for oversized order")
 	}
 	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
 		t.Fatalf("error=%q, want cap hint", err.Error())

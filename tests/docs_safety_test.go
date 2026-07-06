@@ -254,24 +254,28 @@ func TestDocumentationSafety(t *testing.T) {
 	}
 
 	safety := readRepositoryFile(t, root, "docs/SAFETY.md")
-	for _, gate := range []string{
-		"POLYMARKET_LIVE_PROFILE=on",
-		"live_trading_enabled: true",
-		"--confirm-live",
-		"preflight",
-	} {
-		if !strings.Contains(safety, gate) {
-			t.Fatalf("docs/SAFETY.md must document live gate %q", gate)
-		}
-	}
+	// Assert the guards that actually protect funds in the shipped CLI, so this
+	// test regresses if SAFETY.md drifts away from real behavior. (It must not
+	// re-assert the historical "Phase 1 has no dangerous code paths" text, which
+	// was false once live execution shipped.)
 	for _, required := range []string{
-		"Preflight checks config validity, wallet readiness, auth readiness, network consistency, API health, and chain consistency",
+		"POLYGOLEM_MAX_LIVE_ORDER_USD",
+		"APPROVE_ADAPTERS",
+		"REDEEM_WINNERS",
 		"Automation must treat any preflight failure as terminal",
-		"Dangerous operations include real order submission, payload signing, on-chain transactions, token approvals, private-key handling, and authenticated trading mutations",
-		"Phase 1 intentionally contains no code path for those operations",
+		"never persisted or logged",
 	} {
 		if !strings.Contains(safety, required) {
-			t.Fatalf("docs/SAFETY.md must include safety guidance %q", required)
+			t.Fatalf("docs/SAFETY.md must document safety guard %q", required)
+		}
+	}
+	// Guard against regressing to the stale Phase-1 framing that claimed no live
+	// execution existed.
+	for _, forbidden := range []string{
+		"Phase 1 intentionally contains no code path for those operations",
+	} {
+		if strings.Contains(safety, forbidden) {
+			t.Fatalf("docs/SAFETY.md contains stale/false claim %q; describe the real guard set instead", forbidden)
 		}
 	}
 }
