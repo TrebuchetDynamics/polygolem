@@ -7,8 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.3.0] — 2026-07-05
+
+Cut to restore a correct `go install @latest` channel: `v0.2.1` predated the
+sigtype-3 deposit-wallet derivation fix (factory switch to BEACON proxies), and
+the invalid `v2026.5.9` tag was invisible to Go tooling. This is the first tag
+that includes the derivation fix and the packages/commands below.
+
 ### Added
 
+- Five public SDK packages: `pkg/capabilities` (the typed Capability Map —
+  per-surface service, auth, wallet mode, read-only/mutating), `pkg/compat`
+  (machine-readable compatibility contract), `pkg/polyerrors` (stable error
+  kinds normalized from upstream failures), `pkg/reconciliation` (read-only
+  evidence reconciliation report), and `pkg/upstreamdrift` (official `llms.txt`
+  drift checker).
+- `polygolem drift llms`: read-only, credential-free check that a saved official
+  docs index still advertises every section the compatibility surface depends on.
+- Generated `docs/COMPATIBILITY.md` and `docs/COMPATIBILITY.json` from the
+  Capability Map, plus `docs/POLYMARKET-APIS.md` mapping the official Gamma/CLOB/
+  Data APIs to polygolem.
 - `pkg/geoblock`: read-only client for Polymarket's geoblock endpoint
   (blocked flag plus caller IP/country/region), migrated from the mega-bot
   consumer so all Polymarket HTTP lives in the SDK.
@@ -30,6 +48,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   conversion, plus `MaxUint256` and `Decode{Uint256,Bool}Result`.
   Selectors are keccak-verified in tests and byte-identical to the
   relayer's deposit-wallet batch encoding.
+
+### Changed
+
+- Authenticated commands now read `SIGNER_PRIVATE_KEY` first, falling back to
+  the legacy `POLYMARKET_PRIVATE_KEY`. Docs, help text, and the generated
+  command reference use the new name.
+- Raised the CI statement-coverage floor from 50% to 60% and documented the
+  enforced gate in the README.
+
+### Fixed
+
+- `clob batch-orders` now enforces `POLYGOLEM_MAX_LIVE_ORDER_USD` per order and
+  on the summed batch notional before signing. Previously the cap guarded only
+  `create-order` and `market-order`, so a batch could submit unlimited notional.
+- Rewrote `docs/SAFETY.md`, which still described a Phase-1 state with no live
+  execution and four enforced "live gates" that are actually advisory. It now
+  documents the real guard set (read-only default, live-order cap, typed
+  `APPROVE_ADAPTERS`/`REDEEM_WINNERS` confirmation tokens, credential handling).
 
 ## [v0.2.1] — 2026-06-30
 

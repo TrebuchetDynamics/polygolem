@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Validate before release
+        run: |
+          go vet ./...
+          go test -short ./...
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME}"
+          # Extract this version's section from CHANGELOG.md for the release body.
+          notes="$(awk -v v="## [${version}]" '
+            index($0, v) == 1 {flag=1; next}
+            /^## \[/ {flag=0}
+            flag {print}
+          ' CHANGELOG.md)"
+          if [ -z "${notes}" ]; then
+            notes="Release ${version}."
+          fi
+          gh release create "${version}" --title "${version}" --notes "${notes}"
