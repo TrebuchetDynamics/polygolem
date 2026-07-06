@@ -25,6 +25,15 @@ func newDiscoverCommand(w *wire, reads discoverReadRunner) *cobra.Command {
 	var limit int
 
 	cmd := commandGroup("discover", "Market discovery via Polymarket Gamma API")
+	cmd.Long = `Find Polymarket markets and events. Read-only; no credentials required.
+
+Search and list markets, look one up by id/slug/token, enrich with live CLOB
+quotes, browse tags/series/comments, and resolve crypto up/down windows
+(crypto-5m, crypto-window). This is the usual starting point: use it to find the
+token id you then pass to orderbook, clob, or paper.`
+	cmd.Example = `  polygolem discover search --query "Will BTC" --limit 5
+  polygolem discover crypto-5m --asset BTC --hours-ahead 1 --enrich
+  polygolem discover market --slug <market-slug>`
 
 	var marketsLimit, marketsOffset, marketsTagID int
 	var marketsOrder string

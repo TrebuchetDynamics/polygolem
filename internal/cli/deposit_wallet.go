@@ -57,6 +57,20 @@ const defaultRelayerURL = "https://relayer-v2.polymarket.com"
 
 func depositWalletCmd(jsonOut bool) *cobra.Command {
 	cmd := commandGroup("deposit-wallet", "Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)")
+	cmd.Long = `Deposit-wallet lifecycle for Polymarket V2 (POLY_1271) trading.
+
+Polymarket V2 requires a deposit wallet as the order maker/signer; your EOA is the
+signing key. The lifecycle is: derive -> deploy -> approve -> fund -> trade -> redeem.
+
+Read-only: derive, status, nonce, redeemable, settlement-status.
+
+Live-money (signs and submits real transactions): deploy, approve, approve-adapters,
+batch, fund, onboard, redeem. Each of these requires a typed --confirm token so a
+live submission cannot fire from a single mistyped flag — see docs/SAFETY.md for the
+token per command.
+
+Quickest path (deploy + approve + enable trading + fund):
+  polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET`
 
 	cmd.AddCommand(depositWalletDeriveCmd(jsonOut))
 	cmd.AddCommand(depositWalletDeployCmd(jsonOut))

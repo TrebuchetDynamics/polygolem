@@ -255,6 +255,23 @@ func addCLOBAuthenticatedReadCommands(cmd *cobra.Command, balances clobBalanceCo
 func clobCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
 	cmd := commandGroup("clob", "CLOB market data and authenticated account commands")
+	cmd.Long = `Central Limit Order Book (CLOB) market data and trading.
+
+Read-only (no credentials): book, markets, market, market-by-token, price-history,
+tick-size.
+
+Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
+account/key commands.
+
+Live-money (signs and submits): create-order, market-order, batch-orders, and the
+cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
+(default $1) before signing.`
+	cmd.Example = `  # Read-only
+  polygolem clob book --token-id <id>
+  polygolem clob price-history --token-id <id> --interval 1h
+
+  # Live, capped (needs a funded deposit wallet)
+  POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem clob create-order --token <id> --side buy --price 0.40 --size 2`
 
 	addOutput := addCLOBOutputFlag
 	checkOutput := checkCLOBOutput

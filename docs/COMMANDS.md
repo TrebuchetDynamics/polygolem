@@ -614,6 +614,18 @@ polygolem builder onboard [flags]
 
 CLOB market data and authenticated account commands
 
+Central Limit Order Book (CLOB) market data and trading.
+
+Read-only (no credentials): book, markets, market, market-by-token, price-history,
+tick-size.
+
+Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
+account/key commands.
+
+Live-money (signs and submits): create-order, market-order, batch-orders, and the
+cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
+(default $1) before signing.
+
 **Usage:**
 
 ```bash
@@ -1397,6 +1409,21 @@ polygolem data value [flags]
 
 Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
 
+Deposit-wallet lifecycle for Polymarket V2 (POLY_1271) trading.
+
+Polymarket V2 requires a deposit wallet as the order maker/signer; your EOA is the
+signing key. The lifecycle is: derive -> deploy -> approve -> fund -> trade -> redeem.
+
+Read-only: derive, status, nonce, redeemable, settlement-status.
+
+Live-money (signs and submits real transactions): deploy, approve, approve-adapters,
+batch, fund, onboard, redeem. Each of these requires a typed --confirm token so a
+live submission cannot fire from a single mistyped flag — see docs/SAFETY.md for the
+token per command.
+
+Quickest path (deploy + approve + enable trading + fund):
+  polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
+
 **Usage:**
 
 ```bash
@@ -1845,6 +1872,13 @@ polygolem diag [flags]
 ### polygolem discover
 
 Market discovery via Polymarket Gamma API
+
+Find Polymarket markets and events. Read-only; no credentials required.
+
+Search and list markets, look one up by id/slug/token, enrich with live CLOB
+quotes, browse tags/series/comments, and resolve crypto up/down windows
+(crypto-5m, crypto-window). This is the usual starting point: use it to find the
+token id you then pass to orderbook, clob, or paper.
 
 **Usage:**
 
@@ -2624,6 +2658,16 @@ polygolem orderbook tick-size [flags]
 ### polygolem paper
 
 Paper trading simulation for crypto markets
+
+Simulate crypto up/down trading with no wallet and no risk.
+
+Paper mode holds a local cash/position ledger and prices simulations against live
+public market data. It never loads a private key, signs, or submits anything — a
+safe way to rehearse the flow before trading real funds.
+
+  polygolem paper reset --cash 100
+  polygolem paper trade --asset BTC --interval 5m --side up --size 1
+  polygolem paper positions
 
 **Usage:**
 
