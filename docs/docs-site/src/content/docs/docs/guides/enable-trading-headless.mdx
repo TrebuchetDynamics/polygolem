@@ -14,7 +14,7 @@ Enable Trading prompts:
 
 Polygolem exposes those prompts in `pkg/enabletrading`.
 
-The CLI path is `polygolem deposit-wallet onboard`. It runs ClobAuth
+The CLI path is `polygolem wallet onboard`. It runs ClobAuth
 creation/derivation and submits the 2-call UI token approval batch after the
 deposit wallet deploy and standard approval phases. Use
 `--skip-enable-trading` only when you want to leave those prompts unresolved.
@@ -22,7 +22,7 @@ deposit wallet deploy and standard approval phases. Use
 For an already-deployed wallet, run:
 
 ```bash
-polygolem deposit-wallet enable-trading
+polygolem wallet enable-trading
 ```
 
 When relayer credentials are missing, this command performs headless SIWE
@@ -90,7 +90,7 @@ batch. Unknown targets or spenders fail closed.
 ## Validate
 
 ```bash
-polygolem deposit-wallet status --check-enable-trading
+polygolem wallet status --check-enable-trading
 ```
 
 This signs local validation payloads and checks the on-chain ERC-20 allowances

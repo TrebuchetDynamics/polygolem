@@ -86,16 +86,16 @@ This means the proxy profile step matters. The EOA needs a registered profile be
 
 ```bash
 # 1. Create proxy profile (headless via SIWE + POST /profiles)
-polygolem auth headless-onboard
+polygolem credentials headless-onboard
 
 # 2. Deploy deposit wallet (headless via relayer)
-polygolem deposit-wallet deploy --wait
+polygolem wallet deploy --wait
 
 # 3. Create deposit-wallet-bound API key (headless, standard ECDSA)
-polygolem clob create-api-key-for-address --owner $(polygolem deposit-wallet derive | jq -r '.depositWallet')
+polygolem exchange create-api-key-for-address --owner $(polygolem wallet derive | jq -r '.depositWallet')
 
 # 4. Trade (headless)
-polygolem clob create-order --token <ID> --side buy --price 0.5 --size 10
+polygolem exchange create-order --token <ID> --side buy --price 0.5 --size 10
 ```
 
 **Status:** Steps 1-3 work. Step 4 requires the deposit wallet to have pUSD, which requires funding. But the auth layer — the part we thought was broken — is not the blocker.

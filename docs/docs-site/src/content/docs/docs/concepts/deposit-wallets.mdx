@@ -52,14 +52,14 @@ factory       = 0x00000000000Fb5C9ADea0298D729A0CB3823Cc07
 implementation = 0x58CA52ebe0DadfdF531Cde7062e76746de4Db1eB
 ```
 
-Same EOA → same wallet address. Always. Pure local computation via `polygolem deposit-wallet derive`.
+Same EOA → same wallet address. Always. Pure local computation via `polygolem wallet derive`.
 
 ## Deployment (Relayer)
 
 The wallet is deployed via the Polymarket relayer. The factory's `deploy()` is role-gated — only the relayer's EOA holds the operator role. Deployment is gas-sponsored.
 
 ```bash
-polygolem deposit-wallet deploy --wait
+polygolem wallet deploy --wait
 ```
 
 After deployment, WALLET batches still route through the Polymarket relayer.
@@ -127,7 +127,7 @@ Existing wallets that only ran the six-call trading approval batch must run a
 one-time adapter approval batch before first redeem. New wallet onboarding
 should include both trading approvals and adapter-readiness approvals.
 
-Use `polygolem deposit-wallet settlement-status` as the read-only gate before
+Use `polygolem wallet settlement-status` as the read-only gate before
 live trading. It proves the wallet is deployed, relayer credentials are loaded,
 the Data API positions path works, and both V2 collateral adapters are
 approved.

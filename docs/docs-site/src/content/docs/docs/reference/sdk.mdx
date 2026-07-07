@@ -316,7 +316,7 @@ func (t *Tracker) ApplyTickSizeChange(msg stream.TickSizeChangeMessage) Snapshot
 func (t *Tracker) Snapshot(assetID string) (Snapshot, bool)
 ```
 
-The CLI surface is `polygolem marketdata live --asset-ids ...`, which wires
+The CLI surface is `polygolem prices live --asset-ids ...`, which wires
 `pkg/stream` into this tracker and emits one enriched JSON snapshot per update.
 
 ## `pkg/enabletrading` — Headless Enable Trading
@@ -1376,7 +1376,7 @@ import "github.com/TrebuchetDynamics/polygolem/pkg/upstreamdrift"
 
 Checks a saved official Polymarket docs index (`llms.txt`) against the
 polygolem compatibility surface (`pkg/upstreamdrift/llms.go:1`). Read-only and
-credential-free; backs the `polygolem drift llms` command.
+credential-free; backs the `polygolem check-upstream llms` command.
 
 ```go
 func CheckLLMS(text string) Report

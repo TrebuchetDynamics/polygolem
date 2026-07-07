@@ -139,7 +139,7 @@ This is already implemented in `polygolem/internal/clob/orders.go` (636-byte out
 ### Prerequisites
 
 1. **EOA with private key** — you have this
-2. **V2 relayer credentials** — mint with `polygolem auth login`
+2. **V2 relayer credentials** — mint with `polygolem credentials login`
 3. **POL for gas** on Polygon (minimum ~50 POL reserve recommended)
 4. **pUSD** to fund the deposit wallet
 
@@ -150,8 +150,8 @@ Create or derive CLOB L2 credentials, then mint V2 relayer credentials:
 **Environment variables:**
 ```bash
 export POLYMARKET_PRIVATE_KEY="0x..."
-polygolem builder auto
-polygolem auth login
+polygolem builder-keys auto
+polygolem credentials login
 
 export RELAYER_API_KEY="your-relayer-key"
 export RELAYER_API_KEY_ADDRESS="0x..."
@@ -169,7 +169,7 @@ Try the `POLY_BUILDER_*` format first; if you get `"invalid authorization"`, swi
 
 ```bash
 cd polygolem
-POLYMARKET_PRIVATE_KEY="0x..." polygolem deposit-wallet derive --json
+POLYMARKET_PRIVATE_KEY="0x..." polygolem wallet derive --json
 ```
 
 Output:
@@ -189,7 +189,7 @@ POLYMARKET_PRIVATE_KEY="0x..." \
 POLYMARKET_BUILDER_API_KEY="..." \
 POLYMARKET_BUILDER_SECRET="..." \
 POLYMARKET_BUILDER_PASSPHRASE="..." \
-  polygolem deposit-wallet deploy --wait --json
+  polygolem wallet deploy --wait --json
 ```
 
 This submits a `WALLET-CREATE` transaction to the relayer and polls until the wallet is deployed on Polygon. Expected output:
@@ -246,13 +246,13 @@ After funding and approvals, refresh the CLOB cache:
 
 ```bash
 POLYMARKET_PRIVATE_KEY="0x..." \
-  polygolem clob update-balance --asset-type collateral --json
+  polygolem exchange update-balance --asset-type collateral --json
 ```
 
 Then verify the balance is visible:
 ```bash
 POLYMARKET_PRIVATE_KEY="0x..." \
-  polygolem clob balance --asset-type collateral --json
+  polygolem exchange balance --asset-type collateral --json
 ```
 
 Expected output shows non-zero balance and non-zero allowances.
@@ -329,14 +329,14 @@ Builder profile creation at polymarket.com/settings is generally instant. No app
 
 | Feature | Command/API |
 |---------|-------------|
-| Deposit wallet address derivation | `polygolem deposit-wallet derive` |
-| WALLET-CREATE deployment | `polygolem deposit-wallet deploy [--wait]` |
-| WALLET nonce fetch | `polygolem deposit-wallet nonce` |
-| Transaction status polling | `polygolem deposit-wallet status [--tx-id]` |
-| Deployment check | `polygolem deposit-wallet status` |
-| V2 order signing (POLY_1271) | `polygolem clob create-order` |
-| CLOB balance with sig type 3 | `polygolem clob balance` |
-| CLOB balance sync | `polygolem clob update-balance` |
+| Deposit wallet address derivation | `polygolem wallet derive` |
+| WALLET-CREATE deployment | `polygolem wallet deploy [--wait]` |
+| WALLET nonce fetch | `polygolem wallet nonce` |
+| Transaction status polling | `polygolem wallet status [--tx-id]` |
+| Deployment check | `polygolem wallet status` |
+| V2 order signing (POLY_1271) | `polygolem exchange create-order` |
+| CLOB balance with sig type 3 | `polygolem exchange balance` |
+| CLOB balance sync | `polygolem exchange update-balance` |
 | ERC-7739 wrapped signatures | Automatic for deposit wallet orders |
 
 ### ❌ Not Yet Implemented
@@ -399,13 +399,13 @@ POLYMARKET_SIGNATURE_TYPE="deposit"  # for live trading
 If your bot is down with deposit wallet issues:
 
 - [ ] Confirm you're in the "new API user" category (EOA orders rejected)
-- [ ] Run `polygolem builder auto` for CLOB L2 credentials
-- [ ] Run `polygolem auth login` for V2 relayer credentials
+- [ ] Run `polygolem builder-keys auto` for CLOB L2 credentials
+- [ ] Run `polygolem credentials login` for V2 relayer credentials
 - [ ] Set `RELAYER_API_KEY` / `RELAYER_API_KEY_ADDRESS` env vars
-- [ ] Run `polygolem deposit-wallet derive` — note the deposit wallet address
-- [ ] Run `polygolem deposit-wallet deploy --wait` — deploy the wallet
+- [ ] Run `polygolem wallet derive` — note the deposit wallet address
+- [ ] Run `polygolem wallet deploy --wait` — deploy the wallet
 - [ ] Transfer pUSD from EOA to deposit wallet address (ERC-20 transfer)
 - [ ] Approve trading contracts via Polymarket UI or WALLET batch
-- [ ] Run `polygolem clob update-balance --asset-type collateral`
-- [ ] Run `polygolem clob balance --asset-type collateral` to verify
+- [ ] Run `polygolem exchange update-balance --asset-type collateral`
+- [ ] Run `polygolem exchange balance --asset-type collateral` to verify
 - [ ] Restart bot and verify no `"maker address not allowed"` errors

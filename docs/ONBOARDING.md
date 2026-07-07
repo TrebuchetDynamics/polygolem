@@ -24,26 +24,26 @@ expected. Polygolem derives the corresponding deposit wallet separately.
 export SIGNER_PRIVATE_KEY="0x..."
 
 # 1. Deposit wallet deploy + relayer auth + approvals + UI Enable Trading signs + funding.
-polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
+polygolem wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
 
 # 2. Sync CLOB cache and verify readiness.
-polygolem clob update-balance --asset-type collateral
-polygolem deposit-wallet status --check-enable-trading
-polygolem auth status --check-deposit-key
+polygolem exchange update-balance --asset-type collateral
+polygolem wallet status --check-enable-trading
+polygolem credentials status --check-deposit-key
 
 # 3. Trade with the deposit wallet path.
-polygolem clob create-order --token <TOKEN_ID> --side buy --price 0.5 --size 10
+polygolem exchange create-order --token <TOKEN_ID> --side buy --price 0.5 --size 10
 ```
 
 `deposit-wallet onboard` and `deposit-wallet enable-trading` first load V2
 relayer credentials from env or Polygolem env files. If none exist, they run
 the SIWE login/profile/key-mint flow automatically, persist the relayer key to
-the 0600 env file, and continue with the WALLET batch. `polygolem auth login`
+the 0600 env file, and continue with the WALLET batch. `polygolem credentials login`
 is still useful when you want to inspect or refresh authentication explicitly,
 but it is no longer a required manual pre-step for the deposit-wallet flow.
 
 `auth headless-onboard` remains as a compatibility command for older
-automation. New scripts should use `polygolem auth login`.
+automation. New scripts should use `polygolem credentials login`.
 
 ## UI Enable Trading Prompts
 
@@ -53,7 +53,7 @@ asking for two typed-data operations:
 - EOA-signed ClobAuth to create or derive CLOB API keys.
 - DepositWallet Batch signing for UI token approvals.
 
-`polygolem deposit-wallet onboard` now performs both operations by default:
+`polygolem wallet onboard` now performs both operations by default:
 it signs ClobAuth locally, creates or derives CLOB API keys, then submits the
 2-call UI token approval WALLET batch. Use `--skip-enable-trading` only when
 you intentionally want deploy/approve/fund without these UI readiness signs.
@@ -61,7 +61,7 @@ you intentionally want deploy/approve/fund without these UI readiness signs.
 If the wallet is already deployed, run the focused command:
 
 ```bash
-polygolem deposit-wallet enable-trading
+polygolem wallet enable-trading
 ```
 
 This command is also automatic: when relayer credentials are missing, it signs
@@ -73,7 +73,7 @@ headless path.
 Validate the result with:
 
 ```bash
-polygolem deposit-wallet status --check-enable-trading
+polygolem wallet status --check-enable-trading
 ```
 
 Important: polymarket.com can still ask the browser to sign ClobAuth because
@@ -99,7 +99,7 @@ data, approval calls, and live-submission safety rules.
 
 ## What `auth login` Does
 
-`polygolem auth login` handles the website sign-in step from the CLI:
+`polygolem credentials login` handles the website sign-in step from the CLI:
 
 1. Fetches a SIWE nonce from Gamma.
 2. Builds the same message polymarket.com displays.
@@ -148,7 +148,7 @@ the SIWE message. That distinction is intentional.
 ## Verification
 
 ```bash
-polygolem auth status --check-deposit-key
+polygolem credentials status --check-deposit-key
 ```
 
 Expected ready shape:
@@ -171,7 +171,7 @@ payload and the `signature_type=3` CLOB query path.
 For the UI Enable Trading gate, prefer:
 
 ```bash
-polygolem deposit-wallet status --check-enable-trading
+polygolem wallet status --check-enable-trading
 ```
 
 That command reports whether the ClobAuth key is configured or derivable,
@@ -180,7 +180,7 @@ is ready for Polygolem's headless trading path.
 
 ## Manual Fallback
 
-Use [BROWSER-SETUP.md](./BROWSER-SETUP.md) only when `polygolem auth login`
+Use [BROWSER-SETUP.md](./BROWSER-SETUP.md) only when `polygolem credentials login`
 or `builder auto` is blocked by an upstream API change, account policy, or
 local network restriction. The browser signs the same SIWE message with the
 EOA; it does not change the deposit wallet address.
@@ -197,25 +197,25 @@ the trading wallet after login.
 Refresh CLOB credentials:
 
 ```bash
-polygolem builder auto --force
+polygolem builder-keys auto --force
 ```
 
-Then retry `polygolem auth status --check-deposit-key`.
+Then retry `polygolem credentials status --check-deposit-key`.
 
 ### "the order owner has to be the owner of the API KEY"
 
 The CLOB L2 key and the POLY_1271 order identity are out of sync. Re-run:
 
 ```bash
-polygolem builder auto --force
-polygolem clob update-balance --asset-type collateral
+polygolem builder-keys auto --force
+polygolem exchange update-balance --asset-type collateral
 ```
 
 ### "Deposit wallet not deployed"
 
 ```bash
-polygolem deposit-wallet status --json
-polygolem deposit-wallet deploy --wait
+polygolem wallet status --json
+polygolem wallet deploy --wait
 ```
 
 On-chain bytecode is the source of truth. If `onchainCodeDeployed=true`, the
@@ -226,7 +226,7 @@ wallet exists even when the relayer index says otherwise.
 Fund the deposit wallet, not just the EOA:
 
 ```bash
-polygolem deposit-wallet fund --amount 0.71
+polygolem wallet fund --amount 0.71
 ```
 
 ## Technical Background

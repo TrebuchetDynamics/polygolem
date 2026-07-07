@@ -44,7 +44,7 @@ Save the official docs index, then run the offline checker:
 
 ```bash
 curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/polymarket-llms.txt
-polygolem drift llms --file /tmp/polymarket-llms.txt
+polygolem check-upstream llms --file /tmp/polymarket-llms.txt
 ```
 
 For CI or air-gapped review, check in or pass a saved fixture instead of fetching
@@ -57,7 +57,7 @@ Use `--json` when another tool needs `ok`, `checked`, and `missing` fields.
 1. Save the JSON envelope and exact command.
 2. Compare the failing command with checked-in fixtures under `fixtures/`.
 3. Run `scripts/live-smoke.sh` to identify which upstream surface changed.
-4. Run `polygolem drift llms --file <saved-llms.txt>` against the saved official
+4. Run `polygolem check-upstream llms --file <saved-llms.txt>` against the saved official
    page index. If the affected service is missing, inspect the new upstream docs
    index before changing code.
 5. Re-check the official documentation for the affected endpoint: find the

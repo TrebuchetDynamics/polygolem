@@ -5,8 +5,8 @@
 This page is a fallback runbook. The normal path is:
 
 ```bash
-polygolem auth login
-polygolem builder auto
+polygolem credentials login
+polygolem builder-keys auto
 ```
 
 Polymarket login signs with the EOA. The deposit wallet remains the trading
@@ -20,7 +20,7 @@ Use a browser only when the CLI path is blocked by:
 - local network, TLS, or cookie policy problems;
 - an account policy that asks for extra interactive verification.
 
-If `polygolem auth login` succeeds, you do not need this page.
+If `polygolem credentials login` succeeds, you do not need this page.
 
 ## Security Warning
 
@@ -42,7 +42,7 @@ Prefer these options:
 1. Confirm the local identity:
 
    ```bash
-   polygolem deposit-wallet derive --json
+   polygolem wallet derive --json
    ```
 
 2. Open `https://polymarket.com`.
@@ -69,9 +69,9 @@ Prefer these options:
 5. Return to the CLI and refresh credentials:
 
    ```bash
-   polygolem auth login
-   polygolem builder auto --force
-   polygolem auth status --check-deposit-key
+   polygolem credentials login
+   polygolem builder-keys auto --force
+   polygolem credentials status --check-deposit-key
    ```
 
 6. Disconnect the wallet or remove the imported account from the browser.
@@ -82,10 +82,10 @@ If an agent generated the key and you must import it manually:
 
 ```bash
 # First get the EOA address without exposing the key.
-polygolem auth status
+polygolem credentials status
 
 # Then type the explicit token and the EOA's last 6 hex characters.
-polygolem auth export-key --confirm EXPORT_PRIVATE_KEY --confirm-address-suffix <last6>
+polygolem credentials export-key --confirm EXPORT_PRIVATE_KEY --confirm-address-suffix <last6>
 ```
 
 Do this only in a private terminal. The command prints the private key. Clear

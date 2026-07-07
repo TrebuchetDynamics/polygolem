@@ -56,7 +56,7 @@ trigger.
 Query the deposit wallet, not the EOA:
 
 ```bash
-polygolem data positions --user 0xDEPOSIT_WALLET --limit 50 --json
+polygolem analytics positions --user 0xDEPOSIT_WALLET --limit 50 --json
 ```
 
 The important fields are:
@@ -124,19 +124,19 @@ the same one-time batch also supports future split flows.
 
 ```bash
 # Read-only live gate: wallet code, relayer creds, Data API, adapter approvals.
-polygolem deposit-wallet settlement-status --json
+polygolem wallet settlement-status --json
 
 # One-time migration for existing wallets.
-polygolem deposit-wallet approve-adapters --submit --confirm APPROVE_ADAPTERS --json
+polygolem wallet approve-adapters --submit --confirm APPROVE_ADAPTERS --json
 
 # Read-only detection.
-polygolem deposit-wallet redeemable --json
+polygolem wallet redeemable --json
 
 # Inspect the redeem calls before signing.
-polygolem deposit-wallet redeem --json
+polygolem wallet redeem --json
 
 # Submit only after operator approval.
-polygolem deposit-wallet redeem --submit --confirm REDEEM_WINNERS --json
+polygolem wallet redeem --submit --confirm REDEEM_WINNERS --json
 ```
 
 The submit path fails closed when `CTF.isApprovedForAll(wallet, adapter)` is

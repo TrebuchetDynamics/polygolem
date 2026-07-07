@@ -28,7 +28,7 @@ func TestPaperBuyCommandDelegatesPricingAndJSONEnvelope(t *testing.T) {
 	root.SetErr(&stderr)
 	root.PersistentFlags().Bool("json", false, "emit JSON output")
 	root.AddCommand(newPaperCommand(true, pricer))
-	root.SetArgs([]string{"--json", "paper", "buy", "--token-id", "token-1", "--size", "2"})
+	root.SetArgs([]string{"--json", "sim", "buy", "--token-id", "token-1", "--size", "2"})
 	installJSONContract(root)
 
 	if err := root.Execute(); err != nil {
@@ -38,8 +38,8 @@ func TestPaperBuyCommandDelegatesPricingAndJSONEnvelope(t *testing.T) {
 		t.Fatalf("price call token=%q side=%q", pricer.tokenID, pricer.side)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "paper buy" {
-		t.Fatalf("meta.command=%q, want paper buy", got.Meta.Command)
+	if got.Meta.Command != "sim buy" {
+		t.Fatalf("meta.command=%q, want sim buy", got.Meta.Command)
 	}
 	var data struct {
 		Action string  `json:"action"`
@@ -49,7 +49,7 @@ func TestPaperBuyCommandDelegatesPricingAndJSONEnvelope(t *testing.T) {
 		Cash   float64 `json:"cash"`
 	}
 	if err := json.Unmarshal(got.Data, &data); err != nil {
-		t.Fatalf("data is not paper buy payload: %v\n%s", err, got.Data)
+		t.Fatalf("data is not sim buy payload: %v\n%s", err, got.Data)
 	}
 	if data.Action != "buy" || data.Price != 0.42 || data.Size != 2 || data.Cost != 0.84 || data.Cash != 9999.16 {
 		t.Fatalf("data=%+v", data)

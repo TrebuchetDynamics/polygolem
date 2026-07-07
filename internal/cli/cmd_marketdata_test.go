@@ -4,7 +4,7 @@ import "testing"
 
 func TestMarketDataLiveCommandKeepsStreamFlags(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version"})
-	cmd, _, err := root.Find([]string{"marketdata", "live"})
+	cmd, _, err := root.Find([]string{"prices", "live"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestMarketDataLiveCommandKeepsStreamFlags(t *testing.T) {
 
 func TestMarketDataCryptoCommandKeepsSnapshotFlags(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version"})
-	cmd, _, err := root.Find([]string{"marketdata", "crypto"})
+	cmd, _, err := root.Find([]string{"prices", "crypto"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}

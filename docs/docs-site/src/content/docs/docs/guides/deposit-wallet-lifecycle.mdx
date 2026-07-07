@@ -50,7 +50,7 @@ WALLET-CREATE { from: <EOA>, to: <factory> }
 > `STATE_FAILED` despite the underlying transaction landing). Polygolem and
 > the go-bot SDK both fall back to `eth_getCode` at the derived address; if
 > bytecode exists, the wallet is treated as deployed and `WALLET-CREATE` is
-> skipped. `polygolem deposit-wallet status --json` exposes which path
+> skipped. `polygolem wallet status --json` exposes which path
 > answered via `relayerDeployed`, `onchainCodeDeployed`, and
 > `deploymentStatusSource`.
 
@@ -118,7 +118,7 @@ adapter-targeted WALLET batch, first verify the adapter addresses against
 Polymarket's current contracts reference. If the addresses are current, surface
 the upstream blocker and stop.
 
-The operator surface is `polygolem deposit-wallet approve-adapters`,
+The operator surface is `polygolem wallet approve-adapters`,
 `redeemable`, and `redeem`. Every signing path is dry-run by default;
 submission requires both `--submit` and a typed `--confirm` token
 (`APPROVE_ADAPTERS` for adapter approvals, `REDEEM_WINNERS` for redeem).
@@ -161,7 +161,7 @@ This guarantees:
 
 ## First-Time Onboard
 
-First-time setup can start directly with `polygolem deposit-wallet onboard`.
+First-time setup can start directly with `polygolem wallet onboard`.
 Polymarket login signs with the EOA shown in the website's SIWE prompt; the
 deposit wallet remains the trading wallet for pUSD, POLY_1271 orders, CTF
 positions, approvals, and redemption.
@@ -171,19 +171,19 @@ positions, approvals, and redemption.
 # derive + auto SIWE/profile/relayer auth + deploy + approvals
 # + UI Enable Trading signs + fund.
 SIGNER_PRIVATE_KEY="0x..." \
-  polygolem deposit-wallet onboard --fund-amount 50 --confirm ONBOARD_WALLET --json
+  polygolem wallet onboard --fund-amount 50 --confirm ONBOARD_WALLET --json
 ```
 
 If V2 relayer credentials are missing, wallet commands sign the Polymarket
 SIWE message locally, register the profile, mint the relayer key, persist it
-to the Polygolem env file, and continue. `polygolem auth login` is still
+to the Polygolem env file, and continue. `polygolem credentials login` is still
 available when you want to refresh or inspect that step explicitly.
 
 This single command runs: derive → deploy → trading and adapter approvals
 → UI Enable Trading signs → fund. The UI Enable Trading leg signs ClobAuth,
 creates or derives CLOB API keys, and submits the 2-call token approval batch.
 
-For pre-provisioned CLOB credentials, run `polygolem builder auto`. Otherwise
+For pre-provisioned CLOB credentials, run `polygolem builder-keys auto`. Otherwise
 Polygolem derives or creates the EOA-bound CLOB key on demand for order auth.
 Non-zero order attribution is configured separately with
 `POLYMARKET_BUILDER_CODE` or CLI `--builder-code`.
@@ -192,7 +192,7 @@ Then sync the CLOB balance:
 
 ```bash
 SIGNER_PRIVATE_KEY="0x..." \
-  polygolem clob update-balance --asset-type collateral
+  polygolem exchange update-balance --asset-type collateral
 ```
 
 ## Automated Startup (go-bot live)
@@ -221,7 +221,7 @@ crash → restart → derive (same address) → IsDeployed or eth_getCode=true
 
 ```bash
 # Is the wallet deployed? (relayer + on-chain dual-source check)
-polygolem deposit-wallet status --json
+polygolem wallet status --json
 # {
 #   "deployed": true,
 #   "deploymentStatusSource": "polygon_code",
@@ -231,10 +231,10 @@ polygolem deposit-wallet status --json
 # }
 
 # What's the deposit wallet balance?
-polygolem clob balance --asset-type collateral
+polygolem exchange balance --asset-type collateral
 
 # Are the UI Enable Trading signs and allowances ready?
-polygolem deposit-wallet status --check-enable-trading
+polygolem wallet status --check-enable-trading
 
 # Check EOA onchain funds with wallet/RPC tooling; CLOB balance reads use
 # the deposit wallet cache.
@@ -246,7 +246,7 @@ polygolem deposit-wallet status --check-enable-trading
 - `polygon_code` — relayer said false, but `eth_getCode` returned non-empty
   bytecode. The wallet is deployed; the relayer row is stale.
 - `relayer_and_polygon_code` — both reported not deployed. Real first-deploy
-  state; `polygolem deposit-wallet deploy --wait` will submit `WALLET-CREATE`
+  state; `polygolem wallet deploy --wait` will submit `WALLET-CREATE`
   (and itself skips the call if `eth_getCode` becomes non-empty before the
   request is made, e.g. mid-retry).
 

@@ -253,11 +253,11 @@ func addCLOBAuthenticatedReadCommands(cmd *cobra.Command, balances clobBalanceCo
 
 func clobCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
-	cmd := commandGroup("clob", "CLOB market data and authenticated account commands")
+	cmd := commandGroup("exchange", "CLOB market data and authenticated account commands")
 	cmd.Long = `Central Limit Order Book (CLOB) market data and trading.
 
 Read-only (no credentials): book, markets, market, market-by-token, price-history,
-simulate-order, tick-size.
+simulate, tick-size.
 
 Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
 account/key commands.
@@ -266,12 +266,12 @@ Live-money (signs and submits): create-order, market-order, batch-orders, and th
 cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
 (default $1) before signing.`
 	cmd.Example = `  # Read-only
-  polygolem clob book <token-id>
-  polygolem clob price-history <token-id> --interval 1h
-  polygolem clob simulate-order --token <id> --side buy --amount 10
+  polygolem exchange book <token-id>
+  polygolem exchange price-history <token-id> --interval 1h
+  polygolem exchange simulate --token <id> --side buy --amount 10
 
   # Live, capped (needs a funded deposit wallet)
-  POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem clob create-order --token <id> --side buy --price 0.40 --size 2`
+  POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem exchange create-order --token <id> --side buy --price 0.40 --size 2`
 
 	addOutput := addCLOBOutputFlag
 	checkOutput := checkCLOBOutput
@@ -334,7 +334,7 @@ CLOB L1 auth headers.`,
 			}
 			apiKey, err := w.clob.CreateAPIKeyForAddress(cmd.Context(), key, owner)
 			if err != nil {
-				return fmt.Errorf("%w\n\nNote: Polymarket login and CLOB HTTP auth sign with the EOA; the deposit wallet remains the POLY_1271 trading wallet. Run `polygolem auth login` first if this EOA has not been profiled. See docs/ONBOARDING.md", err)
+				return fmt.Errorf("%w\n\nNote: Polymarket login and CLOB HTTP auth sign with the EOA; the deposit wallet remains the POLY_1271 trading wallet. Run `polygolem credentials login` first if this EOA has not been profiled. See docs/ONBOARDING.md", err)
 			}
 			return w.printJSON(cmd, map[string]string{"api_key": apiKey.Key, "owner": common.HexToAddress(owner).Hex()})
 		},

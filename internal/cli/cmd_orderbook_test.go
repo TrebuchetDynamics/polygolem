@@ -29,7 +29,7 @@ func TestOrderbookCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 	root.SetErr(&stderr)
 	root.PersistentFlags().Bool("json", false, "emit JSON output")
 	root.AddCommand(newOrderbookCommand(fake))
-	root.SetArgs([]string{"--json", "orderbook", "price", "--token-id", "token-1"})
+	root.SetArgs([]string{"--json", "book", "price", "--token-id", "token-1"})
 	installJSONContract(root)
 
 	if err := root.Execute(); err != nil {
@@ -39,8 +39,8 @@ func TestOrderbookCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 		t.Fatalf("request=%+v", fake.request)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "orderbook price" {
-		t.Fatalf("meta.command=%q, want orderbook price", got.Meta.Command)
+	if got.Meta.Command != "book price" {
+		t.Fatalf("meta.command=%q, want book price", got.Meta.Command)
 	}
 	var data map[string]string
 	if err := json.Unmarshal(got.Data, &data); err != nil {

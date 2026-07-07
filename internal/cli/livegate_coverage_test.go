@@ -39,16 +39,16 @@ func TestLiveMoneyCommandsFailClosed(t *testing.T) {
 		wantErrSub string // proves the specific guard fired
 	}{
 		// Cap-guarded order commands (default cap = $1).
-		{"clob create-order", []string{"clob", "create-order", "--token", "1", "--side", "buy", "--price", "0.60", "--size", "2"}, "POLYGOLEM_MAX_LIVE_ORDER_USD"},
-		{"clob market-order", []string{"clob", "market-order", "--token", "1", "--amount", "2"}, "POLYGOLEM_MAX_LIVE_ORDER_USD"},
-		{"clob batch-orders", []string{"clob", "batch-orders", "--orders-file", overCapOrders}, "POLYGOLEM_MAX_LIVE_ORDER_USD"},
+		{"exchange create-order", []string{"exchange", "create-order", "--token", "1", "--side", "buy", "--price", "0.60", "--size", "2"}, "POLYGOLEM_MAX_LIVE_ORDER_USD"},
+		{"exchange market-order", []string{"exchange", "market-order", "--token", "1", "--amount", "2"}, "POLYGOLEM_MAX_LIVE_ORDER_USD"},
+		{"exchange batch-orders", []string{"exchange", "batch-orders", "--orders-file", overCapOrders}, "POLYGOLEM_MAX_LIVE_ORDER_USD"},
 
 		// Confirm-guarded deposit-wallet commands (no --confirm token supplied).
-		{"deposit-wallet batch", []string{"deposit-wallet", "batch", "--calls-json", `[{"target":"0x0000000000000000000000000000000000000001","value":"0","data":"0x"}]`}, "SUBMIT_BATCH"},
-		{"deposit-wallet approve --submit", []string{"deposit-wallet", "approve", "--submit"}, "APPROVE_TRADING"},
-		{"deposit-wallet onboard", []string{"deposit-wallet", "onboard", "--skip-deploy"}, "ONBOARD_WALLET"},
-		{"deposit-wallet approve-adapters --submit", []string{"deposit-wallet", "approve-adapters", "--submit"}, "APPROVE_ADAPTERS"},
-		{"deposit-wallet approve-auto-redeem --submit", []string{"deposit-wallet", "approve-auto-redeem", "--submit"}, "APPROVE_AUTO_REDEEM"},
+		{"wallet batch", []string{"wallet", "batch", "--calls-json", `[{"target":"0x0000000000000000000000000000000000000001","value":"0","data":"0x"}]`}, "SUBMIT_BATCH"},
+		{"wallet approve --submit", []string{"wallet", "approve", "--submit"}, "APPROVE_TRADING"},
+		{"wallet onboard", []string{"wallet", "onboard", "--skip-deploy"}, "ONBOARD_WALLET"},
+		{"wallet approve-adapters --submit", []string{"wallet", "approve-adapters", "--submit"}, "APPROVE_ADAPTERS"},
+		{"wallet approve-auto-redeem --submit", []string{"wallet", "approve-auto-redeem", "--submit"}, "APPROVE_AUTO_REDEEM"},
 	}
 
 	for _, tc := range cases {

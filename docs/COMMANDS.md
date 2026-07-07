@@ -45,21 +45,47 @@ polygolem --json version | jq .
 
 ```text
 polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
-  auth - Inspect authentication readiness
-    clob-probe - Probe configured CLOB L2 credentials with read-only calls
-    export-key - HIGH RISK: display private key for wallet import
-    headless-onboard - Run SIWE login + mint V2 Relayer API Key
-    login - Sign in to Polymarket headlessly and mint V2 relayer credentials
-    status - Check authentication readiness and API key status
+  analytics - Polymarket Data API analytics
+    activity - List public activity for a user
+    closed-positions - List closed positions for a user
+    holders - List top holders for a token
+    leaderboard - List trader leaderboard rows
+    live-volume - Get live volume summary
+    markets-traded - Get total markets traded for a user
+    open-interest - Get open interest for a token
+    order-results - Join positions, trades, and results for a user
+    positions - List open positions for a user
+    trades - List public Data API trades for a user
+    value - Get total portfolio value for a user
+  book - Read CLOB order book data
+    fee-rate - Get fee rate in bps
+    get - Get L2 order book
+    last-trade - Get last trade price
+    midpoint - Get midpoint price
+    price - Get best price (BUY side)
+    spread - Get bid-ask spread
+    tick-size - Get minimum tick size
   bridge - Polymarket Bridge API
     assets - List supported bridge assets
     deposit - Create deposit addresses
     quote - Quote a bridge deposit move
     status - Get bridge deposit status
-  builder - Manage builder credentials
+  builder-keys - Manage builder credentials
     auto - Mint CLOB L2 creds via ClobAuth signature
     onboard - Capture builder credentials and persist locally
-  clob - CLOB market data and authenticated account commands
+  check-upstream - Check read-only upstream Polymarket drift
+    llms - Check a saved docs.polymarket.com llms.txt index
+  credentials - Inspect authentication readiness
+    clob-probe - Probe configured CLOB L2 credentials with read-only calls
+    export-key - HIGH RISK: display private key for wallet import
+    headless-onboard - Run SIWE login + mint V2 Relayer API Key
+    login - Sign in to Polymarket headlessly and mint V2 relayer credentials
+    status - Check authentication readiness and API key status
+  debug - Print redacted local diagnostics
+  doctor - Inspect local CLI readiness
+  events - List Polymarket events
+    list - List events
+  exchange - CLOB market data and authenticated account commands
     balance - Get CLOB balance and allowances
     batch-orders - Create multiple signed CLOB limit orders
     book - Get L2 order book
@@ -82,23 +108,43 @@ polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
     orders - List authenticated CLOB orders
     price-history - Get CLOB token price history
     revoke-builder-fee-key - Revoke a builder fee key (DELETE /auth/builder-api-key/{key})
-    simulate-order - Simulate a read-only CLOB order fill from the current book
+    simulate - Simulate a read-only CLOB order fill from the current book
     tick-size - Get minimum tick size
     trades - List authenticated CLOB trades
     update-balance - Refresh CLOB balance and allowances
-  data - Polymarket Data API analytics
-    activity - List public activity for a user
-    closed-positions - List closed positions for a user
-    holders - List top holders for a token
-    leaderboard - List trader leaderboard rows
-    live-volume - Get live volume summary
-    markets-traded - Get total markets traded for a user
-    open-interest - Get open interest for a token
-    order-results - Join positions, trades, and results for a user
-    positions - List open positions for a user
-    trades - List public Data API trades for a user
-    value - Get total portfolio value for a user
-  deposit-wallet - Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
+  markets - Market discovery via Polymarket Gamma API
+    comments - List or fetch public Gamma comments
+    crypto - Discover active crypto prediction markets
+    crypto-5m - List active 5-minute crypto markets
+    crypto-window - Resolve the current crypto prediction window deterministically
+    enrich - Enrich market with CLOB data
+    market - Get market details
+    markets - List Gamma markets
+    opportunities - Scan read-only market opportunity candidates
+    search - Search markets and events
+    series - List or fetch Gamma series
+    tags - List or fetch Gamma tags/categories
+  ping - Check Gamma and CLOB API reachability
+  prices - Live CLOB orderbook and share-price snapshots
+    crypto - Get live marketdata snapshots for crypto markets
+    live - Stream enriched CLOB market-data snapshots
+  risk - Inspect live gate status
+    status - Inspect live gate status
+  sim - Paper trading simulation for crypto markets
+    buy - Simulate a buy order (paper trading)
+    crypto - Discover crypto markets and paper trade
+    positions - Show current paper trading positions
+    reset - Reset paper trading state
+    sell - Simulate a sell order (paper trading)
+    trade - Paper trade the current crypto window in one command
+  stream - Polymarket WebSocket streams
+    crypto - Stream live crypto market events
+    market - Stream public CLOB market events
+    user - Stream authenticated CLOB user order/trade events
+  tx - Inspect Polymarket relayer state
+    transaction - Get relayer transaction state
+  version - Print version
+  wallet - Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
     approve - Build and optionally submit approval calls for the deposit wallet
     approve-adapters - Approve V2 collateral adapters for redeem (one-shot per wallet)
     approve-auto-redeem - Enable Get Paid Instantly auto-redemption (one-shot per wallet)
@@ -114,57 +160,11 @@ polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
     settlement-status - Check whether the deposit wallet is ready to redeem V2 winners
     status - Check deposit wallet deployment status or transaction state
     swap-pol-pusd - Swap native POL into an exact amount of pUSD via Uniswap V3
-  diag - Print redacted local diagnostics
-  discover - Market discovery via Polymarket Gamma API
-    comments - List or fetch public Gamma comments
-    crypto - Discover active crypto prediction markets
-    crypto-5m - List active 5-minute crypto markets
-    crypto-window - Resolve the current crypto prediction window deterministically
-    enrich - Enrich market with CLOB data
-    market - Get market details
-    markets - List Gamma markets
-    opportunities - Scan read-only market opportunity candidates
-    search - Search markets and events
-    series - List or fetch Gamma series
-    tags - List or fetch Gamma tags/categories
-  drift - Check read-only upstream Polymarket drift
-    llms - Check a saved docs.polymarket.com llms.txt index
-  events - List Polymarket events
-    list - List events
-  health - Check Gamma and CLOB API reachability
-  intel - Read-only wallet intelligence
+  wallets - Read-only wallet intelligence
     alerts - List user-scoped wallet dossier alerts
     leaderboard - List Data-API-ranked wallet intelligence rows
     market-flow - Summarize read-only market holder, trade, and open-interest flow
     wallet - Build a read-only wallet intelligence dossier
-  live - Inspect live gate status
-    status - Inspect live gate status
-  marketdata - Live CLOB orderbook and share-price snapshots
-    crypto - Get live marketdata snapshots for crypto markets
-    live - Stream enriched CLOB market-data snapshots
-  orderbook - Read CLOB order book data
-    fee-rate - Get fee rate in bps
-    get - Get L2 order book
-    last-trade - Get last trade price
-    midpoint - Get midpoint price
-    price - Get best price (BUY side)
-    spread - Get bid-ask spread
-    tick-size - Get minimum tick size
-  paper - Paper trading simulation for crypto markets
-    buy - Simulate a buy order (paper trading)
-    crypto - Discover crypto markets and paper trade
-    positions - Show current paper trading positions
-    reset - Reset paper trading state
-    sell - Simulate a sell order (paper trading)
-    trade - Paper trade the current crypto window in one command
-  preflight - Inspect local CLI readiness
-  relayer - Inspect Polymarket relayer state
-    transaction - Get relayer transaction state
-  stream - Polymarket WebSocket streams
-    crypto - Stream live crypto market events
-    market - Stream public CLOB market events
-    user - Stream authenticated CLOB user order/trade events
-  version - Print version
 ```
 
 ## Command Reference
@@ -181,10 +181,10 @@ paths are opt-in only when SIGNER_PRIVATE_KEY is set, and every command that
 moves funds gates on an explicit cap and a typed --confirm token.
 
 Start here (no credentials needed):
-  polygolem health                 # is the API reachable?
-  polygolem discover search --query "Will BTC" --limit 5
-  polygolem orderbook get --token-id <id>
-  polygolem paper reset --cash 100 # simulate trading with zero risk
+  polygolem ping                   # is the API reachable?
+  polygolem markets search --query "Will BTC" --limit 5
+  polygolem book get --token-id <id>
+  polygolem sim reset --cash 100   # simulate trading with zero risk
 
 When you are ready to trade with real funds, read the safety model first:
   docs/SAFETY.md and docs/SAFE-HAPPY-PATH.md
@@ -201,26 +201,26 @@ polygolem [flags]
 
 | Command | Description |
 |---|---|
-| `polygolem auth` | Inspect authentication readiness |
+| `polygolem analytics` | Polymarket Data API analytics |
+| `polygolem book` | Read CLOB order book data |
 | `polygolem bridge` | Polymarket Bridge API |
-| `polygolem builder` | Manage builder credentials |
-| `polygolem clob` | CLOB market data and authenticated account commands |
-| `polygolem data` | Polymarket Data API analytics |
-| `polygolem deposit-wallet` | Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status) |
-| `polygolem diag` | Print redacted local diagnostics |
-| `polygolem discover` | Market discovery via Polymarket Gamma API |
-| `polygolem drift` | Check read-only upstream Polymarket drift |
+| `polygolem builder-keys` | Manage builder credentials |
+| `polygolem check-upstream` | Check read-only upstream Polymarket drift |
+| `polygolem credentials` | Inspect authentication readiness |
+| `polygolem debug` | Print redacted local diagnostics |
+| `polygolem doctor` | Inspect local CLI readiness |
 | `polygolem events` | List Polymarket events |
-| `polygolem health` | Check Gamma and CLOB API reachability |
-| `polygolem intel` | Read-only wallet intelligence |
-| `polygolem live` | Inspect live gate status |
-| `polygolem marketdata` | Live CLOB orderbook and share-price snapshots |
-| `polygolem orderbook` | Read CLOB order book data |
-| `polygolem paper` | Paper trading simulation for crypto markets |
-| `polygolem preflight` | Inspect local CLI readiness |
-| `polygolem relayer` | Inspect Polymarket relayer state |
+| `polygolem exchange` | CLOB market data and authenticated account commands |
+| `polygolem markets` | Market discovery via Polymarket Gamma API |
+| `polygolem ping` | Check Gamma and CLOB API reachability |
+| `polygolem prices` | Live CLOB orderbook and share-price snapshots |
+| `polygolem risk` | Inspect live gate status |
+| `polygolem sim` | Paper trading simulation for crypto markets |
 | `polygolem stream` | Polymarket WebSocket streams |
+| `polygolem tx` | Inspect Polymarket relayer state |
 | `polygolem version` | Print version |
+| `polygolem wallet` | Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status) |
+| `polygolem wallets` | Read-only wallet intelligence |
 
 **Flags:**
 
@@ -229,200 +229,410 @@ polygolem [flags]
 | `-h, --help` | `bool` | `false` | help for polygolem |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem auth
+### polygolem analytics
 
-Inspect authentication readiness
+Polymarket Data API analytics
 
-Authentication readiness and login for Polymarket.
+Wallet- and market-level analytics from Polymarket's Data API. Read-only; keyed by
+wallet address, no credentials required.
 
-Read-only: 'auth status' and 'auth clob-probe' report credential readiness.
-Live: 'auth login' and 'auth headless-onboard' sign SIWE and mint/persist V2
-relayer credentials. 'auth export-key' prints your private key and is
-double-confirmed — avoid it unless importing into a temporary browser wallet.
+Query any wallet's positions, closed positions, trades, activity, and portfolio
+value, plus market-level holders, open interest, live volume, and leaderboards.
 
 **Usage:**
 
 ```bash
-polygolem auth [flags]
+polygolem analytics [flags]
 ```
 
 **Subcommands:**
 
 | Command | Description |
 |---|---|
-| `polygolem auth clob-probe` | Probe configured CLOB L2 credentials with read-only calls |
-| `polygolem auth export-key` | HIGH RISK: display private key for wallet import |
-| `polygolem auth headless-onboard` | Run SIWE login + mint V2 Relayer API Key |
-| `polygolem auth login` | Sign in to Polymarket headlessly and mint V2 relayer credentials |
-| `polygolem auth status` | Check authentication readiness and API key status |
+| `polygolem analytics activity` | List public activity for a user |
+| `polygolem analytics closed-positions` | List closed positions for a user |
+| `polygolem analytics holders` | List top holders for a token |
+| `polygolem analytics leaderboard` | List trader leaderboard rows |
+| `polygolem analytics live-volume` | Get live volume summary |
+| `polygolem analytics markets-traded` | Get total markets traded for a user |
+| `polygolem analytics open-interest` | Get open interest for a token |
+| `polygolem analytics order-results` | Join positions, trades, and results for a user |
+| `polygolem analytics positions` | List open positions for a user |
+| `polygolem analytics trades` | List public Data API trades for a user |
+| `polygolem analytics value` | Get total portfolio value for a user |
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for auth |
+| `-h, --help` | `bool` | `false` | help for analytics |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem auth clob-probe
+### polygolem analytics activity
 
-Probe configured CLOB L2 credentials with read-only calls
-
-Uses configured CLOB L2 HMAC credentials to run authenticated,
-read-only CLOB checks without creating or deriving an API key. The probe calls
-only GET /data/orders, GET /data/trades, and GET /balance-allowance.
+List public activity for a user
 
 **Usage:**
 
 ```bash
-polygolem auth clob-probe [flags]
+polygolem analytics activity [flags]
 ```
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for clob-probe |
+| `-h, --help` | `bool` | `false` | help for activity |
 | `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max rows |
+| `--user` | `string` | `""` | user wallet address |
 
-### polygolem auth export-key
+### polygolem analytics closed-positions
 
-HIGH RISK: display private key for wallet import
-
-Displays the current SIGNER_PRIVATE_KEY and derived addresses
-in formats suitable for wallet import. This is useful when a bot/agent
-generated the key and the user needs to import it into MetaMask/Rabby/etc.
-for the one-time Polymarket browser signup.
-
-SECURITY WARNING: The private key will be printed to your terminal.
-Anyone with access to your screen or shell history can steal your funds.
-Use this only in a secure environment and clear your terminal history after.
-This command requires both a typed confirmation token and the last six hex
-characters of the EOA address to reduce accidental key disclosure.
-
-Recommended flow for bot-generated keys:
-  1. Run this command in a secure terminal
-  2. Import the private key into a temporary wallet (MetaMask mobile, fresh browser profile)
-  3. Connect to polymarket.com and complete signup
-  4. Remove the imported account from the wallet
-  5. Clear terminal history: history -c && clear
+List closed positions for a user
 
 **Usage:**
 
 ```bash
-polygolem auth export-key [flags]
+polygolem analytics closed-positions [flags]
 ```
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--confirm` | `string` | `""` | must be exactly EXPORT_PRIVATE_KEY to print the private key |
-| `--confirm-address-suffix` | `string` | `""` | last 6 hex characters of the EOA address |
-| `-h, --help` | `bool` | `false` | help for export-key |
+| `-h, --help` | `bool` | `false` | help for closed-positions |
 | `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max rows |
+| `--user` | `string` | `""` | user wallet address |
 
-### polygolem auth headless-onboard
+### polygolem analytics holders
 
-Run SIWE login + mint V2 Relayer API Key
-
-Compatibility name for 'polygolem auth login'. It signs the
-Polymarket SIWE login message with the EOA from SIGNER_PRIVATE_KEY,
-registers the EOA + maker profile, mints a V2 relayer key, and writes
-{RELAYER_API_KEY, RELAYER_API_KEY_ADDRESS} to a 0600 env file.
-
-Prefer 'polygolem auth login' in new docs and automation. Polymarket login
-signs with the EOA; the deposit wallet remains the trading wallet for
-POLY_1271 orders, pUSD balances, approvals, and redemption.
+List top holders for a token
 
 **Usage:**
 
 ```bash
-polygolem auth headless-onboard [flags]
+polygolem analytics holders [flags]
 ```
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--env-file` | `string` | `""` | target env file (default: ../go-bot/.env.relayer-v2) |
-| `--force` | `bool` | `false` | overwrite existing env file |
-| `--gamma-url` | `string` | `""` | Gamma API base URL (default: https://gamma-api.polymarket.com) |
-| `-h, --help` | `bool` | `false` | help for headless-onboard |
+| `-h, --help` | `bool` | `false` | help for holders |
 | `--json` | `bool` | `false` | emit JSON output |
-| `--relayer-url` | `string` | `""` | Relayer base URL (default: https://relayer-v2.polymarket.com) |
-| `--signature-type` | `int` | `3` | maker derivation: 0=EOA, 1=proxy, 3=deposit wallet (default 3) |
-| `--skip-profile` | `bool` | `false` | skip the /profiles registration step (use if profile already exists) |
+| `--limit` | `int` | `20` | max rows |
+| `--token-id` | `string` | `""` | CLOB token ID |
 
-### polygolem auth login
+### polygolem analytics leaderboard
 
-Sign in to Polymarket headlessly and mint V2 relayer credentials
-
-Signs in to Polymarket without a browser and prepares the
-deposit-wallet account relationship for automation.
-
-Polymarket login signs with the EOA from SIGNER_PRIVATE_KEY. That is the
-same address the website shows in its Sign-In With Ethereum prompt. The
-deposit wallet remains the trading wallet: it holds pUSD, appears as the
-POLY_1271 maker/signer in orders, receives CTF positions, and is used for
-settlement.
-
-Steps:
-  1. Fetch a Polymarket SIWE nonce from gamma-api.polymarket.com.
-  2. Sign the SIWE message locally with the EOA.
-  3. Trade the signature for a Polymarket session cookie.
-  4. Register the EOA + maker profile for --signature-type.
-  5. This mints V2 relayer credentials for deposit-wallet deploy and WALLET batches.
-  6. Persist {RELAYER_API_KEY, RELAYER_API_KEY_ADDRESS} to a 0600 env file.
-
-This does not print or export the private key. Use 'polygolem builder auto'
-or 'polygolem clob create-api-key' for CLOB L2 credentials after login.
+List trader leaderboard rows
 
 **Usage:**
 
 ```bash
-polygolem auth login [flags]
+polygolem analytics leaderboard [flags]
 ```
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--env-file` | `string` | `""` | target env file (default: ../go-bot/.env.relayer-v2) |
-| `--force` | `bool` | `false` | overwrite existing env file |
-| `--gamma-url` | `string` | `""` | Gamma API base URL (default: https://gamma-api.polymarket.com) |
-| `-h, --help` | `bool` | `false` | help for login |
+| `-h, --help` | `bool` | `false` | help for leaderboard |
 | `--json` | `bool` | `false` | emit JSON output |
-| `--relayer-url` | `string` | `""` | Relayer base URL (default: https://relayer-v2.polymarket.com) |
-| `--signature-type` | `int` | `3` | maker derivation: 0=EOA, 1=proxy, 3=deposit wallet (default 3) |
-| `--skip-profile` | `bool` | `false` | skip the /profiles registration step (use if profile already exists) |
+| `--limit` | `int` | `20` | max rows |
 
-### polygolem auth status
+### polygolem analytics live-volume
 
-Check authentication readiness and API key status
-
-Inspects the current SIGNER_PRIVATE_KEY and reports:
-  - EOA address and deposit wallet address
-  - Whether the deposit wallet is deployed
-  - Whether EOA-bound CLOB credentials are present
-  - Whether the setup is ready for deposit-wallet trading
-
-Use --check-deposit-key to test whether the configured CLOB key works for
-trading-readiness checks (makes a live network call). Without this flag, the
-check is faster but may report a stale key as existing.
+Get live volume summary
 
 **Usage:**
 
 ```bash
-polygolem auth status [flags]
+polygolem analytics live-volume [flags]
 ```
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--check-deposit-key` | `bool` | `false` | make a live network call to verify configured CLOB credentials |
-| `-h, --help` | `bool` | `false` | help for status |
+| `-h, --help` | `bool` | `false` | help for live-volume |
 | `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max rows |
+
+### polygolem analytics markets-traded
+
+Get total markets traded for a user
+
+**Usage:**
+
+```bash
+polygolem analytics markets-traded [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for markets-traded |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem analytics open-interest
+
+Get open interest for a token
+
+**Usage:**
+
+```bash
+polygolem analytics open-interest [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for open-interest |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
+
+### polygolem analytics order-results
+
+Join positions, trades, and results for a user
+
+**Usage:**
+
+```bash
+polygolem analytics order-results [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for order-results |
+| `--include-clob` | `bool` | `false` | include authenticated CLOB open orders and trade history |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max rows |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem analytics positions
+
+List open positions for a user
+
+**Usage:**
+
+```bash
+polygolem analytics positions [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for positions |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max rows |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem analytics trades
+
+List public Data API trades for a user
+
+**Usage:**
+
+```bash
+polygolem analytics trades [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for trades |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max rows |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem analytics value
+
+Get total portfolio value for a user
+
+**Usage:**
+
+```bash
+polygolem analytics value [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for value |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem book
+
+Read CLOB order book data
+
+Read the live CLOB order book for a token. Read-only; no credentials.
+
+Fetch bids/asks, best bid/ask, midpoint, and spread for a token id (get one from
+'polygolem markets'). For a continuously updated view, see 'polygolem prices
+live'; for the raw event stream, see 'polygolem stream'.
+
+**Usage:**
+
+```bash
+polygolem book [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem book fee-rate` | Get fee rate in bps |
+| `polygolem book get` | Get L2 order book |
+| `polygolem book last-trade` | Get last trade price |
+| `polygolem book midpoint` | Get midpoint price |
+| `polygolem book price` | Get best price (BUY side) |
+| `polygolem book spread` | Get bid-ask spread |
+| `polygolem book tick-size` | Get minimum tick size |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for book |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem book fee-rate
+
+Get fee rate in bps
+
+**Usage:**
+
+```bash
+polygolem book fee-rate [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for fee-rate |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
+
+### polygolem book get
+
+Get L2 order book
+
+**Usage:**
+
+```bash
+polygolem book get [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for get |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
+
+### polygolem book last-trade
+
+Get last trade price
+
+**Usage:**
+
+```bash
+polygolem book last-trade [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for last-trade |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
+
+### polygolem book midpoint
+
+Get midpoint price
+
+**Usage:**
+
+```bash
+polygolem book midpoint [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for midpoint |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
+
+### polygolem book price
+
+Get best price (BUY side)
+
+**Usage:**
+
+```bash
+polygolem book price [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for price |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
+
+### polygolem book spread
+
+Get bid-ask spread
+
+**Usage:**
+
+```bash
+polygolem book spread [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for spread |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
+
+### polygolem book tick-size
+
+Get minimum tick size
+
+**Usage:**
+
+```bash
+polygolem book tick-size [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for tick-size |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--token-id` | `string` | `""` | CLOB token ID |
 
 ### polygolem bridge
 
@@ -530,36 +740,36 @@ polygolem bridge status <deposit-address> [flags]
 | `-h, --help` | `bool` | `false` | help for status |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem builder
+### polygolem builder-keys
 
 Manage builder credentials
 
 Builder helpers manage CLOB L2 credentials and legacy
-builder-relayer HMAC credentials. Use 'builder auto' for CLOB L2 creds,
-'auth login' for V2 relayer keys, and 'clob
+builder-relayer HMAC credentials. Use 'builder-keys auto' for CLOB L2 creds,
+'credentials login' for V2 relayer keys, and 'exchange
 create-builder-fee-key' for order attribution.
 
 **Usage:**
 
 ```bash
-polygolem builder [flags]
+polygolem builder-keys [flags]
 ```
 
 **Subcommands:**
 
 | Command | Description |
 |---|---|
-| `polygolem builder auto` | Mint CLOB L2 creds via ClobAuth signature |
-| `polygolem builder onboard` | Capture builder credentials and persist locally |
+| `polygolem builder-keys auto` | Mint CLOB L2 creds via ClobAuth signature |
+| `polygolem builder-keys onboard` | Capture builder credentials and persist locally |
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for builder |
+| `-h, --help` | `bool` | `false` | help for builder-keys |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem builder auto
+### polygolem builder-keys auto
 
 Mint CLOB L2 creds via ClobAuth signature
 
@@ -571,7 +781,7 @@ These are CLOB L2 trading creds — they authenticate book/balance reads,
 relayer GETs (/nonce, /deployed), and orders signed by the same address.
 They are NOT V2 Relayer API Keys: the relayer's POST /submit (used by
 deposit-wallet deploy and approve flows) requires a separate key minted
-by 'polygolem auth login' or an existing settings-page relayer key.
+by 'polygolem credentials login' or an existing settings-page relayer key.
 A profiled EOA without that relayer key will see relayer-write 401s even
 with valid CLOB L2 creds. See docs/ONBOARDING.md.
 
@@ -581,7 +791,7 @@ manual browser-capture flow.
 **Usage:**
 
 ```bash
-polygolem builder auto [flags]
+polygolem builder-keys auto [flags]
 ```
 
 **Flags:**
@@ -595,7 +805,7 @@ polygolem builder auto [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--no-validate` | `bool` | `false` | skip the relayer HMAC liveness check |
 
-### polygolem builder onboard
+### polygolem builder-keys onboard
 
 Capture builder credentials and persist locally
 
@@ -611,7 +821,7 @@ skip the network step (offline use only).
 **Usage:**
 
 ```bash
-polygolem builder onboard [flags]
+polygolem builder-keys onboard [flags]
 ```
 
 **Flags:**
@@ -625,1657 +835,7 @@ polygolem builder onboard [flags]
 | `--no-validate` | `bool` | `false` | skip the relayer HMAC liveness check |
 | `--open-browser` | `bool` | `false` | attempt to open polymarket.com/settings?tab=builder |
 
-### polygolem clob
-
-CLOB market data and authenticated account commands
-
-Central Limit Order Book (CLOB) market data and trading.
-
-Read-only (no credentials): book, markets, market, market-by-token, price-history,
-simulate-order, tick-size.
-
-Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
-account/key commands.
-
-Live-money (signs and submits): create-order, market-order, batch-orders, and the
-cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
-(default $1) before signing.
-
-**Usage:**
-
-```bash
-polygolem clob [flags]
-```
-
-**Subcommands:**
-
-| Command | Description |
-|---|---|
-| `polygolem clob balance` | Get CLOB balance and allowances |
-| `polygolem clob batch-orders` | Create multiple signed CLOB limit orders |
-| `polygolem clob book` | Get L2 order book |
-| `polygolem clob cancel` | Cancel a single open CLOB order |
-| `polygolem clob cancel-all` | Cancel all open CLOB orders |
-| `polygolem clob cancel-market` | Cancel open CLOB orders for a market or asset |
-| `polygolem clob cancel-orders` | Cancel multiple open CLOB orders |
-| `polygolem clob create-api-key` | Create or derive CLOB API credentials |
-| `polygolem clob create-api-key-for-address` | Create CLOB API credentials while reporting a maker address |
-| `polygolem clob create-builder-fee-key` | Mint a CLOB builder fee key (POST /auth/builder-api-key) |
-| `polygolem clob create-order` | Create a signed CLOB limit order |
-| `polygolem clob heartbeat` | Send one CLOB heartbeat ping |
-| `polygolem clob list-builder-fee-keys` | List builder fee keys (GET /auth/builder-api-keys) |
-| `polygolem clob market` | Get CLOB market by condition ID |
-| `polygolem clob market-by-token` | Resolve CLOB market by token ID |
-| `polygolem clob market-order` | Create a signed CLOB market/FOK order |
-| `polygolem clob market-trades-probe` | Probe CLOB trade scope for one market or token |
-| `polygolem clob markets` | List CLOB markets |
-| `polygolem clob order` | Get a single authenticated CLOB order |
-| `polygolem clob orders` | List authenticated CLOB orders |
-| `polygolem clob price-history` | Get CLOB token price history |
-| `polygolem clob revoke-builder-fee-key` | Revoke a builder fee key (DELETE /auth/builder-api-key/{key}) |
-| `polygolem clob simulate-order` | Simulate a read-only CLOB order fill from the current book |
-| `polygolem clob tick-size` | Get minimum tick size |
-| `polygolem clob trades` | List authenticated CLOB trades |
-| `polygolem clob update-balance` | Refresh CLOB balance and allowances |
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for clob |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem clob balance
-
-Get CLOB balance and allowances
-
-**Usage:**
-
-```bash
-polygolem clob balance [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset-type` | `string` | `collateral` | asset type |
-| `-h, --help` | `bool` | `false` | help for balance |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-| `--token-id` | `string` | `""` | conditional token id |
-
-### polygolem clob batch-orders
-
-Create multiple signed CLOB limit orders
-
-**Usage:**
-
-```bash
-polygolem clob batch-orders [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
-| `-h, --help` | `bool` | `false` | help for batch-orders |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--orders-file` | `string` | `""` | JSON array of limit orders, or '-' for stdin |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob book
-
-Get L2 order book
-
-**Usage:**
-
-```bash
-polygolem clob book <token-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for book |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob cancel
-
-Cancel a single open CLOB order
-
-**Usage:**
-
-```bash
-polygolem clob cancel <order-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for cancel |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob cancel-all
-
-Cancel all open CLOB orders
-
-**Usage:**
-
-```bash
-polygolem clob cancel-all [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for cancel-all |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob cancel-market
-
-Cancel open CLOB orders for a market or asset
-
-**Usage:**
-
-```bash
-polygolem clob cancel-market [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset` | `string` | `""` | asset/token ID |
-| `-h, --help` | `bool` | `false` | help for cancel-market |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--market` | `string` | `""` | market condition ID |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob cancel-orders
-
-Cancel multiple open CLOB orders
-
-**Usage:**
-
-```bash
-polygolem clob cancel-orders <order-ids> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for cancel-orders |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob create-api-key
-
-Create or derive CLOB API credentials
-
-**Usage:**
-
-```bash
-polygolem clob create-api-key [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for create-api-key |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob create-api-key-for-address
-
-Create CLOB API credentials while reporting a maker address
-
-Creates CLOB L2 credentials using EOA L1 auth and echoes the
-configured maker address. Polymarket login and CLOB HTTP authentication sign
-with the EOA; the deposit wallet remains the POLY_1271 trading wallet inside
-orders, balances, approvals, and settlement.
-
-The --owner flag is retained for source compatibility with older automation
-and is returned in the JSON output. It is not used as POLY_ADDRESS for the
-CLOB L1 auth headers.
-
-**Usage:**
-
-```bash
-polygolem clob create-api-key-for-address [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for create-api-key-for-address |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-| `--owner` | `string` | `""` | deposit wallet owner address |
-
-### polygolem clob create-builder-fee-key
-
-Mint a CLOB builder fee key (POST /auth/builder-api-key)
-
-Mints a builder fee key by signing an L2 HMAC-authenticated
-POST to /auth/builder-api-key. The returned triple is the fee
-attribution key — attach its 'key' to the 'builder' bytes32 field of V2
-orders to claim integrator fees.
-
-This is a different credential from the L2 trading triple minted by
-'create-api-key'; both are needed for full V2 integrator setup. See
-docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.
-
-**Usage:**
-
-```bash
-polygolem clob create-builder-fee-key [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for create-builder-fee-key |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob create-order
-
-Create a signed CLOB limit order
-
-**Usage:**
-
-```bash
-polygolem clob create-order [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
-| `--expiration` | `string` | `0` | GTD only: unix timestamp when the order expires; must be at least 1 minute in the future |
-| `-h, --help` | `bool` | `false` | help for create-order |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--order-type` | `string` | `GTC` | order type: GTC (rest on book), GTD (rest until --expiration), FOK (fill full size immediately or cancel), FAK (fill what crosses immediately, cancel the rest) |
-| `--output` | `string` | `json` | output format (json) |
-| `--post-only` | `bool` | `false` | post-only order (maker-only, rejected if it would take) |
-| `--price` | `string` | `""` | limit price |
-| `--side` | `string` | `buy` | order side |
-| `--size` | `string` | `""` | order size |
-| `--token` | `string` | `""` | CLOB token id |
-
-### polygolem clob heartbeat
-
-Send one CLOB heartbeat ping
-
-**Usage:**
-
-```bash
-polygolem clob heartbeat [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for heartbeat |
-| `--id` | `string` | `""` | optional heartbeat id |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob list-builder-fee-keys
-
-List builder fee keys (GET /auth/builder-api-keys)
-
-**Usage:**
-
-```bash
-polygolem clob list-builder-fee-keys [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for list-builder-fee-keys |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob market
-
-Get CLOB market by condition ID
-
-**Usage:**
-
-```bash
-polygolem clob market <condition-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for market |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob market-by-token
-
-Resolve CLOB market by token ID
-
-**Usage:**
-
-```bash
-polygolem clob market-by-token <token-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for market-by-token |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob market-order
-
-Create a signed CLOB market/FOK order
-
-**Usage:**
-
-```bash
-polygolem clob market-order [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--amount` | `string` | `""` | buy: USDC notional to spend; sell: number of shares to sell |
-| `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
-| `-h, --help` | `bool` | `false` | help for market-order |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--order-type` | `string` | `FOK` | market order type: FOK (all-or-nothing) or FAK (fill what crosses, cancel the rest) |
-| `--output` | `string` | `json` | output format (json) |
-| `--price` | `string` | `""` | optional worst acceptable price (default: swept from the book) |
-| `--side` | `string` | `buy` | order side |
-| `--token` | `string` | `""` | CLOB token id |
-
-### polygolem clob market-trades-probe
-
-Probe CLOB trade scope for one market or token
-
-**Usage:**
-
-```bash
-polygolem clob market-trades-probe [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset-id` | `string` | `""` | CLOB token ID |
-| `--cursor` | `string` | `""` | optional next_cursor for diagnostics |
-| `-h, --help` | `bool` | `false` | help for market-trades-probe |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--market` | `string` | `""` | market condition ID |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob markets
-
-List CLOB markets
-
-**Usage:**
-
-```bash
-polygolem clob markets [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--cursor` | `string` | `""` | pagination cursor |
-| `-h, --help` | `bool` | `false` | help for markets |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob order
-
-Get a single authenticated CLOB order
-
-**Usage:**
-
-```bash
-polygolem clob order <order-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for order |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob orders
-
-List authenticated CLOB orders
-
-**Usage:**
-
-```bash
-polygolem clob orders [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for orders |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob price-history
-
-Get CLOB token price history
-
-**Usage:**
-
-```bash
-polygolem clob price-history <token-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for price-history |
-| `--interval` | `string` | `1m` | history interval |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob revoke-builder-fee-key
-
-Revoke a builder fee key (DELETE /auth/builder-api-key/{key})
-
-**Usage:**
-
-```bash
-polygolem clob revoke-builder-fee-key [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for revoke-builder-fee-key |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--key` | `string` | `""` | builder fee key to revoke |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob simulate-order
-
-Simulate a read-only CLOB order fill from the current book
-
-Walks the opposing side of the live CLOB book and estimates the fill,
-average price, and slippage for a proposed order. This command is read-only:
-it does not load a private key, sign, or submit an order.
-
-For buys, --amount is USDC notional to spend. For sells, --amount is shares to sell.
-Use --limit-price to stop the walk at a worst acceptable price.
-
-**Usage:**
-
-```bash
-polygolem clob simulate-order [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--amount` | `string` | `""` | buy: USDC notional to spend; sell: number of shares to sell |
-| `-h, --help` | `bool` | `false` | help for simulate-order |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit-price` | `string` | `""` | optional worst acceptable price for simulated taker fill |
-| `--output` | `string` | `json` | output format (json) |
-| `--side` | `string` | `buy` | order side: buy or sell |
-| `--token` | `string` | `""` | CLOB token id |
-
-### polygolem clob tick-size
-
-Get minimum tick size
-
-**Usage:**
-
-```bash
-polygolem clob tick-size <token-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for tick-size |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob trades
-
-List authenticated CLOB trades
-
-**Usage:**
-
-```bash
-polygolem clob trades [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for trades |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-
-### polygolem clob update-balance
-
-Refresh CLOB balance and allowances
-
-**Usage:**
-
-```bash
-polygolem clob update-balance [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset-type` | `string` | `collateral` | asset type |
-| `-h, --help` | `bool` | `false` | help for update-balance |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--output` | `string` | `json` | output format (json) |
-| `--token-id` | `string` | `""` | conditional token id |
-
-### polygolem data
-
-Polymarket Data API analytics
-
-Wallet- and market-level analytics from Polymarket's Data API. Read-only; keyed by
-wallet address, no credentials required.
-
-Query any wallet's positions, closed positions, trades, activity, and portfolio
-value, plus market-level holders, open interest, live volume, and leaderboards.
-
-**Usage:**
-
-```bash
-polygolem data [flags]
-```
-
-**Subcommands:**
-
-| Command | Description |
-|---|---|
-| `polygolem data activity` | List public activity for a user |
-| `polygolem data closed-positions` | List closed positions for a user |
-| `polygolem data holders` | List top holders for a token |
-| `polygolem data leaderboard` | List trader leaderboard rows |
-| `polygolem data live-volume` | Get live volume summary |
-| `polygolem data markets-traded` | Get total markets traded for a user |
-| `polygolem data open-interest` | Get open interest for a token |
-| `polygolem data order-results` | Join positions, trades, and results for a user |
-| `polygolem data positions` | List open positions for a user |
-| `polygolem data trades` | List public Data API trades for a user |
-| `polygolem data value` | Get total portfolio value for a user |
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for data |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem data activity
-
-List public activity for a user
-
-**Usage:**
-
-```bash
-polygolem data activity [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for activity |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem data closed-positions
-
-List closed positions for a user
-
-**Usage:**
-
-```bash
-polygolem data closed-positions [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for closed-positions |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem data holders
-
-List top holders for a token
-
-**Usage:**
-
-```bash
-polygolem data holders [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for holders |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem data leaderboard
-
-List trader leaderboard rows
-
-**Usage:**
-
-```bash
-polygolem data leaderboard [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for leaderboard |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-
-### polygolem data live-volume
-
-Get live volume summary
-
-**Usage:**
-
-```bash
-polygolem data live-volume [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for live-volume |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-
-### polygolem data markets-traded
-
-Get total markets traded for a user
-
-**Usage:**
-
-```bash
-polygolem data markets-traded [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for markets-traded |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem data open-interest
-
-Get open interest for a token
-
-**Usage:**
-
-```bash
-polygolem data open-interest [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for open-interest |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem data order-results
-
-Join positions, trades, and results for a user
-
-**Usage:**
-
-```bash
-polygolem data order-results [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for order-results |
-| `--include-clob` | `bool` | `false` | include authenticated CLOB open orders and trade history |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem data positions
-
-List open positions for a user
-
-**Usage:**
-
-```bash
-polygolem data positions [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for positions |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem data trades
-
-List public Data API trades for a user
-
-**Usage:**
-
-```bash
-polygolem data trades [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for trades |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max rows |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem data value
-
-Get total portfolio value for a user
-
-**Usage:**
-
-```bash
-polygolem data value [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for value |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem deposit-wallet
-
-Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
-
-Deposit-wallet lifecycle for Polymarket V2 (POLY_1271) trading.
-
-Polymarket V2 requires a deposit wallet as the order maker/signer; your EOA is the
-signing key. The lifecycle is: derive -> deploy -> approve -> fund -> trade -> redeem.
-
-Read-only: derive, status, nonce, redeemable, settlement-status.
-
-Live-money (signs and submits real transactions): deploy, approve, approve-adapters,
-batch, fund, onboard, redeem. Each of these requires a typed --confirm token so a
-live submission cannot fire from a single mistyped flag — see docs/SAFETY.md for the
-token per command.
-
-Quickest path (deploy + approve + enable trading + fund):
-  polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet [flags]
-```
-
-**Subcommands:**
-
-| Command | Description |
-|---|---|
-| `polygolem deposit-wallet approve` | Build and optionally submit approval calls for the deposit wallet |
-| `polygolem deposit-wallet approve-adapters` | Approve V2 collateral adapters for redeem (one-shot per wallet) |
-| `polygolem deposit-wallet approve-auto-redeem` | Enable Get Paid Instantly auto-redemption (one-shot per wallet) |
-| `polygolem deposit-wallet batch` | Sign and submit a deposit wallet WALLET batch |
-| `polygolem deposit-wallet deploy` | Deploy the deposit wallet via relayer WALLET-CREATE |
-| `polygolem deposit-wallet derive` | Derive the deterministic deposit wallet address |
-| `polygolem deposit-wallet enable-trading` | Complete the UI Enable Trading signs for an existing deposit wallet |
-| `polygolem deposit-wallet fund` | Transfer pUSD from EOA to the deposit wallet |
-| `polygolem deposit-wallet nonce` | Get the current WALLET nonce for the owner |
-| `polygolem deposit-wallet onboard` | Full deposit wallet onboarding: deploy + approve + enable trading + fund |
-| `polygolem deposit-wallet redeem` | Redeem winning deposit-wallet positions via the V2 collateral adapter |
-| `polygolem deposit-wallet redeemable` | List redeemable positions held by the deposit wallet |
-| `polygolem deposit-wallet settlement-status` | Check whether the deposit wallet is ready to redeem V2 winners |
-| `polygolem deposit-wallet status` | Check deposit wallet deployment status or transaction state |
-| `polygolem deposit-wallet swap-pol-pusd` | Swap native POL into an exact amount of pUSD via Uniswap V3 |
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for deposit-wallet |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem deposit-wallet approve
-
-Build and optionally submit approval calls for the deposit wallet
-
-Build the standard 6-call approval batch (pUSD + CTF for all 3 V2 exchange spenders).
-
-Without --submit, prints the calldata JSON for review.
-With --submit, the operator must also pass --confirm APPROVE_TRADING to
-authorize the live-money WALLET batch.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet approve [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_TRADING' when --submit is set |
-| `-h, --help` | `bool` | `false` | help for approve |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--submit` | `bool` | `false` | sign and submit the approval batch (requires --confirm APPROVE_TRADING) |
-
-### polygolem deposit-wallet approve-adapters
-
-Approve V2 collateral adapters for redeem (one-shot per wallet)
-
-Submits the 4-call adapter approval batch (pUSD approve + CTF setApprovalForAll
-for CtfCollateralAdapter and NegRiskCtfCollateralAdapter). Required once per
-deposit wallet before V2 redeem will succeed. Idempotent.
-
-Without --submit, prints the calldata JSON for review.
-With --submit, the operator must also pass --confirm APPROVE_ADAPTERS to
-authorize the live-money WALLET batch.
-
-NOTE: The V2 deposit-wallet path is non-negotiable: the owner signs an EIP-712
-WALLET batch, the relayer submits it through the deposit-wallet factory, and
-the wallet call targets the V2 collateral adapters. If Polymarket's relayer
-allowlist rejects these calls with HTTP 400 "not in the allowed list", first
-verify the adapter addresses against Polymarket's current contract reference;
-if they match, stop.
-The wallet implementation gates execute() behind onlyFactory and the factory
-gates proxy() behind onlyOperator, so a direct EOA bypass is not possible.
-Do not fall back to raw ConditionalTokens.redeemPositions, SAFE, or PROXY;
-V2 deposit-wallet redeem must route through the collateral adapters.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet approve-adapters [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_ADAPTERS' when --submit is set |
-| `-h, --help` | `bool` | `false` | help for approve-adapters |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--submit` | `bool` | `false` | sign and submit the adapter approval batch (requires --confirm APPROVE_ADAPTERS) |
-
-### polygolem deposit-wallet approve-auto-redeem
-
-Enable Get Paid Instantly auto-redemption (one-shot per wallet)
-
-Submits the 3-call auto-redeem approval batch (CTF setApprovalForAll for
-CtfAutoRedeem and AutoRedeemer, plus PositionManager setApprovalForAll for
-AutoRedeemer). This is Polymarket's "Get Paid Instantly" one-time approval:
-once mined, winning positions are redeemed automatically after resolution
-and the payout lands in the wallet balance with no manual redeem step.
-
-Auto-redemption starts after the wallet's next trade; positions that
-already resolved before enabling must be redeemed manually one last time
-(see deposit-wallet redeem). The grant stays on permanently until the
-wallet revokes the operators. Idempotent.
-
-Without --submit, prints the calldata JSON for review.
-With --submit, the operator must also pass --confirm APPROVE_AUTO_REDEEM to
-authorize the live-money WALLET batch.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet approve-auto-redeem [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_AUTO_REDEEM' when --submit is set |
-| `-h, --help` | `bool` | `false` | help for approve-auto-redeem |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--submit` | `bool` | `false` | sign and submit the auto-redeem approval batch (requires --confirm APPROVE_AUTO_REDEEM) |
-
-### polygolem deposit-wallet batch
-
-Sign and submit a deposit wallet WALLET batch
-
-Sign an EIP-712 DepositWallet.Batch message and submit to the relayer.
-
-The --calls-json must be a JSON array of DepositWalletCall objects:
-  [{"target":"0x...","value":"0","data":"0x..."}, ...]
-
-This command submits real transactions from the deposit wallet: it requires
---confirm SUBMIT_BATCH to authorize the live-money WALLET batch.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet batch [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--calls-json` | `string` | `""` | JSON array of DepositWalletCall objects |
-| `--confirm` | `string` | `""` | live-money confirmation token; must be 'SUBMIT_BATCH' |
-| `--deadline` | `int64` | `1800` | deadline seconds from now |
-| `-h, --help` | `bool` | `false` | help for batch |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--nonce` | `string` | `""` | WALLET nonce (default: fetched from relayer) |
-| `--wallet` | `string` | `""` | deposit wallet address (default: derived from EOA) |
-
-### polygolem deposit-wallet deploy
-
-Deploy the deposit wallet via relayer WALLET-CREATE
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet deploy [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for deploy |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--rpc-url` | `string` | `""` | Polygon RPC URL (default: public node) |
-| `--timeout` | `duration` | `2m0s` | max wait time for --wait |
-| `--wait` | `bool` | `false` | poll until transaction reaches terminal state |
-
-### polygolem deposit-wallet derive
-
-Derive the deterministic deposit wallet address
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet derive [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for derive |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem deposit-wallet enable-trading
-
-Complete the UI Enable Trading signs for an existing deposit wallet
-
-Signs the same two prompts polymarket.com shows after deposit-wallet deploy:
-
-1. ClobAuth — EOA-signed message to create or derive CLOB API keys.
-2. Approve Tokens — DepositWallet.Batch signing for the 6-call UI token
-   approval batch: pUSD -> CTF, USDC.e -> CollateralOnramp, and the Combos
-   grants (pUSD approve + PositionManager setApprovalForAll for both the
-   Combos Router and Combos Exchange).
-
-Use this when the wallet is already deployed but the UI still shows
-"Enable Trading" or "Approve Tokens". If relayer credentials are missing,
-Polygolem signs SIWE locally, registers the profile if needed, mints and
-persists the V2 relayer key, then continues automatically.
-
-The browser may still ask for a local ClobAuth signature because
-polymarket.com stores browser-local API state; this command prepares
-Polygolem's headless trading path and submits the on-chain deposit-wallet
-approvals.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet enable-trading [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--dry-run` | `bool` | `false` | build and validate typed data without signing, creating API keys, or submitting approvals |
-| `-h, --help` | `bool` | `false` | help for enable-trading |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem deposit-wallet fund
-
-Transfer pUSD from EOA to the deposit wallet
-
-Send pUSD from the EOA to the deposit wallet address via direct ERC-20 transfer.
-
---amount is in pUSD (e.g. "0.71" for 0.71 pUSD). Uses 6 decimals internally.
-Requires POL for gas on Polygon.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet fund [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--amount` | `string` | `""` | pUSD amount to transfer (e.g. 0.71) |
-| `-h, --help` | `bool` | `false` | help for fund |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--rpc-url` | `string` | `""` | Polygon RPC URL (default: public node) |
-
-### polygolem deposit-wallet nonce
-
-Get the current WALLET nonce for the owner
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet nonce [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for nonce |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem deposit-wallet onboard
-
-Full deposit wallet onboarding: deploy + approve + enable trading + fund
-
-Run the complete deposit wallet setup sequence:
-
-1. Derive the deterministic deposit wallet address
-2. Deploy via WALLET-CREATE (skip with --skip-deploy if already deployed)
-3. Submit the 10-call approval batch for trading and V2 settlement adapters
-   (skip with --skip-approve)
-4. Sign ClobAuth and submit the 2-call UI Enable Trading approval batch
-   (skip with --skip-enable-trading)
-5. Transfer pUSD from EOA to deposit wallet (requires --fund-amount)
-
-After onboarding, sync CLOB:
-  polygolem clob update-balance --asset-type collateral
-
-If relayer credentials are missing, Polygolem signs SIWE locally, registers
-the profile if needed, mints and persists the V2 relayer key, then continues
-automatically.
-
-This command deploys, approves, and (with --fund-amount) moves real funds, so
-it requires --confirm ONBOARD_WALLET to authorize the live-money sequence.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet onboard [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--confirm` | `string` | `""` | live-money confirmation token; must be 'ONBOARD_WALLET' |
-| `--fund-amount` | `string` | `""` | pUSD amount to transfer from EOA to deposit wallet (e.g. 0.71) |
-| `-h, --help` | `bool` | `false` | help for onboard |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--skip-approve` | `bool` | `false` | skip approval batch |
-| `--skip-deploy` | `bool` | `false` | skip WALLET-CREATE (wallet already deployed) |
-| `--skip-enable-trading` | `bool` | `false` | skip ClobAuth and UI Enable Trading token approval signs |
-
-### polygolem deposit-wallet redeem
-
-Redeem winning deposit-wallet positions via the V2 collateral adapter
-
-Builds a WALLET batch that calls redeemPositions on the V2 collateral
-adapter (CtfCollateralAdapter for binary markets, NegRiskCtfCollateralAdapter
-for neg-risk). The adapter pulls the wallet's CTF tokens, redeems through
-the legacy CT with USDC.e, wraps the proceeds back into pUSD, and sends pUSD
-to the deposit wallet.
-
-Without --submit, prints the calldata JSON for review.
-With --submit, the operator must also pass --confirm REDEEM_WINNERS to
-authorize the live-money WALLET batch.
-
-Pre-check: requires CTF.setApprovalForAll(wallet, adapter) = true for
-every adapter targeted by the redeem set. If any approval is missing,
-fails closed with a pointer to 'deposit-wallet approve-adapters'.
-
-NOTE: The V2 deposit-wallet redeem path is non-negotiable: the owner signs an
-EIP-712 WALLET batch, the relayer submits it through the deposit-wallet
-factory, and the wallet call targets CtfCollateralAdapter or
-NegRiskCtfCollateralAdapter. If Polymarket's relayer rejects adapter approval
-or redeem calls with "not in the allowed list", first verify the adapter
-addresses against Polymarket's current contract reference; if they match, stop
-and surface an upstream blocker. There is no direct EOA bypass, no raw
-ConditionalTokens fallback, and no SAFE/PROXY shortcut for deposit-wallet
-positions.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet redeem [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--confirm` | `string` | `""` | live-money confirmation token; must be 'REDEEM_WINNERS' when --submit is set |
-| `-h, --help` | `bool` | `false` | help for redeem |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `10` | max positions per WALLET batch (deduplicated by conditionID) |
-| `--rpc-url` | `string` | `""` | Polygon RPC URL for the adapter-approval pre-check (default: POLYGON_RPC_URL or public node) |
-| `--submit` | `bool` | `false` | sign and submit the redeem batch (requires --confirm REDEEM_WINNERS) |
-
-### polygolem deposit-wallet redeemable
-
-List redeemable positions held by the deposit wallet
-
-Read-only list of positions where the Data API redeemable=true
-flag is set. The 'user' parameter is the deposit wallet (not the EOA),
-since POLY_1271 positions live in the wallet.
-
-Use this before running 'redeem' to see what would be submitted.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet redeemable [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for redeemable |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem deposit-wallet settlement-status
-
-Check whether the deposit wallet is ready to redeem V2 winners
-
-Read-only settlement readiness gate for V2 deposit-wallet trading.
-
-Checks:
-  - Deposit wallet has bytecode on Polygon
-  - Polymarket relayer credentials are configured
-  - Data API positions can be queried for the deposit wallet
-  - CTF.setApprovalForAll(wallet, CtfCollateralAdapter) is true
-  - CTF.setApprovalForAll(wallet, NegRiskCtfCollateralAdapter) is true
-
-This command does not sign, submit, approve, redeem, or try a fallback. V2
-deposit-wallet settlement is relayer + collateral adapter only: no direct EOA
-submission path, no raw ConditionalTokens path, and no SAFE/PROXY shortcut.
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet settlement-status [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for settlement-status |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--rpc-url` | `string` | `""` | Polygon RPC URL for code and adapter-approval checks (default: POLYGON_RPC_URL or public node) |
-
-### polygolem deposit-wallet status
-
-Check deposit wallet deployment status or transaction state
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet status [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--check-enable-trading` | `bool` | `false` | validate ClobAuth signing and UI Enable Trading token approvals |
-| `-h, --help` | `bool` | `false` | help for status |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--rpc-url` | `string` | `""` | Polygon RPC URL for --check-enable-trading allowance checks (default: POLYGON_RPC_URL or public node) |
-| `--tx-id` | `string` | `""` | transaction ID to poll |
-
-### polygolem deposit-wallet swap-pol-pusd
-
-Swap native POL into an exact amount of pUSD via Uniswap V3
-
-Swap native POL on the EOA into exactly --out-pusd of pUSD via Uniswap V3
-on Polygon (multihop WMATIC → USDC.e → pUSD, 0.05% fee per leg). Excess POL
-is refunded by the router via multicall(refundETH).
-
-The pUSD lands on the EOA. Use 'polygolem deposit-wallet fund --amount X'
-afterwards to move pUSD into the deposit wallet.
-
---out-pusd is the exact pUSD amount to receive (e.g. "0.72" for 0.72 pUSD).
---max-pol-in caps the POL the router may consume (e.g. "10" for 10 POL).
-
-**Usage:**
-
-```bash
-polygolem deposit-wallet swap-pol-pusd [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for swap-pol-pusd |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--max-pol-in` | `string` | `""` | max POL the router may consume (e.g. 10) |
-| `--out-pusd` | `string` | `""` | exact pUSD amount to receive (e.g. 0.72) |
-| `--rpc-url` | `string` | `""` | Polygon RPC URL (default: public node) |
-
-### polygolem diag
-
-Print redacted local diagnostics
-
-**Usage:**
-
-```bash
-polygolem diag [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for diag |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem discover
-
-Market discovery via Polymarket Gamma API
-
-Find Polymarket markets and events. Read-only; no credentials required.
-
-Search and list markets, look one up by id/slug/token, enrich with live CLOB
-quotes, browse tags/series/comments, and resolve crypto up/down windows
-(crypto-5m, crypto-window). This is the usual starting point: use it to find the
-token id you then pass to orderbook, clob, or paper.
-
-**Usage:**
-
-```bash
-polygolem discover [flags]
-```
-
-**Subcommands:**
-
-| Command | Description |
-|---|---|
-| `polygolem discover comments` | List or fetch public Gamma comments |
-| `polygolem discover crypto` | Discover active crypto prediction markets |
-| `polygolem discover crypto-5m` | List active 5-minute crypto markets |
-| `polygolem discover crypto-window` | Resolve the current crypto prediction window deterministically |
-| `polygolem discover enrich` | Enrich market with CLOB data |
-| `polygolem discover market` | Get market details |
-| `polygolem discover markets` | List Gamma markets |
-| `polygolem discover opportunities` | Scan read-only market opportunity candidates |
-| `polygolem discover search` | Search markets and events |
-| `polygolem discover series` | List or fetch Gamma series |
-| `polygolem discover tags` | List or fetch Gamma tags/categories |
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for discover |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem discover comments
-
-List or fetch public Gamma comments
-
-**Usage:**
-
-```bash
-polygolem discover comments [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--entity-id` | `int` | `0` | comment parent entity ID |
-| `--entity-type` | `string` | `""` | comment parent entity type |
-| `-h, --help` | `bool` | `false` | help for comments |
-| `--id` | `string` | `""` | comment ID |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max comments |
-| `--offset` | `int` | `0` | pagination offset |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem discover crypto
-
-Discover active crypto prediction markets
-
-Search for active Polymarket crypto markets by asset and interval.
-
-Extracts markets from events and filters by title patterns. Returns token IDs
-ready for orderbook inspection or trading.
-
-Examples:
-  polygolem discover crypto --asset BTC --interval 5m    # BTC Up/Down 5m markets
-  polygolem discover crypto --asset ETH --interval 15m   # ETH Up/Down 15m markets
-  polygolem discover crypto --asset BTC --interval 5m --enrich  # With CLOB prices
-  polygolem discover crypto --limit 50                   # All crypto markets
-
-Assets: BTC, ETH, SOL, XRP, DOGE, BNB, HYPE, etc.
-Intervals: 5m, 15m, 1h, daily, weekly (matches title patterns)
-
-**Usage:**
-
-```bash
-polygolem discover crypto [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset` | `string` | `""` | crypto asset filter (BTC, ETH, SOL, XRP, DOGE, BNB, HYPE) |
-| `--enrich` | `bool` | `false` | enrich with CLOB price and spread (slower, one API call per market) |
-| `-h, --help` | `bool` | `false` | help for crypto |
-| `--interval` | `string` | `""` | interval filter (5m, 15m, 1h, daily, weekly) |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max results |
-
-### polygolem discover crypto-5m
-
-List active 5-minute crypto markets
-
-Resolve current and near-future 5-minute windows for supported crypto assets
-and return a consolidated view of every open accepting market.
-
-Assets scanned by default: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
-
-Use --hours-ahead 1 for the current window plus the next hour.
-Use --timezone America/Denver to add local window fields.
-Use --asset BTC --asset ETH to narrow the sweep.
-Use --enrich to fetch live CLOB prices and spreads (slower).
-
-**Usage:**
-
-```bash
-polygolem discover crypto-5m [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset` | `stringSlice` | `[]` | crypto asset(s) to scan (repeat or comma-separate: BTC,ETH,SOL) |
-| `--enrich` | `bool` | `false` | enrich with CLOB price and spread |
-| `-h, --help` | `bool` | `false` | help for crypto-5m |
-| `--hours-ahead` | `int` | `0` | include future 5m windows this many hours ahead |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--timezone` | `string` | `UTC` | display local window fields in this IANA timezone (example: America/Chicago) |
-
-### polygolem discover crypto-window
-
-Resolve the current crypto prediction window deterministically
-
-Resolve the current active crypto up/down market using the deterministic
-slug pattern (<asset>-updown-<interval>-<unix_timestamp>).
-
-This bypasses search and hits the exact current window directly — much faster
-and more reliable than discovery via public search.
-
-Examples:
-  polygolem discover crypto-window --asset BTC --interval 5m
-  polygolem discover crypto-window --asset ETH --interval 15m --enrich
-
-**Usage:**
-
-```bash
-polygolem discover crypto-window [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset` | `string` | `""` | crypto asset (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE) |
-| `--enrich` | `bool` | `false` | enrich with CLOB price and spread |
-| `-h, --help` | `bool` | `false` | help for crypto-window |
-| `--interval` | `string` | `""` | time interval (5m, 15m, 1h, 4h) |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem discover enrich
-
-Enrich market with CLOB data
-
-**Usage:**
-
-```bash
-polygolem discover enrich [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for enrich |
-| `--id` | `string` | `""` | market Gamma ID |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem discover market
-
-Get market details
-
-**Usage:**
-
-```bash
-polygolem discover market [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for market |
-| `--id` | `string` | `""` | market Gamma ID |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--slug` | `string` | `""` | market slug |
-
-### polygolem discover markets
-
-List Gamma markets
-
-**Usage:**
-
-```bash
-polygolem discover markets [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--active` | `bool` | `true` | filter active markets |
-| `--ascending` | `bool` | `false` | sort ascending |
-| `--closed` | `bool` | `false` | filter closed markets |
-| `-h, --help` | `bool` | `false` | help for markets |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max markets |
-| `--offset` | `int` | `0` | pagination offset |
-| `--order` | `string` | `""` | Gamma order field |
-| `--tag-id` | `int` | `0` | filter by tag id |
-
-### polygolem discover opportunities
-
-Scan read-only market opportunity candidates
-
-Scan public Polymarket data for read-only research candidates.
-
-Scanner types:
-  wide-spread
-  low-liquidity-high-volume
-  new-markets
-  closing-soon
-  negative-risk
-  crypto-5m
-
-Examples:
-  polygolem discover opportunities --type wide-spread --limit 20
-  polygolem discover opportunities --type closing-soon --hours 6
-  polygolem discover opportunities --type low-liquidity-high-volume
-  polygolem discover opportunities --type crypto-5m --asset BTC
-
-**Usage:**
-
-```bash
-polygolem discover opportunities [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--asset` | `string` | `""` | crypto asset for crypto-5m scanner (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE) |
-| `-h, --help` | `bool` | `false` | help for opportunities |
-| `--hours` | `int` | `24` | closing-soon lookahead window in hours |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max opportunities |
-| `--type` | `string` | `wide-spread` | scanner type: wide-spread, low-liquidity-high-volume, new-markets, closing-soon, negative-risk, crypto-5m |
-
-### polygolem discover search
-
-Search markets and events
-
-**Usage:**
-
-```bash
-polygolem discover search [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for search |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `10` | max results |
-| `--query` | `string` | `""` | text query |
-
-### polygolem discover series
-
-List or fetch Gamma series
-
-**Usage:**
-
-```bash
-polygolem discover series [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--closed` | `bool` | `false` | filter closed series |
-| `-h, --help` | `bool` | `false` | help for series |
-| `--id` | `string` | `""` | series ID |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max series |
-| `--offset` | `int` | `0` | pagination offset |
-
-### polygolem discover tags
-
-List or fetch Gamma tags/categories
-
-**Usage:**
-
-```bash
-polygolem discover tags [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for tags |
-| `--id` | `string` | `""` | tag ID |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `100` | max tags |
-| `--offset` | `int` | `0` | pagination offset |
-| `--slug` | `string` | `""` | tag slug |
-
-### polygolem drift
+### polygolem check-upstream
 
 Check read-only upstream Polymarket drift
 
@@ -2284,35 +844,35 @@ depends on. Read-only, credential-free, and offline: it runs against a saved
 llms.txt index, so it is safe in CI or air-gapped review.
 
   curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/llms.txt
-  polygolem drift llms --file /tmp/llms.txt
+  polygolem check-upstream llms --file /tmp/llms.txt
 
 **Usage:**
 
 ```bash
-polygolem drift [flags]
+polygolem check-upstream [flags]
 ```
 
 **Subcommands:**
 
 | Command | Description |
 |---|---|
-| `polygolem drift llms` | Check a saved docs.polymarket.com llms.txt index |
+| `polygolem check-upstream llms` | Check a saved docs.polymarket.com llms.txt index |
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for drift |
+| `-h, --help` | `bool` | `false` | help for check-upstream |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem drift llms
+### polygolem check-upstream llms
 
 Check a saved docs.polymarket.com llms.txt index
 
 **Usage:**
 
 ```bash
-polygolem drift llms [flags]
+polygolem check-upstream llms [flags]
 ```
 
 **Flags:**
@@ -2323,6 +883,235 @@ polygolem drift llms [flags]
 | `-h, --help` | `bool` | `false` | help for llms |
 | `--json` | `bool` | `false` | emit JSON output |
 
+### polygolem credentials
+
+Inspect authentication readiness
+
+Authentication readiness and login for Polymarket.
+
+Read-only: 'credentials status' and 'credentials clob-probe' report credential readiness.
+Live: 'credentials login' and 'credentials headless-onboard' sign SIWE and mint/persist V2
+relayer credentials. 'credentials export-key' prints your private key and is
+double-confirmed — avoid it unless importing into a temporary browser wallet.
+
+**Usage:**
+
+```bash
+polygolem credentials [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem credentials clob-probe` | Probe configured CLOB L2 credentials with read-only calls |
+| `polygolem credentials export-key` | HIGH RISK: display private key for wallet import |
+| `polygolem credentials headless-onboard` | Run SIWE login + mint V2 Relayer API Key |
+| `polygolem credentials login` | Sign in to Polymarket headlessly and mint V2 relayer credentials |
+| `polygolem credentials status` | Check authentication readiness and API key status |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for credentials |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem credentials clob-probe
+
+Probe configured CLOB L2 credentials with read-only calls
+
+Uses configured CLOB L2 HMAC credentials to run authenticated,
+read-only CLOB checks without creating or deriving an API key. The probe calls
+only GET /data/orders, GET /data/trades, and GET /balance-allowance.
+
+**Usage:**
+
+```bash
+polygolem credentials clob-probe [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for clob-probe |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem credentials export-key
+
+HIGH RISK: display private key for wallet import
+
+Displays the current SIGNER_PRIVATE_KEY and derived addresses
+in formats suitable for wallet import. This is useful when a bot/agent
+generated the key and the user needs to import it into MetaMask/Rabby/etc.
+for the one-time Polymarket browser signup.
+
+SECURITY WARNING: The private key will be printed to your terminal.
+Anyone with access to your screen or shell history can steal your funds.
+Use this only in a secure environment and clear your terminal history after.
+This command requires both a typed confirmation token and the last six hex
+characters of the EOA address to reduce accidental key disclosure.
+
+Recommended flow for bot-generated keys:
+  1. Run this command in a secure terminal
+  2. Import the private key into a temporary wallet (MetaMask mobile, fresh browser profile)
+  3. Connect to polymarket.com and complete signup
+  4. Remove the imported account from the wallet
+  5. Clear terminal history: history -c && clear
+
+**Usage:**
+
+```bash
+polygolem credentials export-key [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | must be exactly EXPORT_PRIVATE_KEY to print the private key |
+| `--confirm-address-suffix` | `string` | `""` | last 6 hex characters of the EOA address |
+| `-h, --help` | `bool` | `false` | help for export-key |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem credentials headless-onboard
+
+Run SIWE login + mint V2 Relayer API Key
+
+Compatibility name for 'polygolem credentials login'. It signs the
+Polymarket SIWE login message with the EOA from SIGNER_PRIVATE_KEY,
+registers the EOA + maker profile, mints a V2 relayer key, and writes
+{RELAYER_API_KEY, RELAYER_API_KEY_ADDRESS} to a 0600 env file.
+
+Prefer 'polygolem credentials login' in new docs and automation. Polymarket login
+signs with the EOA; the deposit wallet remains the trading wallet for
+POLY_1271 orders, pUSD balances, approvals, and redemption.
+
+**Usage:**
+
+```bash
+polygolem credentials headless-onboard [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--env-file` | `string` | `""` | target env file (default: ../go-bot/.env.relayer-v2) |
+| `--force` | `bool` | `false` | overwrite existing env file |
+| `--gamma-url` | `string` | `""` | Gamma API base URL (default: https://gamma-api.polymarket.com) |
+| `-h, --help` | `bool` | `false` | help for headless-onboard |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--relayer-url` | `string` | `""` | Relayer base URL (default: https://relayer-v2.polymarket.com) |
+| `--signature-type` | `int` | `3` | maker derivation: 0=EOA, 1=proxy, 3=deposit wallet (default 3) |
+| `--skip-profile` | `bool` | `false` | skip the /profiles registration step (use if profile already exists) |
+
+### polygolem credentials login
+
+Sign in to Polymarket headlessly and mint V2 relayer credentials
+
+Signs in to Polymarket without a browser and prepares the
+deposit-wallet account relationship for automation.
+
+Polymarket login signs with the EOA from SIGNER_PRIVATE_KEY. That is the
+same address the website shows in its Sign-In With Ethereum prompt. The
+deposit wallet remains the trading wallet: it holds pUSD, appears as the
+POLY_1271 maker/signer in orders, receives CTF positions, and is used for
+settlement.
+
+Steps:
+  1. Fetch a Polymarket SIWE nonce from gamma-api.polymarket.com.
+  2. Sign the SIWE message locally with the EOA.
+  3. Trade the signature for a Polymarket session cookie.
+  4. Register the EOA + maker profile for --signature-type.
+  5. This mints V2 relayer credentials for deposit-wallet deploy and WALLET batches.
+  6. Persist {RELAYER_API_KEY, RELAYER_API_KEY_ADDRESS} to a 0600 env file.
+
+This does not print or export the private key. Use 'polygolem builder-keys auto'
+or 'polygolem exchange create-api-key' for CLOB L2 credentials after login.
+
+**Usage:**
+
+```bash
+polygolem credentials login [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--env-file` | `string` | `""` | target env file (default: ../go-bot/.env.relayer-v2) |
+| `--force` | `bool` | `false` | overwrite existing env file |
+| `--gamma-url` | `string` | `""` | Gamma API base URL (default: https://gamma-api.polymarket.com) |
+| `-h, --help` | `bool` | `false` | help for login |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--relayer-url` | `string` | `""` | Relayer base URL (default: https://relayer-v2.polymarket.com) |
+| `--signature-type` | `int` | `3` | maker derivation: 0=EOA, 1=proxy, 3=deposit wallet (default 3) |
+| `--skip-profile` | `bool` | `false` | skip the /profiles registration step (use if profile already exists) |
+
+### polygolem credentials status
+
+Check authentication readiness and API key status
+
+Inspects the current SIGNER_PRIVATE_KEY and reports:
+  - EOA address and deposit wallet address
+  - Whether the deposit wallet is deployed
+  - Whether EOA-bound CLOB credentials are present
+  - Whether the setup is ready for deposit-wallet trading
+
+Use --check-deposit-key to test whether the configured CLOB key works for
+trading-readiness checks (makes a live network call). Without this flag, the
+check is faster but may report a stale key as existing.
+
+**Usage:**
+
+```bash
+polygolem credentials status [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--check-deposit-key` | `bool` | `false` | make a live network call to verify configured CLOB credentials |
+| `-h, --help` | `bool` | `false` | help for status |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem debug
+
+Print redacted local diagnostics
+
+**Usage:**
+
+```bash
+polygolem debug [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for debug |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem doctor
+
+Inspect local CLI readiness
+
+**Usage:**
+
+```bash
+polygolem doctor [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for doctor |
+| `--json` | `bool` | `false` | emit JSON output |
+
 ### polygolem events
 
 List Polymarket events
@@ -2330,7 +1119,7 @@ List Polymarket events
 List Polymarket events. Read-only; no credentials.
 
 An event groups related markets under one question set. Browse events, then drill
-into a specific market with 'polygolem discover market'.
+into a specific market with 'polygolem markets market'.
 
 **Usage:**
 
@@ -2368,207 +1157,959 @@ polygolem events list [flags]
 | `-h, --help` | `bool` | `false` | help for list |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem health
+### polygolem exchange
+
+CLOB market data and authenticated account commands
+
+Central Limit Order Book (CLOB) market data and trading.
+
+Read-only (no credentials): book, markets, market, market-by-token, price-history,
+simulate, tick-size.
+
+Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
+account/key commands.
+
+Live-money (signs and submits): create-order, market-order, batch-orders, and the
+cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
+(default $1) before signing.
+
+**Usage:**
+
+```bash
+polygolem exchange [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem exchange balance` | Get CLOB balance and allowances |
+| `polygolem exchange batch-orders` | Create multiple signed CLOB limit orders |
+| `polygolem exchange book` | Get L2 order book |
+| `polygolem exchange cancel` | Cancel a single open CLOB order |
+| `polygolem exchange cancel-all` | Cancel all open CLOB orders |
+| `polygolem exchange cancel-market` | Cancel open CLOB orders for a market or asset |
+| `polygolem exchange cancel-orders` | Cancel multiple open CLOB orders |
+| `polygolem exchange create-api-key` | Create or derive CLOB API credentials |
+| `polygolem exchange create-api-key-for-address` | Create CLOB API credentials while reporting a maker address |
+| `polygolem exchange create-builder-fee-key` | Mint a CLOB builder fee key (POST /auth/builder-api-key) |
+| `polygolem exchange create-order` | Create a signed CLOB limit order |
+| `polygolem exchange heartbeat` | Send one CLOB heartbeat ping |
+| `polygolem exchange list-builder-fee-keys` | List builder fee keys (GET /auth/builder-api-keys) |
+| `polygolem exchange market` | Get CLOB market by condition ID |
+| `polygolem exchange market-by-token` | Resolve CLOB market by token ID |
+| `polygolem exchange market-order` | Create a signed CLOB market/FOK order |
+| `polygolem exchange market-trades-probe` | Probe CLOB trade scope for one market or token |
+| `polygolem exchange markets` | List CLOB markets |
+| `polygolem exchange order` | Get a single authenticated CLOB order |
+| `polygolem exchange orders` | List authenticated CLOB orders |
+| `polygolem exchange price-history` | Get CLOB token price history |
+| `polygolem exchange revoke-builder-fee-key` | Revoke a builder fee key (DELETE /auth/builder-api-key/{key}) |
+| `polygolem exchange simulate` | Simulate a read-only CLOB order fill from the current book |
+| `polygolem exchange tick-size` | Get minimum tick size |
+| `polygolem exchange trades` | List authenticated CLOB trades |
+| `polygolem exchange update-balance` | Refresh CLOB balance and allowances |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for exchange |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem exchange balance
+
+Get CLOB balance and allowances
+
+**Usage:**
+
+```bash
+polygolem exchange balance [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset-type` | `string` | `collateral` | asset type |
+| `-h, --help` | `bool` | `false` | help for balance |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+| `--token-id` | `string` | `""` | conditional token id |
+
+### polygolem exchange batch-orders
+
+Create multiple signed CLOB limit orders
+
+**Usage:**
+
+```bash
+polygolem exchange batch-orders [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
+| `-h, --help` | `bool` | `false` | help for batch-orders |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--orders-file` | `string` | `""` | JSON array of limit orders, or '-' for stdin |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange book
+
+Get L2 order book
+
+**Usage:**
+
+```bash
+polygolem exchange book <token-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for book |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange cancel
+
+Cancel a single open CLOB order
+
+**Usage:**
+
+```bash
+polygolem exchange cancel <order-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for cancel |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange cancel-all
+
+Cancel all open CLOB orders
+
+**Usage:**
+
+```bash
+polygolem exchange cancel-all [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for cancel-all |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange cancel-market
+
+Cancel open CLOB orders for a market or asset
+
+**Usage:**
+
+```bash
+polygolem exchange cancel-market [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset` | `string` | `""` | asset/token ID |
+| `-h, --help` | `bool` | `false` | help for cancel-market |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--market` | `string` | `""` | market condition ID |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange cancel-orders
+
+Cancel multiple open CLOB orders
+
+**Usage:**
+
+```bash
+polygolem exchange cancel-orders <order-ids> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for cancel-orders |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange create-api-key
+
+Create or derive CLOB API credentials
+
+**Usage:**
+
+```bash
+polygolem exchange create-api-key [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for create-api-key |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange create-api-key-for-address
+
+Create CLOB API credentials while reporting a maker address
+
+Creates CLOB L2 credentials using EOA L1 auth and echoes the
+configured maker address. Polymarket login and CLOB HTTP authentication sign
+with the EOA; the deposit wallet remains the POLY_1271 trading wallet inside
+orders, balances, approvals, and settlement.
+
+The --owner flag is retained for source compatibility with older automation
+and is returned in the JSON output. It is not used as POLY_ADDRESS for the
+CLOB L1 auth headers.
+
+**Usage:**
+
+```bash
+polygolem exchange create-api-key-for-address [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for create-api-key-for-address |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+| `--owner` | `string` | `""` | deposit wallet owner address |
+
+### polygolem exchange create-builder-fee-key
+
+Mint a CLOB builder fee key (POST /auth/builder-api-key)
+
+Mints a builder fee key by signing an L2 HMAC-authenticated
+POST to /auth/builder-api-key. The returned triple is the fee
+attribution key — attach its 'key' to the 'builder' bytes32 field of V2
+orders to claim integrator fees.
+
+This is a different credential from the L2 trading triple minted by
+'create-api-key'; both are needed for full V2 integrator setup. See
+docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.
+
+**Usage:**
+
+```bash
+polygolem exchange create-builder-fee-key [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for create-builder-fee-key |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange create-order
+
+Create a signed CLOB limit order
+
+**Usage:**
+
+```bash
+polygolem exchange create-order [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
+| `--expiration` | `string` | `0` | GTD only: unix timestamp when the order expires; must be at least 1 minute in the future |
+| `-h, --help` | `bool` | `false` | help for create-order |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--order-type` | `string` | `GTC` | order type: GTC (rest on book), GTD (rest until --expiration), FOK (fill full size immediately or cancel), FAK (fill what crosses immediately, cancel the rest) |
+| `--output` | `string` | `json` | output format (json) |
+| `--post-only` | `bool` | `false` | post-only order (maker-only, rejected if it would take) |
+| `--price` | `string` | `""` | limit price |
+| `--side` | `string` | `buy` | order side |
+| `--size` | `string` | `""` | order size |
+| `--token` | `string` | `""` | CLOB token id |
+
+### polygolem exchange heartbeat
+
+Send one CLOB heartbeat ping
+
+**Usage:**
+
+```bash
+polygolem exchange heartbeat [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for heartbeat |
+| `--id` | `string` | `""` | optional heartbeat id |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange list-builder-fee-keys
+
+List builder fee keys (GET /auth/builder-api-keys)
+
+**Usage:**
+
+```bash
+polygolem exchange list-builder-fee-keys [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for list-builder-fee-keys |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange market
+
+Get CLOB market by condition ID
+
+**Usage:**
+
+```bash
+polygolem exchange market <condition-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for market |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange market-by-token
+
+Resolve CLOB market by token ID
+
+**Usage:**
+
+```bash
+polygolem exchange market-by-token <token-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for market-by-token |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange market-order
+
+Create a signed CLOB market/FOK order
+
+**Usage:**
+
+```bash
+polygolem exchange market-order [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--amount` | `string` | `""` | buy: USDC notional to spend; sell: number of shares to sell |
+| `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
+| `-h, --help` | `bool` | `false` | help for market-order |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--order-type` | `string` | `FOK` | market order type: FOK (all-or-nothing) or FAK (fill what crosses, cancel the rest) |
+| `--output` | `string` | `json` | output format (json) |
+| `--price` | `string` | `""` | optional worst acceptable price (default: swept from the book) |
+| `--side` | `string` | `buy` | order side |
+| `--token` | `string` | `""` | CLOB token id |
+
+### polygolem exchange market-trades-probe
+
+Probe CLOB trade scope for one market or token
+
+**Usage:**
+
+```bash
+polygolem exchange market-trades-probe [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset-id` | `string` | `""` | CLOB token ID |
+| `--cursor` | `string` | `""` | optional next_cursor for diagnostics |
+| `-h, --help` | `bool` | `false` | help for market-trades-probe |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--market` | `string` | `""` | market condition ID |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange markets
+
+List CLOB markets
+
+**Usage:**
+
+```bash
+polygolem exchange markets [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--cursor` | `string` | `""` | pagination cursor |
+| `-h, --help` | `bool` | `false` | help for markets |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange order
+
+Get a single authenticated CLOB order
+
+**Usage:**
+
+```bash
+polygolem exchange order <order-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for order |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange orders
+
+List authenticated CLOB orders
+
+**Usage:**
+
+```bash
+polygolem exchange orders [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for orders |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange price-history
+
+Get CLOB token price history
+
+**Usage:**
+
+```bash
+polygolem exchange price-history <token-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for price-history |
+| `--interval` | `string` | `1m` | history interval |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange revoke-builder-fee-key
+
+Revoke a builder fee key (DELETE /auth/builder-api-key/{key})
+
+**Usage:**
+
+```bash
+polygolem exchange revoke-builder-fee-key [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for revoke-builder-fee-key |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--key` | `string` | `""` | builder fee key to revoke |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange simulate
+
+Simulate a read-only CLOB order fill from the current book
+
+Walks the opposing side of the live CLOB book and estimates the fill,
+average price, and slippage for a proposed order. This command is read-only:
+it does not load a private key, sign, or submit an order.
+
+For buys, --amount is USDC notional to spend. For sells, --amount is shares to sell.
+Use --limit-price to stop the walk at a worst acceptable price.
+
+**Usage:**
+
+```bash
+polygolem exchange simulate [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--amount` | `string` | `""` | buy: USDC notional to spend; sell: number of shares to sell |
+| `-h, --help` | `bool` | `false` | help for simulate |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit-price` | `string` | `""` | optional worst acceptable price for simulated taker fill |
+| `--output` | `string` | `json` | output format (json) |
+| `--side` | `string` | `buy` | order side: buy or sell |
+| `--token` | `string` | `""` | CLOB token id |
+
+### polygolem exchange tick-size
+
+Get minimum tick size
+
+**Usage:**
+
+```bash
+polygolem exchange tick-size <token-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for tick-size |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange trades
+
+List authenticated CLOB trades
+
+**Usage:**
+
+```bash
+polygolem exchange trades [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for trades |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+
+### polygolem exchange update-balance
+
+Refresh CLOB balance and allowances
+
+**Usage:**
+
+```bash
+polygolem exchange update-balance [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset-type` | `string` | `collateral` | asset type |
+| `-h, --help` | `bool` | `false` | help for update-balance |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--output` | `string` | `json` | output format (json) |
+| `--token-id` | `string` | `""` | conditional token id |
+
+### polygolem markets
+
+Market discovery via Polymarket Gamma API
+
+Find Polymarket markets and events. Read-only; no credentials required.
+
+Search and list markets, look one up by id/slug/token, enrich with live CLOB
+quotes, browse tags/series/comments, and resolve crypto up/down windows
+(crypto-5m, crypto-window). This is the usual starting point: use it to find the
+token id you then pass to book, exchange, or sim.
+
+**Usage:**
+
+```bash
+polygolem markets [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem markets comments` | List or fetch public Gamma comments |
+| `polygolem markets crypto` | Discover active crypto prediction markets |
+| `polygolem markets crypto-5m` | List active 5-minute crypto markets |
+| `polygolem markets crypto-window` | Resolve the current crypto prediction window deterministically |
+| `polygolem markets enrich` | Enrich market with CLOB data |
+| `polygolem markets market` | Get market details |
+| `polygolem markets markets` | List Gamma markets |
+| `polygolem markets opportunities` | Scan read-only market opportunity candidates |
+| `polygolem markets search` | Search markets and events |
+| `polygolem markets series` | List or fetch Gamma series |
+| `polygolem markets tags` | List or fetch Gamma tags/categories |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for markets |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem markets comments
+
+List or fetch public Gamma comments
+
+**Usage:**
+
+```bash
+polygolem markets comments [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--entity-id` | `int` | `0` | comment parent entity ID |
+| `--entity-type` | `string` | `""` | comment parent entity type |
+| `-h, --help` | `bool` | `false` | help for comments |
+| `--id` | `string` | `""` | comment ID |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max comments |
+| `--offset` | `int` | `0` | pagination offset |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem markets crypto
+
+Discover active crypto prediction markets
+
+Search for active Polymarket crypto markets by asset and interval.
+
+Extracts markets from events and filters by title patterns. Returns token IDs
+ready for orderbook inspection or trading.
+
+Examples:
+  polygolem markets crypto --asset BTC --interval 5m    # BTC Up/Down 5m markets
+  polygolem markets crypto --asset ETH --interval 15m   # ETH Up/Down 15m markets
+  polygolem markets crypto --asset BTC --interval 5m --enrich  # With CLOB prices
+  polygolem markets crypto --limit 50                   # All crypto markets
+
+Assets: BTC, ETH, SOL, XRP, DOGE, BNB, HYPE, etc.
+Intervals: 5m, 15m, 1h, daily, weekly (matches title patterns)
+
+**Usage:**
+
+```bash
+polygolem markets crypto [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset` | `string` | `""` | crypto asset filter (BTC, ETH, SOL, XRP, DOGE, BNB, HYPE) |
+| `--enrich` | `bool` | `false` | enrich with CLOB price and spread (slower, one API call per market) |
+| `-h, --help` | `bool` | `false` | help for crypto |
+| `--interval` | `string` | `""` | interval filter (5m, 15m, 1h, daily, weekly) |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max results |
+
+### polygolem markets crypto-5m
+
+List active 5-minute crypto markets
+
+Resolve current and near-future 5-minute windows for supported crypto assets
+and return a consolidated view of every open accepting market.
+
+Assets scanned by default: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
+
+Use --hours-ahead 1 for the current window plus the next hour.
+Use --timezone America/Denver to add local window fields.
+Use --asset BTC --asset ETH to narrow the sweep.
+Use --enrich to fetch live CLOB prices and spreads (slower).
+
+**Usage:**
+
+```bash
+polygolem markets crypto-5m [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset` | `stringSlice` | `[]` | crypto asset(s) to scan (repeat or comma-separate: BTC,ETH,SOL) |
+| `--enrich` | `bool` | `false` | enrich with CLOB price and spread |
+| `-h, --help` | `bool` | `false` | help for crypto-5m |
+| `--hours-ahead` | `int` | `0` | include future 5m windows this many hours ahead |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--timezone` | `string` | `UTC` | display local window fields in this IANA timezone (example: America/Chicago) |
+
+### polygolem markets crypto-window
+
+Resolve the current crypto prediction window deterministically
+
+Resolve the current active crypto up/down market using the deterministic
+slug pattern (<asset>-updown-<interval>-<unix_timestamp>).
+
+This bypasses search and hits the exact current window directly — much faster
+and more reliable than discovery via public search.
+
+Examples:
+  polygolem markets crypto-window --asset BTC --interval 5m
+  polygolem markets crypto-window --asset ETH --interval 15m --enrich
+
+**Usage:**
+
+```bash
+polygolem markets crypto-window [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset` | `string` | `""` | crypto asset (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE) |
+| `--enrich` | `bool` | `false` | enrich with CLOB price and spread |
+| `-h, --help` | `bool` | `false` | help for crypto-window |
+| `--interval` | `string` | `""` | time interval (5m, 15m, 1h, 4h) |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem markets enrich
+
+Enrich market with CLOB data
+
+**Usage:**
+
+```bash
+polygolem markets enrich [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for enrich |
+| `--id` | `string` | `""` | market Gamma ID |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem markets market
+
+Get market details
+
+**Usage:**
+
+```bash
+polygolem markets market [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for market |
+| `--id` | `string` | `""` | market Gamma ID |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--slug` | `string` | `""` | market slug |
+
+### polygolem markets markets
+
+List Gamma markets
+
+**Usage:**
+
+```bash
+polygolem markets markets [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--active` | `bool` | `true` | filter active markets |
+| `--ascending` | `bool` | `false` | sort ascending |
+| `--closed` | `bool` | `false` | filter closed markets |
+| `-h, --help` | `bool` | `false` | help for markets |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max markets |
+| `--offset` | `int` | `0` | pagination offset |
+| `--order` | `string` | `""` | Gamma order field |
+| `--tag-id` | `int` | `0` | filter by tag id |
+
+### polygolem markets opportunities
+
+Scan read-only market opportunity candidates
+
+Scan public Polymarket data for read-only research candidates.
+
+Scanner types:
+  wide-spread
+  low-liquidity-high-volume
+  new-markets
+  closing-soon
+  negative-risk
+  crypto-5m
+
+Examples:
+  polygolem markets opportunities --type wide-spread --limit 20
+  polygolem markets opportunities --type closing-soon --hours 6
+  polygolem markets opportunities --type low-liquidity-high-volume
+  polygolem markets opportunities --type crypto-5m --asset BTC
+
+**Usage:**
+
+```bash
+polygolem markets opportunities [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--asset` | `string` | `""` | crypto asset for crypto-5m scanner (BTC, ETH, SOL, XRP, BNB, DOGE, HYPE) |
+| `-h, --help` | `bool` | `false` | help for opportunities |
+| `--hours` | `int` | `24` | closing-soon lookahead window in hours |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max opportunities |
+| `--type` | `string` | `wide-spread` | scanner type: wide-spread, low-liquidity-high-volume, new-markets, closing-soon, negative-risk, crypto-5m |
+
+### polygolem markets search
+
+Search markets and events
+
+**Usage:**
+
+```bash
+polygolem markets search [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for search |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `10` | max results |
+| `--query` | `string` | `""` | text query |
+
+### polygolem markets series
+
+List or fetch Gamma series
+
+**Usage:**
+
+```bash
+polygolem markets series [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--closed` | `bool` | `false` | filter closed series |
+| `-h, --help` | `bool` | `false` | help for series |
+| `--id` | `string` | `""` | series ID |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max series |
+| `--offset` | `int` | `0` | pagination offset |
+
+### polygolem markets tags
+
+List or fetch Gamma tags/categories
+
+**Usage:**
+
+```bash
+polygolem markets tags [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for tags |
+| `--id` | `string` | `""` | tag ID |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `100` | max tags |
+| `--offset` | `int` | `0` | pagination offset |
+| `--slug` | `string` | `""` | tag slug |
+
+### polygolem ping
 
 Check Gamma and CLOB API reachability
 
 **Usage:**
 
 ```bash
-polygolem health [flags]
+polygolem ping [flags]
 ```
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for health |
+| `-h, --help` | `bool` | `false` | help for ping |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem intel
-
-Read-only wallet intelligence
-
-Reproducible, read-only statistical signals about public wallet activity.
-
-Scores are computed only from public Data API rows (trades, activity, closed
-positions) with a named formula version and the source rows exposed. A signal is
-research context, not trading advice and not a finding of misconduct.
-
-**Usage:**
-
-```bash
-polygolem intel [flags]
-```
-
-**Subcommands:**
-
-| Command | Description |
-|---|---|
-| `polygolem intel alerts` | List user-scoped wallet dossier alerts |
-| `polygolem intel leaderboard` | List Data-API-ranked wallet intelligence rows |
-| `polygolem intel market-flow` | Summarize read-only market holder, trade, and open-interest flow |
-| `polygolem intel wallet` | Build a read-only wallet intelligence dossier |
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for intel |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem intel alerts
-
-List user-scoped wallet dossier alerts
-
-**Usage:**
-
-```bash
-polygolem intel alerts [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for alerts |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `100` | max source rows per Data API read |
-| `--min-score` | `int` | `70` | minimum candidate score |
-| `--user` | `string` | `""` | user wallet address |
-
-### polygolem intel leaderboard
-
-List Data-API-ranked wallet intelligence rows
-
-**Usage:**
-
-```bash
-polygolem intel leaderboard [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for leaderboard |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `20` | max leaderboard rows |
-| `--sort` | `string` | `data-api-rank` | sort mode (data-api-rank) |
-
-### polygolem intel market-flow
-
-Summarize read-only market holder, trade, and open-interest flow
-
-**Usage:**
-
-```bash
-polygolem intel market-flow <market-or-token-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for market-flow |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `100` | max holder/trade rows |
-
-### polygolem intel wallet
-
-Build a read-only wallet intelligence dossier
-
-**Usage:**
-
-```bash
-polygolem intel wallet <wallet> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for wallet |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--limit` | `int` | `100` | max source rows per Data API read |
-
-### polygolem live
-
-Inspect live gate status
-
-Inspect the advisory live-trading gates (POLYMARKET_LIVE_PROFILE, --confirm-live,
-preflight). Read-only: this reports whether you have opted into a live posture; it
-does not itself authorize spending. The enforced money guards are the per-order cap
-and the typed --confirm tokens documented in docs/SAFETY.md.
-
-**Usage:**
-
-```bash
-polygolem live [flags]
-```
-
-**Subcommands:**
-
-| Command | Description |
-|---|---|
-| `polygolem live status` | Inspect live gate status |
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for live |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem live status
-
-Inspect live gate status
-
-**Usage:**
-
-```bash
-polygolem live status [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `--confirm-live` | `bool` | `false` | include the live confirmation gate in status evaluation |
-| `-h, --help` | `bool` | `false` | help for status |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem marketdata
+### polygolem prices
 
 Live CLOB orderbook and share-price snapshots
 
 Live, normalized market-data snapshots per token. Read-only; no credentials.
 
-'marketdata live' subscribes to the public CLOB stream and reports the latest best
+'prices live' subscribes to the public CLOB stream and reports the latest best
 bid/ask, spread, midpoint, tick size, last trade, and book levels as they update —
 a higher-level, normalized view than the raw 'stream' events.
 
 **Usage:**
 
 ```bash
-polygolem marketdata [flags]
+polygolem prices [flags]
 ```
 
 **Subcommands:**
 
 | Command | Description |
 |---|---|
-| `polygolem marketdata crypto` | Get live marketdata snapshots for crypto markets |
-| `polygolem marketdata live` | Stream enriched CLOB market-data snapshots |
+| `polygolem prices crypto` | Get live marketdata snapshots for crypto markets |
+| `polygolem prices live` | Stream enriched CLOB market-data snapshots |
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for marketdata |
+| `-h, --help` | `bool` | `false` | help for prices |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem marketdata crypto
+### polygolem prices crypto
 
 Get live marketdata snapshots for crypto markets
 
@@ -2576,13 +2117,13 @@ Discover crypto markets and fetch current CLOB snapshots (price, spread,
 order book) for each. Returns a single snapshot per market — no continuous stream.
 
 Examples:
-  polygolem marketdata crypto --asset BTC --interval 5m    # BTC 5m snapshots
-  polygolem marketdata crypto --asset ETH --limit 10       # ETH market snapshots
+  polygolem prices crypto --asset BTC --interval 5m    # BTC 5m snapshots
+  polygolem prices crypto --asset ETH --limit 10       # ETH market snapshots
 
 **Usage:**
 
 ```bash
-polygolem marketdata crypto [flags]
+polygolem prices crypto [flags]
 ```
 
 **Flags:**
@@ -2595,14 +2136,14 @@ polygolem marketdata crypto [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--limit` | `int` | `20` | max markets |
 
-### polygolem marketdata live
+### polygolem prices live
 
 Stream enriched CLOB market-data snapshots
 
 **Usage:**
 
 ```bash
-polygolem marketdata live [flags]
+polygolem prices live [flags]
 ```
 
 **Flags:**
@@ -2617,168 +2158,53 @@ polygolem marketdata live [flags]
 | `--max-messages` | `int` | `0` | stop after this many snapshots; 0 streams until interrupted |
 | `--url` | `string` | `wss://ws-subscriptions-clob.polymarket.com/ws/market` | WebSocket URL |
 
-### polygolem orderbook
+### polygolem risk
 
-Read CLOB order book data
+Inspect live gate status
 
-Read the live CLOB order book for a token. Read-only; no credentials.
-
-Fetch bids/asks, best bid/ask, midpoint, and spread for a token id (get one from
-'polygolem discover'). For a continuously updated view, see 'polygolem marketdata
-live'; for the raw event stream, see 'polygolem stream'.
+Inspect the advisory live-trading gates (POLYMARKET_LIVE_PROFILE, --confirm-live,
+preflight). Read-only: this reports whether you have opted into a live posture; it
+does not itself authorize spending. The enforced money guards are the per-order cap
+and the typed --confirm tokens documented in docs/SAFETY.md.
 
 **Usage:**
 
 ```bash
-polygolem orderbook [flags]
+polygolem risk [flags]
 ```
 
 **Subcommands:**
 
 | Command | Description |
 |---|---|
-| `polygolem orderbook fee-rate` | Get fee rate in bps |
-| `polygolem orderbook get` | Get L2 order book |
-| `polygolem orderbook last-trade` | Get last trade price |
-| `polygolem orderbook midpoint` | Get midpoint price |
-| `polygolem orderbook price` | Get best price (BUY side) |
-| `polygolem orderbook spread` | Get bid-ask spread |
-| `polygolem orderbook tick-size` | Get minimum tick size |
+| `polygolem risk status` | Inspect live gate status |
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for orderbook |
+| `-h, --help` | `bool` | `false` | help for risk |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem orderbook fee-rate
+### polygolem risk status
 
-Get fee rate in bps
+Inspect live gate status
 
 **Usage:**
 
 ```bash
-polygolem orderbook fee-rate [flags]
+polygolem risk status [flags]
 ```
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for fee-rate |
+| `--confirm-live` | `bool` | `false` | include the live confirmation gate in status evaluation |
+| `-h, --help` | `bool` | `false` | help for status |
 | `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
 
-### polygolem orderbook get
-
-Get L2 order book
-
-**Usage:**
-
-```bash
-polygolem orderbook get [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for get |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem orderbook last-trade
-
-Get last trade price
-
-**Usage:**
-
-```bash
-polygolem orderbook last-trade [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for last-trade |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem orderbook midpoint
-
-Get midpoint price
-
-**Usage:**
-
-```bash
-polygolem orderbook midpoint [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for midpoint |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem orderbook price
-
-Get best price (BUY side)
-
-**Usage:**
-
-```bash
-polygolem orderbook price [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for price |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem orderbook spread
-
-Get bid-ask spread
-
-**Usage:**
-
-```bash
-polygolem orderbook spread [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for spread |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem orderbook tick-size
-
-Get minimum tick size
-
-**Usage:**
-
-```bash
-polygolem orderbook tick-size [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for tick-size |
-| `--json` | `bool` | `false` | emit JSON output |
-| `--token-id` | `string` | `""` | CLOB token ID |
-
-### polygolem paper
+### polygolem sim
 
 Paper trading simulation for crypto markets
 
@@ -2788,35 +2214,35 @@ Paper mode holds a local cash/position ledger and prices simulations against liv
 public market data. It never loads a private key, signs, or submits anything — a
 safe way to rehearse the flow before trading real funds.
 
-  polygolem paper reset --cash 100
-  polygolem paper trade --asset BTC --interval 5m --side up --size 1
-  polygolem paper positions
+  polygolem sim reset --cash 100
+  polygolem sim trade --asset BTC --interval 5m --side up --size 1
+  polygolem sim positions
 
 **Usage:**
 
 ```bash
-polygolem paper [flags]
+polygolem sim [flags]
 ```
 
 **Subcommands:**
 
 | Command | Description |
 |---|---|
-| `polygolem paper buy` | Simulate a buy order (paper trading) |
-| `polygolem paper crypto` | Discover crypto markets and paper trade |
-| `polygolem paper positions` | Show current paper trading positions |
-| `polygolem paper reset` | Reset paper trading state |
-| `polygolem paper sell` | Simulate a sell order (paper trading) |
-| `polygolem paper trade` | Paper trade the current crypto window in one command |
+| `polygolem sim buy` | Simulate a buy order (paper trading) |
+| `polygolem sim crypto` | Discover crypto markets and paper trade |
+| `polygolem sim positions` | Show current paper trading positions |
+| `polygolem sim reset` | Reset paper trading state |
+| `polygolem sim sell` | Simulate a sell order (paper trading) |
+| `polygolem sim trade` | Paper trade the current crypto window in one command |
 
 **Flags:**
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for paper |
+| `-h, --help` | `bool` | `false` | help for sim |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem paper buy
+### polygolem sim buy
 
 Simulate a buy order (paper trading)
 
@@ -2826,7 +2252,7 @@ Uses current best ask price if --price is not specified.
 **Usage:**
 
 ```bash
-polygolem paper buy [flags]
+polygolem sim buy [flags]
 ```
 
 **Flags:**
@@ -2839,20 +2265,20 @@ polygolem paper buy [flags]
 | `--size` | `string` | `1` | number of shares |
 | `--token-id` | `string` | `""` | CLOB token ID to buy |
 
-### polygolem paper crypto
+### polygolem sim crypto
 
 Discover crypto markets and paper trade
 
 Find active crypto markets and get token IDs for paper trading.
 
 Examples:
-  polygolem paper crypto --asset BTC --interval 5m
-  polygolem paper crypto --asset ETH --limit 10
+  polygolem sim crypto --asset BTC --interval 5m
+  polygolem sim crypto --asset ETH --limit 10
 
 **Usage:**
 
 ```bash
-polygolem paper crypto [flags]
+polygolem sim crypto [flags]
 ```
 
 **Flags:**
@@ -2865,14 +2291,14 @@ polygolem paper crypto [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--limit` | `int` | `10` | max markets |
 
-### polygolem paper positions
+### polygolem sim positions
 
 Show current paper trading positions
 
 **Usage:**
 
 ```bash
-polygolem paper positions [flags]
+polygolem sim positions [flags]
 ```
 
 **Flags:**
@@ -2882,14 +2308,14 @@ polygolem paper positions [flags]
 | `-h, --help` | `bool` | `false` | help for positions |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem paper reset
+### polygolem sim reset
 
 Reset paper trading state
 
 **Usage:**
 
 ```bash
-polygolem paper reset [flags]
+polygolem sim reset [flags]
 ```
 
 **Flags:**
@@ -2900,7 +2326,7 @@ polygolem paper reset [flags]
 | `-h, --help` | `bool` | `false` | help for reset |
 | `--json` | `bool` | `false` | emit JSON output |
 
-### polygolem paper sell
+### polygolem sim sell
 
 Simulate a sell order (paper trading)
 
@@ -2910,7 +2336,7 @@ Uses current best bid price if --price is not specified.
 **Usage:**
 
 ```bash
-polygolem paper sell [flags]
+polygolem sim sell [flags]
 ```
 
 **Flags:**
@@ -2923,20 +2349,20 @@ polygolem paper sell [flags]
 | `--size` | `string` | `1` | number of shares |
 | `--token-id` | `string` | `""` | CLOB token ID to sell |
 
-### polygolem paper trade
+### polygolem sim trade
 
 Paper trade the current crypto window in one command
 
 Resolve the current crypto window, fetch live price, and execute a paper trade.
 
 Examples:
-  polygolem paper trade --asset BTC --interval 5m --side up --size 1
-  polygolem paper trade --asset ETH --interval 15m --side down --size 2 --price 0.48
+  polygolem sim trade --asset BTC --interval 5m --side up --size 1
+  polygolem sim trade --asset ETH --interval 15m --side down --size 2 --price 0.48
 
 **Usage:**
 
 ```bash
-polygolem paper trade [flags]
+polygolem sim trade [flags]
 ```
 
 **Flags:**
@@ -2952,69 +2378,6 @@ polygolem paper trade [flags]
 | `--size` | `float64` | `1` | number of shares |
 | `--token-id` | `string` | `""` | bypass resolution and trade this token ID directly |
 
-### polygolem preflight
-
-Inspect local CLI readiness
-
-**Usage:**
-
-```bash
-polygolem preflight [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for preflight |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem relayer
-
-Inspect Polymarket relayer state
-
-Inspect Polymarket V2 relayer state. Read-only.
-
-Look up a relayer transaction by id to see its state and on-chain hash. The
-wallet lifecycle mutations the relayer sponsors (deploy, batch, approvals) are
-driven from 'polygolem deposit-wallet', not here.
-
-**Usage:**
-
-```bash
-polygolem relayer [flags]
-```
-
-**Subcommands:**
-
-| Command | Description |
-|---|---|
-| `polygolem relayer transaction` | Get relayer transaction state |
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for relayer |
-| `--json` | `bool` | `false` | emit JSON output |
-
-### polygolem relayer transaction
-
-Get relayer transaction state
-
-**Usage:**
-
-```bash
-polygolem relayer transaction <tx-id> [flags]
-```
-
-**Flags:**
-
-| Flag | Type | Default | Description |
-|---|---|---|---|
-| `-h, --help` | `bool` | `false` | help for transaction |
-| `--json` | `bool` | `false` | emit JSON output |
-
 ### polygolem stream
 
 Polymarket WebSocket streams
@@ -3023,7 +2386,7 @@ Subscribe to Polymarket's real-time WebSocket channels.
 
 'stream market' and 'stream crypto' need no credentials; 'stream user' streams your
 own order/trade events and needs CLOB L2 credentials. These emit raw channel events —
-for a normalized latest-snapshot view, use 'polygolem marketdata live' instead.
+for a normalized latest-snapshot view, use 'polygolem prices live' instead.
 
 **Usage:**
 
@@ -3128,6 +2491,52 @@ polygolem stream user [flags]
 | `--stats` | `bool` | `false` | emit stream lifecycle and message counters when the stream exits |
 | `--url` | `string` | `wss://ws-subscriptions-clob.polymarket.com/ws/user` | WebSocket URL |
 
+### polygolem tx
+
+Inspect Polymarket relayer state
+
+Inspect Polymarket V2 relayer state. Read-only.
+
+Look up a relayer transaction by id to see its state and on-chain hash. The
+wallet lifecycle mutations the relayer sponsors (deploy, batch, approvals) are
+driven from 'polygolem wallet', not here.
+
+**Usage:**
+
+```bash
+polygolem tx [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem tx transaction` | Get relayer transaction state |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for tx |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem tx transaction
+
+Get relayer transaction state
+
+**Usage:**
+
+```bash
+polygolem tx transaction <tx-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for transaction |
+| `--json` | `bool` | `false` | emit JSON output |
+
 ### polygolem version
 
 Print version
@@ -3144,3 +2553,594 @@ polygolem version [flags]
 |---|---|---|---|
 | `-h, --help` | `bool` | `false` | help for version |
 | `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem wallet
+
+Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
+
+Deposit-wallet lifecycle for Polymarket V2 (POLY_1271) trading.
+
+Polymarket V2 requires a deposit wallet as the order maker/signer; your EOA is the
+signing key. The lifecycle is: derive -> deploy -> approve -> fund -> trade -> redeem.
+
+Read-only: derive, status, nonce, redeemable, settlement-status.
+
+Live-money (signs and submits real transactions): deploy, approve, approve-adapters,
+batch, fund, onboard, redeem. Each of these requires a typed --confirm token so a
+live submission cannot fire from a single mistyped flag — see docs/SAFETY.md for the
+token per command.
+
+Quickest path (deploy + approve + enable trading + fund):
+  polygolem wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
+
+**Usage:**
+
+```bash
+polygolem wallet [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem wallet approve` | Build and optionally submit approval calls for the deposit wallet |
+| `polygolem wallet approve-adapters` | Approve V2 collateral adapters for redeem (one-shot per wallet) |
+| `polygolem wallet approve-auto-redeem` | Enable Get Paid Instantly auto-redemption (one-shot per wallet) |
+| `polygolem wallet batch` | Sign and submit a deposit wallet WALLET batch |
+| `polygolem wallet deploy` | Deploy the deposit wallet via relayer WALLET-CREATE |
+| `polygolem wallet derive` | Derive the deterministic deposit wallet address |
+| `polygolem wallet enable-trading` | Complete the UI Enable Trading signs for an existing deposit wallet |
+| `polygolem wallet fund` | Transfer pUSD from EOA to the deposit wallet |
+| `polygolem wallet nonce` | Get the current WALLET nonce for the owner |
+| `polygolem wallet onboard` | Full deposit wallet onboarding: deploy + approve + enable trading + fund |
+| `polygolem wallet redeem` | Redeem winning deposit-wallet positions via the V2 collateral adapter |
+| `polygolem wallet redeemable` | List redeemable positions held by the deposit wallet |
+| `polygolem wallet settlement-status` | Check whether the deposit wallet is ready to redeem V2 winners |
+| `polygolem wallet status` | Check deposit wallet deployment status or transaction state |
+| `polygolem wallet swap-pol-pusd` | Swap native POL into an exact amount of pUSD via Uniswap V3 |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for wallet |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem wallet approve
+
+Build and optionally submit approval calls for the deposit wallet
+
+Build the standard 6-call approval batch (pUSD + CTF for all 3 V2 exchange spenders).
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm APPROVE_TRADING to
+authorize the live-money WALLET batch.
+
+**Usage:**
+
+```bash
+polygolem wallet approve [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_TRADING' when --submit is set |
+| `-h, --help` | `bool` | `false` | help for approve |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--submit` | `bool` | `false` | sign and submit the approval batch (requires --confirm APPROVE_TRADING) |
+
+### polygolem wallet approve-adapters
+
+Approve V2 collateral adapters for redeem (one-shot per wallet)
+
+Submits the 4-call adapter approval batch (pUSD approve + CTF setApprovalForAll
+for CtfCollateralAdapter and NegRiskCtfCollateralAdapter). Required once per
+deposit wallet before V2 redeem will succeed. Idempotent.
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm APPROVE_ADAPTERS to
+authorize the live-money WALLET batch.
+
+NOTE: The V2 deposit-wallet path is non-negotiable: the owner signs an EIP-712
+WALLET batch, the relayer submits it through the deposit-wallet factory, and
+the wallet call targets the V2 collateral adapters. If Polymarket's relayer
+allowlist rejects these calls with HTTP 400 "not in the allowed list", first
+verify the adapter addresses against Polymarket's current contract reference;
+if they match, stop.
+The wallet implementation gates execute() behind onlyFactory and the factory
+gates proxy() behind onlyOperator, so a direct EOA bypass is not possible.
+Do not fall back to raw ConditionalTokens.redeemPositions, SAFE, or PROXY;
+V2 deposit-wallet redeem must route through the collateral adapters.
+
+**Usage:**
+
+```bash
+polygolem wallet approve-adapters [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_ADAPTERS' when --submit is set |
+| `-h, --help` | `bool` | `false` | help for approve-adapters |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--submit` | `bool` | `false` | sign and submit the adapter approval batch (requires --confirm APPROVE_ADAPTERS) |
+
+### polygolem wallet approve-auto-redeem
+
+Enable Get Paid Instantly auto-redemption (one-shot per wallet)
+
+Submits the 3-call auto-redeem approval batch (CTF setApprovalForAll for
+CtfAutoRedeem and AutoRedeemer, plus PositionManager setApprovalForAll for
+AutoRedeemer). This is Polymarket's "Get Paid Instantly" one-time approval:
+once mined, winning positions are redeemed automatically after resolution
+and the payout lands in the wallet balance with no manual redeem step.
+
+Auto-redemption starts after the wallet's next trade; positions that
+already resolved before enabling must be redeemed manually one last time
+(see deposit-wallet redeem). The grant stays on permanently until the
+wallet revokes the operators. Idempotent.
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm APPROVE_AUTO_REDEEM to
+authorize the live-money WALLET batch.
+
+**Usage:**
+
+```bash
+polygolem wallet approve-auto-redeem [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_AUTO_REDEEM' when --submit is set |
+| `-h, --help` | `bool` | `false` | help for approve-auto-redeem |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--submit` | `bool` | `false` | sign and submit the auto-redeem approval batch (requires --confirm APPROVE_AUTO_REDEEM) |
+
+### polygolem wallet batch
+
+Sign and submit a deposit wallet WALLET batch
+
+Sign an EIP-712 DepositWallet.Batch message and submit to the relayer.
+
+The --calls-json must be a JSON array of DepositWalletCall objects:
+  [{"target":"0x...","value":"0","data":"0x..."}, ...]
+
+This command submits real transactions from the deposit wallet: it requires
+--confirm SUBMIT_BATCH to authorize the live-money WALLET batch.
+
+**Usage:**
+
+```bash
+polygolem wallet batch [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--calls-json` | `string` | `""` | JSON array of DepositWalletCall objects |
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'SUBMIT_BATCH' |
+| `--deadline` | `int64` | `1800` | deadline seconds from now |
+| `-h, --help` | `bool` | `false` | help for batch |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--nonce` | `string` | `""` | WALLET nonce (default: fetched from relayer) |
+| `--wallet` | `string` | `""` | deposit wallet address (default: derived from EOA) |
+
+### polygolem wallet deploy
+
+Deploy the deposit wallet via relayer WALLET-CREATE
+
+**Usage:**
+
+```bash
+polygolem wallet deploy [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for deploy |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--rpc-url` | `string` | `""` | Polygon RPC URL (default: public node) |
+| `--timeout` | `duration` | `2m0s` | max wait time for --wait |
+| `--wait` | `bool` | `false` | poll until transaction reaches terminal state |
+
+### polygolem wallet derive
+
+Derive the deterministic deposit wallet address
+
+**Usage:**
+
+```bash
+polygolem wallet derive [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for derive |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem wallet enable-trading
+
+Complete the UI Enable Trading signs for an existing deposit wallet
+
+Signs the same two prompts polymarket.com shows after deposit-wallet deploy:
+
+1. ClobAuth — EOA-signed message to create or derive CLOB API keys.
+2. Approve Tokens — DepositWallet.Batch signing for the 6-call UI token
+   approval batch: pUSD -> CTF, USDC.e -> CollateralOnramp, and the Combos
+   grants (pUSD approve + PositionManager setApprovalForAll for both the
+   Combos Router and Combos Exchange).
+
+Use this when the wallet is already deployed but the UI still shows
+"Enable Trading" or "Approve Tokens". If relayer credentials are missing,
+Polygolem signs SIWE locally, registers the profile if needed, mints and
+persists the V2 relayer key, then continues automatically.
+
+The browser may still ask for a local ClobAuth signature because
+polymarket.com stores browser-local API state; this command prepares
+Polygolem's headless trading path and submits the on-chain deposit-wallet
+approvals.
+
+**Usage:**
+
+```bash
+polygolem wallet enable-trading [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--dry-run` | `bool` | `false` | build and validate typed data without signing, creating API keys, or submitting approvals |
+| `-h, --help` | `bool` | `false` | help for enable-trading |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem wallet fund
+
+Transfer pUSD from EOA to the deposit wallet
+
+Send pUSD from the EOA to the deposit wallet address via direct ERC-20 transfer.
+
+--amount is in pUSD (e.g. "0.71" for 0.71 pUSD). Uses 6 decimals internally.
+Requires POL for gas on Polygon.
+
+**Usage:**
+
+```bash
+polygolem wallet fund [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--amount` | `string` | `""` | pUSD amount to transfer (e.g. 0.71) |
+| `-h, --help` | `bool` | `false` | help for fund |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--rpc-url` | `string` | `""` | Polygon RPC URL (default: public node) |
+
+### polygolem wallet nonce
+
+Get the current WALLET nonce for the owner
+
+**Usage:**
+
+```bash
+polygolem wallet nonce [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for nonce |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem wallet onboard
+
+Full deposit wallet onboarding: deploy + approve + enable trading + fund
+
+Run the complete deposit wallet setup sequence:
+
+1. Derive the deterministic deposit wallet address
+2. Deploy via WALLET-CREATE (skip with --skip-deploy if already deployed)
+3. Submit the 10-call approval batch for trading and V2 settlement adapters
+   (skip with --skip-approve)
+4. Sign ClobAuth and submit the 2-call UI Enable Trading approval batch
+   (skip with --skip-enable-trading)
+5. Transfer pUSD from EOA to deposit wallet (requires --fund-amount)
+
+After onboarding, sync CLOB:
+  polygolem exchange update-balance --asset-type collateral
+
+If relayer credentials are missing, Polygolem signs SIWE locally, registers
+the profile if needed, mints and persists the V2 relayer key, then continues
+automatically.
+
+This command deploys, approves, and (with --fund-amount) moves real funds, so
+it requires --confirm ONBOARD_WALLET to authorize the live-money sequence.
+
+**Usage:**
+
+```bash
+polygolem wallet onboard [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'ONBOARD_WALLET' |
+| `--fund-amount` | `string` | `""` | pUSD amount to transfer from EOA to deposit wallet (e.g. 0.71) |
+| `-h, --help` | `bool` | `false` | help for onboard |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--skip-approve` | `bool` | `false` | skip approval batch |
+| `--skip-deploy` | `bool` | `false` | skip WALLET-CREATE (wallet already deployed) |
+| `--skip-enable-trading` | `bool` | `false` | skip ClobAuth and UI Enable Trading token approval signs |
+
+### polygolem wallet redeem
+
+Redeem winning deposit-wallet positions via the V2 collateral adapter
+
+Builds a WALLET batch that calls redeemPositions on the V2 collateral
+adapter (CtfCollateralAdapter for binary markets, NegRiskCtfCollateralAdapter
+for neg-risk). The adapter pulls the wallet's CTF tokens, redeems through
+the legacy CT with USDC.e, wraps the proceeds back into pUSD, and sends pUSD
+to the deposit wallet.
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm REDEEM_WINNERS to
+authorize the live-money WALLET batch.
+
+Pre-check: requires CTF.setApprovalForAll(wallet, adapter) = true for
+every adapter targeted by the redeem set. If any approval is missing,
+fails closed with a pointer to 'deposit-wallet approve-adapters'.
+
+NOTE: The V2 deposit-wallet redeem path is non-negotiable: the owner signs an
+EIP-712 WALLET batch, the relayer submits it through the deposit-wallet
+factory, and the wallet call targets CtfCollateralAdapter or
+NegRiskCtfCollateralAdapter. If Polymarket's relayer rejects adapter approval
+or redeem calls with "not in the allowed list", first verify the adapter
+addresses against Polymarket's current contract reference; if they match, stop
+and surface an upstream blocker. There is no direct EOA bypass, no raw
+ConditionalTokens fallback, and no SAFE/PROXY shortcut for deposit-wallet
+positions.
+
+**Usage:**
+
+```bash
+polygolem wallet redeem [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'REDEEM_WINNERS' when --submit is set |
+| `-h, --help` | `bool` | `false` | help for redeem |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `10` | max positions per WALLET batch (deduplicated by conditionID) |
+| `--rpc-url` | `string` | `""` | Polygon RPC URL for the adapter-approval pre-check (default: POLYGON_RPC_URL or public node) |
+| `--submit` | `bool` | `false` | sign and submit the redeem batch (requires --confirm REDEEM_WINNERS) |
+
+### polygolem wallet redeemable
+
+List redeemable positions held by the deposit wallet
+
+Read-only list of positions where the Data API redeemable=true
+flag is set. The 'user' parameter is the deposit wallet (not the EOA),
+since POLY_1271 positions live in the wallet.
+
+Use this before running 'redeem' to see what would be submitted.
+
+**Usage:**
+
+```bash
+polygolem wallet redeemable [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for redeemable |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem wallet settlement-status
+
+Check whether the deposit wallet is ready to redeem V2 winners
+
+Read-only settlement readiness gate for V2 deposit-wallet trading.
+
+Checks:
+  - Deposit wallet has bytecode on Polygon
+  - Polymarket relayer credentials are configured
+  - Data API positions can be queried for the deposit wallet
+  - CTF.setApprovalForAll(wallet, CtfCollateralAdapter) is true
+  - CTF.setApprovalForAll(wallet, NegRiskCtfCollateralAdapter) is true
+
+This command does not sign, submit, approve, redeem, or try a fallback. V2
+deposit-wallet settlement is relayer + collateral adapter only: no direct EOA
+submission path, no raw ConditionalTokens path, and no SAFE/PROXY shortcut.
+
+**Usage:**
+
+```bash
+polygolem wallet settlement-status [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for settlement-status |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--rpc-url` | `string` | `""` | Polygon RPC URL for code and adapter-approval checks (default: POLYGON_RPC_URL or public node) |
+
+### polygolem wallet status
+
+Check deposit wallet deployment status or transaction state
+
+**Usage:**
+
+```bash
+polygolem wallet status [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--check-enable-trading` | `bool` | `false` | validate ClobAuth signing and UI Enable Trading token approvals |
+| `-h, --help` | `bool` | `false` | help for status |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--rpc-url` | `string` | `""` | Polygon RPC URL for --check-enable-trading allowance checks (default: POLYGON_RPC_URL or public node) |
+| `--tx-id` | `string` | `""` | transaction ID to poll |
+
+### polygolem wallet swap-pol-pusd
+
+Swap native POL into an exact amount of pUSD via Uniswap V3
+
+Swap native POL on the EOA into exactly --out-pusd of pUSD via Uniswap V3
+on Polygon (multihop WMATIC → USDC.e → pUSD, 0.05% fee per leg). Excess POL
+is refunded by the router via multicall(refundETH).
+
+The pUSD lands on the EOA. Use 'polygolem wallet fund --amount X'
+afterwards to move pUSD into the deposit wallet.
+
+--out-pusd is the exact pUSD amount to receive (e.g. "0.72" for 0.72 pUSD).
+--max-pol-in caps the POL the router may consume (e.g. "10" for 10 POL).
+
+**Usage:**
+
+```bash
+polygolem wallet swap-pol-pusd [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for swap-pol-pusd |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--max-pol-in` | `string` | `""` | max POL the router may consume (e.g. 10) |
+| `--out-pusd` | `string` | `""` | exact pUSD amount to receive (e.g. 0.72) |
+| `--rpc-url` | `string` | `""` | Polygon RPC URL (default: public node) |
+
+### polygolem wallets
+
+Read-only wallet intelligence
+
+Reproducible, read-only statistical signals about public wallet activity.
+
+Scores are computed only from public Data API rows (trades, activity, closed
+positions) with a named formula version and the source rows exposed. A signal is
+research context, not trading advice and not a finding of misconduct.
+
+**Usage:**
+
+```bash
+polygolem wallets [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem wallets alerts` | List user-scoped wallet dossier alerts |
+| `polygolem wallets leaderboard` | List Data-API-ranked wallet intelligence rows |
+| `polygolem wallets market-flow` | Summarize read-only market holder, trade, and open-interest flow |
+| `polygolem wallets wallet` | Build a read-only wallet intelligence dossier |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for wallets |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem wallets alerts
+
+List user-scoped wallet dossier alerts
+
+**Usage:**
+
+```bash
+polygolem wallets alerts [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for alerts |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `100` | max source rows per Data API read |
+| `--min-score` | `int` | `70` | minimum candidate score |
+| `--user` | `string` | `""` | user wallet address |
+
+### polygolem wallets leaderboard
+
+List Data-API-ranked wallet intelligence rows
+
+**Usage:**
+
+```bash
+polygolem wallets leaderboard [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for leaderboard |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max leaderboard rows |
+| `--sort` | `string` | `data-api-rank` | sort mode (data-api-rank) |
+
+### polygolem wallets market-flow
+
+Summarize read-only market holder, trade, and open-interest flow
+
+**Usage:**
+
+```bash
+polygolem wallets market-flow <market-or-token-id> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for market-flow |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `100` | max holder/trade rows |
+
+### polygolem wallets wallet
+
+Build a read-only wallet intelligence dossier
+
+**Usage:**
+
+```bash
+polygolem wallets wallet <wallet> [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for wallet |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `100` | max source rows per Data API read |

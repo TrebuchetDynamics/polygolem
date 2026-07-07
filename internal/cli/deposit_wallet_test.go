@@ -165,7 +165,7 @@ func TestDepositWalletStatusOutputsWalletNonce(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "relayer-key")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "status")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "status")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -222,7 +222,7 @@ func TestDepositWalletStatusUsesOnchainCodeWhenRelayerFalse(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "relayer-key")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "status")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "status")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -276,7 +276,7 @@ func TestDepositWalletDeploySkipsWalletCreateWhenCodeExists(t *testing.T) {
 	t.Setenv("POLYMARKET_RELAYER_URL", server.URL)
 	t.Setenv("POLYGON_RPC_URL", server.URL)
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "deploy", "--wait")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "deploy", "--wait")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -294,7 +294,7 @@ func TestDepositWalletDeploySkipsWalletCreateWhenCodeExists(t *testing.T) {
 }
 
 func TestDepositWalletApproveAdaptersDryRun(t *testing.T) {
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve-adapters")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "approve-adapters")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -318,7 +318,7 @@ func TestDepositWalletApproveAdaptersDryRun(t *testing.T) {
 
 func TestDepositWalletApproveAdaptersRequiresConfirm(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
-	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve-adapters", "--submit")
+	_, stderr, err := executeRootForTest("--json", "wallet", "approve-adapters", "--submit")
 	if err == nil {
 		t.Fatalf("expected error when --submit is set without --confirm; stderr=%s", stderr)
 	}
@@ -329,7 +329,7 @@ func TestDepositWalletApproveAdaptersRequiresConfirm(t *testing.T) {
 
 func TestDepositWalletBatchRequiresConfirm(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
-	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "batch", "--calls-json", `[{"target":"0x0000000000000000000000000000000000000001","value":"0","data":"0x"}]`)
+	_, stderr, err := executeRootForTest("--json", "wallet", "batch", "--calls-json", `[{"target":"0x0000000000000000000000000000000000000001","value":"0","data":"0x"}]`)
 	if err == nil {
 		t.Fatalf("expected error when batch runs without --confirm; stderr=%s", stderr)
 	}
@@ -340,7 +340,7 @@ func TestDepositWalletBatchRequiresConfirm(t *testing.T) {
 
 func TestDepositWalletApproveSubmitRequiresConfirm(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
-	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve", "--submit")
+	_, stderr, err := executeRootForTest("--json", "wallet", "approve", "--submit")
 	if err == nil {
 		t.Fatalf("expected error when --submit is set without --confirm; stderr=%s", stderr)
 	}
@@ -351,7 +351,7 @@ func TestDepositWalletApproveSubmitRequiresConfirm(t *testing.T) {
 
 func TestDepositWalletOnboardRequiresConfirm(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
-	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy")
+	_, stderr, err := executeRootForTest("--json", "wallet", "onboard", "--skip-deploy")
 	if err == nil {
 		t.Fatalf("expected error when onboard runs without --confirm; stderr=%s", stderr)
 	}
@@ -362,7 +362,7 @@ func TestDepositWalletOnboardRequiresConfirm(t *testing.T) {
 
 func TestDepositWalletApproveDryRunNeedsNoConfirm(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "approve")
 	if err != nil {
 		t.Fatalf("dry-run approve should not error: %v\nstderr=%s", err, stderr)
 	}
@@ -410,7 +410,7 @@ func TestDepositWalletApproveAdaptersSubmitsBatch(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "v2-uuid")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve-adapters", "--submit", "--confirm", "APPROVE_ADAPTERS")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "approve-adapters", "--submit", "--confirm", "APPROVE_ADAPTERS")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -495,7 +495,7 @@ func TestDepositWalletOnboardIncludesEnableTradingSigns(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "v2-uuid")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy", "--confirm", "ONBOARD_WALLET")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "onboard", "--skip-deploy", "--confirm", "ONBOARD_WALLET")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -571,7 +571,7 @@ func TestDepositWalletEnableTradingSubmitsSigns(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "v2-uuid")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "enable-trading")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "enable-trading")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -615,7 +615,7 @@ func TestDepositWalletEnableTradingDryRunDoesNotSubmit(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "v2-uuid")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "enable-trading", "--dry-run")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "enable-trading", "--dry-run")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -694,7 +694,7 @@ func TestDepositWalletEnableTradingAutoMintsRelayerKeyWhenMissing(t *testing.T) 
 	t.Setenv("POLYMARKET_BUILDER_SECRET", "")
 	t.Setenv("POLYMARKET_BUILDER_PASSPHRASE", "")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "enable-trading")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "enable-trading")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -760,7 +760,7 @@ func TestDepositWalletStatusCheckEnableTradingValidatesSignaturesAndAllowances(t
 	t.Setenv("POLYMARKET_CLOB_SECRET", "configured-clob-secret")
 	t.Setenv("POLYMARKET_CLOB_PASSPHRASE", "configured-clob-pass")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "status", "--check-enable-trading")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "status", "--check-enable-trading")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -832,7 +832,7 @@ func TestDepositWalletStatusCheckEnableTradingTreatsDerivableCLOBKeyAsReady(t *t
 	t.Setenv("POLYMARKET_CLOB_SECRET", "")
 	t.Setenv("POLYMARKET_CLOB_PASSPHRASE", "")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "status", "--check-enable-trading")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "status", "--check-enable-trading")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -858,7 +858,7 @@ func TestDepositWalletStatusCheckEnableTradingTreatsDerivableCLOBKeyAsReady(t *t
 const redeemTestPrivateKey = "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
 
 func TestDepositWalletRedeemHelpRejectsDirectCTFFallback(t *testing.T) {
-	stdout, stderr, err := executeRootForTest("deposit-wallet", "redeem", "--help")
+	stdout, stderr, err := executeRootForTest("wallet", "redeem", "--help")
 	if err != nil {
 		t.Fatalf("Execute error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -918,7 +918,7 @@ func TestDepositWalletSettlementStatusReportsMissingAdapterApproval(t *testing.T
 	t.Setenv("RELAYER_API_KEY", "v2-uuid")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "settlement-status")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "settlement-status")
 	if err != nil {
 		t.Fatalf("Execute error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -977,7 +977,7 @@ func TestDepositWalletRedeemableJSON(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", redeemTestPrivateKey)
 	t.Setenv("POLYMARKET_DATA_API_URL", dataSrv.URL)
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "redeemable")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "redeemable")
 	if err != nil {
 		t.Fatalf("Execute error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -1003,7 +1003,7 @@ func TestDepositWalletRedeemDryRunPrintsCalls(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", redeemTestPrivateKey)
 	t.Setenv("POLYMARKET_DATA_API_URL", dataSrv.URL)
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "redeem")
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "redeem")
 	if err != nil {
 		t.Fatalf("Execute error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -1045,7 +1045,7 @@ func TestDepositWalletRedeemRequiresConfirm(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", redeemTestPrivateKey)
 	t.Setenv("POLYMARKET_DATA_API_URL", dataSrv.URL)
 
-	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "redeem", "--submit")
+	_, stderr, err := executeRootForTest("--json", "wallet", "redeem", "--submit")
 	if err == nil {
 		t.Fatalf("expected error when --submit set without --confirm; stderr=%s", stderr)
 	}
@@ -1092,7 +1092,7 @@ func TestDepositWalletRedeemRefusesWithoutAdapterApproval(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 	t.Setenv("POLYGON_RPC_URL", rpcSrv.URL)
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "redeem", "--submit", "--confirm", "REDEEM_WINNERS", "--rpc-url", rpcSrv.URL)
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "redeem", "--submit", "--confirm", "REDEEM_WINNERS", "--rpc-url", rpcSrv.URL)
 	if err != nil {
 		t.Fatalf("Execute error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -1153,7 +1153,7 @@ func TestDepositWalletRedeemHappyPathSubmits(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 	t.Setenv("POLYGON_RPC_URL", rpcSrv.URL)
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "redeem", "--submit", "--confirm", "REDEEM_WINNERS", "--rpc-url", rpcSrv.URL)
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "redeem", "--submit", "--confirm", "REDEEM_WINNERS", "--rpc-url", rpcSrv.URL)
 	if err != nil {
 		t.Fatalf("Execute error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -1218,7 +1218,7 @@ func TestDepositWalletRedeemSurfacesUpstreamAllowlistBlock(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 	t.Setenv("POLYGON_RPC_URL", rpcSrv.URL)
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "redeem", "--submit", "--confirm", "REDEEM_WINNERS", "--rpc-url", rpcSrv.URL)
+	stdout, stderr, err := executeRootForTest("--json", "wallet", "redeem", "--submit", "--confirm", "REDEEM_WINNERS", "--rpc-url", rpcSrv.URL)
 	if err != nil {
 		t.Fatalf("Execute error: %v\nstderr:\n%s", err, stderr)
 	}

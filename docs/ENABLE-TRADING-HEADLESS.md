@@ -12,7 +12,7 @@ wallet is deployed:
 
 Polygolem exposes these as SDK primitives in `pkg/enabletrading`.
 
-The CLI integration is `polygolem deposit-wallet onboard`. After deploy and
+The CLI integration is `polygolem wallet onboard`. After deploy and
 the trading/adapter approval batch, onboarding signs ClobAuth, creates or
 derives CLOB API keys, and submits the 2-call UI token approval batch. Skip it
 only with `--skip-enable-trading`.
@@ -20,7 +20,7 @@ only with `--skip-enable-trading`.
 For an already-deployed wallet, use:
 
 ```bash
-polygolem deposit-wallet enable-trading
+polygolem wallet enable-trading
 ```
 
 If no V2 relayer key is configured, this command runs the SIWE login/profile
@@ -84,7 +84,7 @@ creating API keys, or submitting relayer batches. Use it for audits and tests.
 ## CLI Validation
 
 ```bash
-polygolem deposit-wallet status --check-enable-trading
+polygolem wallet status --check-enable-trading
 ```
 
 The validation path signs local throwaway ClobAuth and DepositWallet typed

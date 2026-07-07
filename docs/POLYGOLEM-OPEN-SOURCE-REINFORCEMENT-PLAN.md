@@ -27,7 +27,7 @@ The best reinforcement path is not a broad rewrite. It is a set of narrow slices
 - Track C executed: `pkg/signers` publishes the stable public signer seam plus local signer adapter; `pkg/signers/http` adds an optional timeout-bound HTTP remote signer; `pkg/signers/kms` and `pkg/signers/turnkey` add provider-neutral custody backend seams without cloud/custody SDK dependencies; `tests/public_sdk_boundary_test.go` and `tests/repository_hygiene_test.go` now guard the package boundary.
 - Track D executed for the planned safety-first surfaces: `pkg/bridge` exposes withdrawal/offramp dry-run types and an explicit unsupported-submit error; `pkg/rfq` publishes typed models, validation, and unsupported-submit guard; `pkg/ctf` exposes high-level split/merge dry-runs and readiness-gated submit-plan artifacts that still do not sign or submit.
 - Track E executed: `fixtures/schemas/cli_envelope.schema.json` pins the CLI JSON envelope; RFQ, bridge withdrawal, and CTF operation request schemas pin new public DTO request shapes; `tests/json_schema_contract_test.go` validates envelope and schema coverage.
-- Track F executed: `polygolem diag` emits redacted local diagnostics, endpoint configuration, and local preflight state in text or JSON; generated CLI docs are refreshed.
+- Track F executed: `polygolem debug` emits redacted local diagnostics, endpoint configuration, and local preflight state in text or JSON; generated CLI docs are refreshed.
 - AI/operator tooling executed: `pkg/mcp` and `cmd/polygolem_mcp` expose a read-only MCP manifest for safe health/discovery/data/orderbook/marketdata tools, reject mutating tool calls, support timeout-bound configured read-only tool handlers, and provide SDK client adapter wiring for health/search/positions/orderbook plus in-memory marketdata snapshots.
 - OpenAPI executed: `pkg/openapi` and `cmd/polygolem_openapi` emit a minimal read-only OpenAPI 3.1 spec for health, diag, discovery, data positions, orderbook, and marketdata snapshots.
 - Deployment examples executed: `docs/MCP-OPENAPI.md` documents read-only MCP/OpenAPI usage, embedding sketches, and excluded mutating surfaces.
@@ -222,7 +222,7 @@ Tasks:
 1. Expose rate-limit status and circuit-breaker state in SDK and optional CLI diagnostics.
 2. Add websocket lifecycle metrics: connected, reconnecting, last message time, dropped/deduped counts.
 3. Standardize structured log fields across CLOB, Gamma, Data, Bridge, Relayer, and Stream clients.
-4. Add `polygolem diag` commands for redacted config, endpoint reachability, version, and permissions.
+4. Add `polygolem debug` commands for redacted config, endpoint reachability, version, and permissions.
 
 Acceptance criteria:
 

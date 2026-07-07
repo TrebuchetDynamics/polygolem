@@ -101,7 +101,7 @@ Use this sequence for live settlement triage.
 ### 1. Check Readiness
 
 ```bash
-polygolem deposit-wallet settlement-status --json
+polygolem wallet settlement-status --json
 ```
 
 Expected ready state:
@@ -137,13 +137,13 @@ If they differ, update Polygolem before sending any approval or redeem batch.
 Dry-run first:
 
 ```bash
-polygolem deposit-wallet approve-adapters --json
+polygolem wallet approve-adapters --json
 ```
 
 Submit only after reviewing the target addresses:
 
 ```bash
-polygolem deposit-wallet approve-adapters \
+polygolem wallet approve-adapters \
   --submit \
   --confirm APPROVE_ADAPTERS \
   --json
@@ -159,7 +159,7 @@ This sends four idempotent calls:
 ### 4. Inspect Redeemable Positions
 
 ```bash
-polygolem deposit-wallet redeemable --json
+polygolem wallet redeemable --json
 ```
 
 `redeemable=true` is the signal. The Data API does not expose a separate
@@ -168,7 +168,7 @@ polygolem deposit-wallet redeemable --json
 ### 5. Dry-Run Redeem
 
 ```bash
-polygolem deposit-wallet redeem --json
+polygolem wallet redeem --json
 ```
 
 Confirm every call target is one of the two official adapters.
@@ -176,7 +176,7 @@ Confirm every call target is one of the two official adapters.
 ### 6. Submit Redeem
 
 ```bash
-polygolem deposit-wallet redeem \
+polygolem wallet redeem \
   --submit \
   --confirm REDEEM_WINNERS \
   --json
@@ -188,10 +188,10 @@ The command fails closed before signing if
 ### 7. Post-Checks
 
 ```bash
-polygolem deposit-wallet settlement-status --json
-polygolem deposit-wallet redeemable --json
-polygolem clob update-balance --asset-type collateral --json
-polygolem clob balance --asset-type collateral --json
+polygolem wallet settlement-status --json
+polygolem wallet redeemable --json
+polygolem exchange update-balance --asset-type collateral --json
+polygolem exchange balance --asset-type collateral --json
 ```
 
 Expected after a successful redeem:

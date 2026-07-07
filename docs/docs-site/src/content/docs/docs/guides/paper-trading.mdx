@@ -30,13 +30,13 @@ See [Safety Model](/docs/concepts/safety) for the full guarantee.
 ### 1. Find a market
 
 ```bash
-polygolem discover search --query "btc 5m" --limit 5
+polygolem markets search --query "btc 5m" --limit 5
 ```
 
 Or resolve the current window directly:
 
 ```bash
-polygolem discover crypto-window --asset BTC --interval 5m
+polygolem markets crypto-window --asset BTC --interval 5m
 ```
 
 Note the `tokenID` of the outcome you want to bet on. For neg-risk Yes/No
@@ -47,8 +47,8 @@ markets there are two token IDs (one per outcome); pick whichever side you want.
 Resolve the current window, fetch live price, and trade in a single step:
 
 ```bash
-polygolem paper trade --asset BTC --interval 5m --side up --size 1
-polygolem paper trade --asset ETH --interval 15m --side down --size 2 --price 0.48
+polygolem sim trade --asset BTC --interval 5m --side up --size 1
+polygolem sim trade --asset ETH --interval 15m --side down --size 2 --price 0.48
 ```
 
 This is the fastest path from idea to paper position — no manual token ID lookup.
@@ -56,7 +56,7 @@ This is the fastest path from idea to paper position — no manual token ID look
 ### 3. Place a paper buy
 
 ```bash
-polygolem paper buy \
+polygolem sim buy \
   --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851 \
   --price 0.52 \
   --size 10
@@ -76,7 +76,7 @@ Output:
 ### 3. Inspect positions
 
 ```bash
-polygolem paper positions
+polygolem sim positions
 ```
 
 ```json
@@ -94,7 +94,7 @@ polygolem paper positions
 ### 4. Close it out with a paper sell
 
 ```bash
-polygolem paper sell \
+polygolem sim sell \
   --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851 \
   --price 0.55 \
   --size 10
@@ -105,7 +105,7 @@ polygolem paper sell \
 Wipes all paper state — positions, fills, history:
 
 ```bash
-polygolem paper reset
+polygolem sim reset
 ```
 
 ## What paper mode does *not* do
@@ -117,6 +117,6 @@ polygolem paper reset
 
 ## Reference
 
-- `polygolem paper --help` — every flag
+- `polygolem sim --help` — every flag
 - [`docs/COMMANDS.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/COMMANDS.md) — canonical command list
 - [Safety Model](/docs/concepts/safety) — paper vs read-only vs live

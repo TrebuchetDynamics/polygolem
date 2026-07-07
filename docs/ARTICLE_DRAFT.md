@@ -101,7 +101,7 @@ export POLYMARKET_PRIVATE_KEY="0x..."
 ### Step 1: Register Profile + Mint Relayer Key
 
 ```bash
-polygolem auth login
+polygolem credentials login
 ```
 
 This does: SIWE login → `POST /profiles` → mint V2 relayer key → persist to `.env.relayer-v2`.
@@ -109,7 +109,7 @@ This does: SIWE login → `POST /profiles` → mint V2 relayer key → persist t
 ### Step 2: Deploy Deposit Wallet
 
 ```bash
-polygolem deposit-wallet deploy --wait
+polygolem wallet deploy --wait
 ```
 
 Submits `WALLET-CREATE` to relayer, polls until `STATE_MINED`.
@@ -117,8 +117,8 @@ Submits `WALLET-CREATE` to relayer, polls until `STATE_MINED`.
 ### Step 3: Create CLOB API Key
 
 ```bash
-polygolem clob create-api-key-for-address \
-  --owner $(polygolem deposit-wallet derive | jq -r '.depositWallet')
+polygolem exchange create-api-key-for-address \
+  --owner $(polygolem wallet derive | jq -r '.depositWallet')
 ```
 
 EOA signs ClobAuth, `POLY_ADDRESS` = deposit wallet, server binds API key to deposit wallet.
@@ -126,7 +126,7 @@ EOA signs ClobAuth, `POLY_ADDRESS` = deposit wallet, server binds API key to dep
 ### Step 4: Fund and Approve
 
 ```bash
-polygolem deposit-wallet onboard --fund-amount 0.71
+polygolem wallet onboard --fund-amount 0.71
 ```
 
 Derives address → deploy (skip if done) → submit 6-call approval batch → transfer pUSD from EOA to deposit wallet.
@@ -134,7 +134,7 @@ Derives address → deploy (skip if done) → submit 6-call approval batch → t
 ### Step 5: Trade
 
 ```bash
-polygolem clob create-order \
+polygolem exchange create-order \
   --token <TOKEN_ID> \
   --side buy \
   --price 0.5 \
@@ -152,49 +152,49 @@ Polygolem is a **Swiss Army knife for Polymarket**. One tool for everything:
 ### Query Everything
 
 ```bash
-polygolem discover search --query "bitcoin 150k" --limit 5
-polygolem discover market --id "0xbd31dc8..."
-polygolem clob book <token-id>
-polygolem orderbook spread <token-id>
-polygolem clob markets --cursor ""
+polygolem markets search --query "bitcoin 150k" --limit 5
+polygolem markets market --id "0xbd31dc8..."
+polygolem exchange book <token-id>
+polygolem book spread <token-id>
+polygolem exchange markets --cursor ""
 polygolem events list
 ```
 
 ### Account + Wallet
 
 ```bash
-polygolem auth status --check-deposit-key
-polygolem deposit-wallet derive
-polygolem deposit-wallet deploy --wait
-polygolem deposit-wallet onboard --fund-amount 0.71
-polygolem deposit-wallet status
+polygolem credentials status --check-deposit-key
+polygolem wallet derive
+polygolem wallet deploy --wait
+polygolem wallet onboard --fund-amount 0.71
+polygolem wallet status
 ```
 
 ### Trading
 
 ```bash
-polygolem clob create-order --token <ID> --side buy --price 0.5 --size 10
-polygolem clob batch-orders --orders-file orders.json
-polygolem clob cancel <order-id>
-polygolem clob cancel-all
-polygolem clob orders
-polygolem clob trades
+polygolem exchange create-order --token <ID> --side buy --price 0.5 --size 10
+polygolem exchange batch-orders --orders-file orders.json
+polygolem exchange cancel <order-id>
+polygolem exchange cancel-all
+polygolem exchange orders
+polygolem exchange trades
 ```
 
 ### Builder + Attribution
 
 ```bash
-polygolem builder auto
-polygolem clob create-builder-fee-key
-polygolem clob list-builder-fee-keys
+polygolem builder-keys auto
+polygolem exchange create-builder-fee-key
+polygolem exchange list-builder-fee-keys
 ```
 
 ### Read-Only (No Credentials)
 
 ```bash
-polygolem discover search --query "btc 5m"
-polygolem orderbook get --token-id "123..."
-polygolem health
+polygolem markets search --query "btc 5m"
+polygolem book get --token-id "123..."
+polygolem ping
 polygolem version
 ```
 
@@ -215,7 +215,7 @@ polygolem version
 **For developers:** The auth flow is simpler than it looks. Standard EOA ECDSA for L1, ERC-7739 only for order signing. Don't over-engineer what the browser doesn't.
 
 **For automation:** Polymarket login signs with the EOA; the deposit wallet
-remains the trading wallet. `polygolem auth login`, `builder auto`,
+remains the trading wallet. `polygolem credentials login`, `builder auto`,
 deposit-wallet deploy, approvals, funding, orders, cancels, and settlement can
 run headlessly.
 
@@ -225,22 +225,22 @@ run headlessly.
 
 ```bash
 # 1. Generate fresh EOA
-export POLYMARKET_PRIVATE_KEY=$(polygolem auth export-key --generate | jq -r '.privateKey')
+export POLYMARKET_PRIVATE_KEY=$(polygolem credentials export-key --generate | jq -r '.privateKey')
 
 # 2. Full headless signup
-polygolem auth login
-polygolem deposit-wallet deploy --wait
-polygolem builder auto
-polygolem deposit-wallet onboard --fund-amount 0.71
+polygolem credentials login
+polygolem wallet deploy --wait
+polygolem builder-keys auto
+polygolem wallet onboard --fund-amount 0.71
 
 # 3. Check status
-polygolem auth status --check-deposit-key
+polygolem credentials status --check-deposit-key
 
 # 4. Query a market
-polygolem discover search --query "bitcoin" --limit 1
+polygolem markets search --query "bitcoin" --limit 1
 
 # 5. Place an order (requires pUSD in deposit wallet)
-polygolem clob create-order --token <ID> --side buy --price 0.5 --size 10
+polygolem exchange create-order --token <ID> --side buy --price 0.5 --size 10
 ```
 
 > **Safety:** Use testnet or <$1 pUSD on mainnet. Don't fund a test wallet with more than you're willing to lose.

@@ -66,7 +66,7 @@ auth readiness, API reachability, and chain consistency into one pass/fail
 result. Automation must treat any preflight failure as terminal and stop rather
 than retrying a different mode or assuming a partial result is usable.
 
-The `polygolem live status` command evaluates advisory gates
+The `polygolem risk status` command evaluates advisory gates
 (`POLYMARKET_LIVE_PROFILE`, `--confirm-live`, preflight) and reports whether an
 operator has opted into a live posture. This status is **advisory**: it helps an
 operator confirm intent, but the enforced money guards are the live-order cap and
@@ -137,7 +137,7 @@ common pitfalls, and recovery steps.
 ## Deposit Wallet Safety Rules
 
 The May 2026 deposit-wallet migration introduces a new family of commands
-(`polygolem deposit-wallet *`) that perform on-chain or relayer-bound
+(`polygolem wallet *`) that perform on-chain or relayer-bound
 operations. These rules apply.
 
 1. **Builder credentials are required and redacted.** `--deploy`,
@@ -230,7 +230,7 @@ one-time adapter approval batch should also include pUSD `approve` for future
 split support. Existing live wallets that only ran the trading approval batch
 need a one-shot adapter-approval migration before their first V2 redeem.
 
-The first-class `polygolem deposit-wallet approve-adapters`, `redeemable`,
+The first-class `polygolem wallet approve-adapters`, `redeemable`,
 and `redeem` commands build the V2 adapter path (commits `c77e735` and
 `0593991`). Every signing path defaults to dry-run; submission requires both
 `--submit` and a typed `--confirm` token (`APPROVE_ADAPTERS` for adapter

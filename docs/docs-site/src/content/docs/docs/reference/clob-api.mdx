@@ -41,60 +41,60 @@ can derive and validate both during setup.
 Read-only commands:
 
 ```bash
-polygolem orderbook get        --token-id <token-id>
-polygolem orderbook price      --token-id <token-id>
-polygolem orderbook midpoint   --token-id <token-id>
-polygolem orderbook spread     --token-id <token-id>
-polygolem orderbook tick-size  --token-id <token-id>
-polygolem orderbook fee-rate   --token-id <token-id>
-polygolem orderbook last-trade --token-id <token-id>
+polygolem book get        --token-id <token-id>
+polygolem book price      --token-id <token-id>
+polygolem book midpoint   --token-id <token-id>
+polygolem book spread     --token-id <token-id>
+polygolem book tick-size  --token-id <token-id>
+polygolem book fee-rate   --token-id <token-id>
+polygolem book last-trade --token-id <token-id>
 
-polygolem clob book <token-id>
-polygolem clob tick-size <token-id>
-polygolem clob price-history <token-id> --interval 1m
-polygolem clob markets --cursor ""
-polygolem clob market <condition-id>
-polygolem clob market-by-token <token-id>
+polygolem exchange book <token-id>
+polygolem exchange tick-size <token-id>
+polygolem exchange price-history <token-id> --interval 1m
+polygolem exchange markets --cursor ""
+polygolem exchange market <condition-id>
+polygolem exchange market-by-token <token-id>
 ```
 
 Authenticated commands:
 
 ```bash
-polygolem clob create-api-key
-polygolem clob create-api-key-for-address --owner <deposit-wallet>
-polygolem clob create-builder-fee-key
-polygolem clob list-builder-fee-keys
-polygolem clob revoke-builder-fee-key --key <builder-code>
-polygolem clob balance        --asset-type collateral
-polygolem clob update-balance --asset-type collateral
+polygolem exchange create-api-key
+polygolem exchange create-api-key-for-address --owner <deposit-wallet>
+polygolem exchange create-builder-fee-key
+polygolem exchange list-builder-fee-keys
+polygolem exchange revoke-builder-fee-key --key <builder-code>
+polygolem exchange balance        --asset-type collateral
+polygolem exchange update-balance --asset-type collateral
 
-polygolem clob orders
-polygolem clob order          <order-id>
-polygolem clob trades
+polygolem exchange orders
+polygolem exchange order          <order-id>
+polygolem exchange trades
 
-polygolem clob cancel         <order-id>
-polygolem clob cancel-orders  <order-id-1,order-id-2>
-polygolem clob cancel-market  --market <condition-id>
-polygolem clob cancel-market  --asset <token-id>
-polygolem clob cancel-all
+polygolem exchange cancel         <order-id>
+polygolem exchange cancel-orders  <order-id-1,order-id-2>
+polygolem exchange cancel-market  --market <condition-id>
+polygolem exchange cancel-market  --asset <token-id>
+polygolem exchange cancel-all
 
-polygolem clob create-order \
+polygolem exchange create-order \
   --token <token-id> --side buy --price 0.5 --size 10 \
   --builder-code "$POLYMARKET_BUILDER_CODE"
 
-polygolem clob create-order \
+polygolem exchange create-order \
   --token <token-id> --side buy --price 0.5 --size 10 \
   --post-only
 
-polygolem clob batch-orders \
+polygolem exchange batch-orders \
   --orders-file orders.json \
   --builder-code "$POLYMARKET_BUILDER_CODE"
 
-polygolem clob market-order \
+polygolem exchange market-order \
   --token <token-id> --side buy --amount 5 \
   --builder-code "$POLYMARKET_BUILDER_CODE"
 
-polygolem clob heartbeat --id keepalive-1
+polygolem exchange heartbeat --id keepalive-1
 ```
 
 `cancel-market` requires at least one filter in polygolem. Use `cancel-all` for

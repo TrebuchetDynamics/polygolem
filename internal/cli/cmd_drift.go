@@ -10,13 +10,13 @@ import (
 )
 
 func driftCmd(_ bool) *cobra.Command {
-	cmd := commandGroup("drift", "Check read-only upstream Polymarket drift", driftLLMSCmd())
+	cmd := commandGroup("check-upstream", "Check read-only upstream Polymarket drift", driftLLMSCmd())
 	cmd.Long = `Check whether Polymarket's official docs still advertise the surfaces polygolem
 depends on. Read-only, credential-free, and offline: it runs against a saved
 llms.txt index, so it is safe in CI or air-gapped review.
 
   curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/llms.txt
-  polygolem drift llms --file /tmp/llms.txt`
+  polygolem check-upstream llms --file /tmp/llms.txt`
 	return cmd
 }
 

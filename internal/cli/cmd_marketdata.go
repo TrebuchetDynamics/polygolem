@@ -10,13 +10,13 @@ import (
 
 func marketDataCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
-	cmd := commandGroup("marketdata", "Live CLOB orderbook and share-price snapshots")
+	cmd := commandGroup("prices", "Live CLOB orderbook and share-price snapshots")
 	cmd.Long = `Live, normalized market-data snapshots per token. Read-only; no credentials.
 
-'marketdata live' subscribes to the public CLOB stream and reports the latest best
+'prices live' subscribes to the public CLOB stream and reports the latest best
 bid/ask, spread, midpoint, tick size, last trade, and book levels as they update —
 a higher-level, normalized view than the raw 'stream' events.`
-	cmd.Example = `  polygolem marketdata live --asset-ids <id>`
+	cmd.Example = `  polygolem prices live --asset-ids <id>`
 
 	var assetsRaw string
 	var url string
@@ -35,7 +35,7 @@ a higher-level, normalized view than the raw 'stream' events.`
 					Level:          level,
 				},
 				func(v interface{}) { _ = w.printJSON(cmd, v) },
-				func(err error) { _, _ = fmt.Fprintf(cmd.ErrOrStderr(), "marketdata stream error: %v\n", err) },
+				func(err error) { _, _ = fmt.Fprintf(cmd.ErrOrStderr(), "prices stream error: %v\n", err) },
 			)
 		},
 	}
@@ -56,8 +56,8 @@ a higher-level, normalized view than the raw 'stream' events.`
 order book) for each. Returns a single snapshot per market — no continuous stream.
 
 Examples:
-  polygolem marketdata crypto --asset BTC --interval 5m    # BTC 5m snapshots
-  polygolem marketdata crypto --asset ETH --limit 10       # ETH market snapshots`,
+  polygolem prices crypto --asset BTC --interval 5m    # BTC 5m snapshots
+  polygolem prices crypto --asset ETH --limit 10       # ETH market snapshots`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			result, err := marketdatacrypto.New(w.gamma, w.clob).Run(cmd.Context(), marketdatacrypto.Request{

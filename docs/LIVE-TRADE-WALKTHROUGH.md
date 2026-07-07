@@ -80,7 +80,7 @@ are Polymarket-run; both pay gas instead of you; they are separate systems.
 These steps run once. After they complete, every subsequent trade is a single
 HTTP POST.
 
-### 2.1 Polymarket Login and V2 Relayer Key — `polygolem auth login`
+### 2.1 Polymarket Login and V2 Relayer Key — `polygolem credentials login`
 
 ```
 SIWE login → POST /profiles → POST /relayer-auth
@@ -93,7 +93,7 @@ wallet for pUSD, POLY_1271 orders, CTF positions, approvals, and redemption.
 Gas: **0** (no on-chain tx).
 Cost: **$0**.
 
-### 2.2 CLOB API Key — `polygolem builder auto`
+### 2.2 CLOB API Key — `polygolem builder-keys auto`
 
 The CLOB HTTP layer is EOA-authenticated. `builder auto` signs the ClobAuth
 EIP-712 message locally and creates or derives the CLOB L2 HMAC key. The
@@ -103,7 +103,7 @@ deposit-wallet identity is carried by POLY_1271 order signing and
 Gas: **0**.
 Cost: **$0**.
 
-### 2.3 Deposit Wallet Deployment — `polygolem deposit-wallet deploy --wait`
+### 2.3 Deposit Wallet Deployment — `polygolem wallet deploy --wait`
 
 `POST /relayer/submit` with `{"type":"WALLET-CREATE", ...}`. The Polymarket
 relayer broadcasts the WalletFactory call **paying gas itself**. Polls until
@@ -112,7 +112,7 @@ the relayer reports `STATE_MINED`.
 Gas (paid by relayer, not user): **~750k**.
 Cost to user: **$0**.
 
-### 2.4 ERC-20 Approvals — `polygolem deposit-wallet onboard --skip-deploy`
+### 2.4 ERC-20 Approvals — `polygolem wallet onboard --skip-deploy`
 
 A 6-call relayer batch that approves the V2 Exchange, the neg-risk Exchange,
 and the V1 Exchange to spend pUSD and conditional tokens from the deposit
@@ -121,7 +121,7 @@ wallet. All sponsored.
 Gas (paid by relayer): **~250k–500k**.
 Cost to user: **$0**.
 
-After 2.4, `polygolem clob balance` shows the three exchange addresses with
+After 2.4, `polygolem exchange balance` shows the three exchange addresses with
 `type(uint256).max` allowances for both pUSD and CTF tokens.
 
 ---
@@ -133,13 +133,13 @@ operator-paid CLOB settlements that produced one filled buy and one filled
 sell. Every receipt was confirmed on Polygon mainnet via
 `https://polygon.drpc.org`.
 
-### 3.1 POL → pUSD Swap — `polygolem deposit-wallet swap-pol-pusd`
+### 3.1 POL → pUSD Swap — `polygolem wallet swap-pol-pusd`
 
 The deposit wallet must hold pUSD. The EOA holds POL. Polygolem bridges via
 Uniswap V3 multihop on Polygon, **without** any L2 bridge.
 
 ```bash
-polygolem deposit-wallet swap-pol-pusd --out-pusd 0.5 --max-pol-in 10
+polygolem wallet swap-pol-pusd --out-pusd 0.5 --max-pol-in 10
 ```
 
 Path encoding (output-first, V3 exactOutput convention):
@@ -167,13 +167,13 @@ Native POL is auto-wrapped to WMATIC because the path begins with WMATIC.
 Both swaps land pUSD on the EOA, not the deposit wallet. They have to be
 followed by a step-3.2 transfer.
 
-### 3.2 EOA → Deposit Wallet pUSD Transfer — `polygolem deposit-wallet fund`
+### 3.2 EOA → Deposit Wallet pUSD Transfer — `polygolem wallet fund`
 
 Standard ERC-20 `transfer(depositWallet, amount)` on the pUSD contract
 (`0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB` on Polygon).
 
 ```bash
-polygolem deposit-wallet fund --amount 0.5
+polygolem wallet fund --amount 0.5
 ```
 
 | # | tx | block | gasUsed | gasPrice (gwei) | gas cost (POL) |
@@ -184,10 +184,10 @@ polygolem deposit-wallet fund --amount 0.5
 The first transfer costs more because it initialises the deposit wallet's
 pUSD balance storage slot (~20k extra SSTORE).
 
-### 3.3 CLOB Balance Refresh — `polygolem clob update-balance`
+### 3.3 CLOB Balance Refresh — `polygolem exchange update-balance`
 
 ```bash
-polygolem clob update-balance --asset-type collateral
+polygolem exchange update-balance --asset-type collateral
 ```
 
 `GET /balance-allowance/update?asset_type=COLLATERAL&signature_type=3`. The
@@ -201,10 +201,10 @@ Cost: **$0**.
 [commit 8bf520b](https://github.com/TrebuchetDynamics/polygolem/commit/8bf520b);
 prior versions surfaced an EOF decode error and the CLI was unusable.)
 
-### 3.4 Market Buy — `polygolem clob market-order`
+### 3.4 Market Buy — `polygolem exchange market-order`
 
 ```bash
-polygolem clob market-order \
+polygolem exchange market-order \
   --token 13915689317269078219168496739008737517740566192006337297676041270492637394586 \
   --side buy --amount 1 --price 0.012 --order-type FOK
 ```
@@ -268,10 +268,10 @@ Even though this single settlement burned 0.20 POL of gas, the user pays
 **zero** because the operator amortises that cost across the matching engine's
 settlement batch (the same tx may settle multiple users' orders).
 
-### 3.5 Limit Sell — `polygolem clob create-order --side sell`
+### 3.5 Limit Sell — `polygolem exchange create-order --side sell`
 
 ```bash
-polygolem clob create-order \
+polygolem exchange create-order \
   --token 13915689317269078219168496739008737517740566192006337297676041270492637394586 \
   --side sell --price 0.010 --size 86.6 --order-type GTC
 ```
@@ -418,18 +418,18 @@ If you want to reproduce the run from a fresh EOA:
 
 ```bash
 # (One-time) Mint relayer + CLOB API key
-polygolem auth login
-polygolem builder auto
+polygolem credentials login
+polygolem builder-keys auto
 
 # (One-time, gasless via relayer) deposit wallet deploy + approvals
-polygolem deposit-wallet onboard
+polygolem wallet onboard
 
 # Per-trade
-polygolem deposit-wallet swap-pol-pusd --out-pusd 1.5 --max-pol-in 10
-polygolem deposit-wallet fund --amount 1.5
-polygolem clob update-balance --asset-type collateral
-polygolem clob market-order --token <ID> --side buy --amount 1 --price <slippage_cap> --order-type FOK
-polygolem clob create-order --token <ID> --side sell --price <bid> --size <clean_size> --order-type GTC
+polygolem wallet swap-pol-pusd --out-pusd 1.5 --max-pol-in 10
+polygolem wallet fund --amount 1.5
+polygolem exchange update-balance --asset-type collateral
+polygolem exchange market-order --token <ID> --side buy --amount 1 --price <slippage_cap> --order-type FOK
+polygolem exchange create-order --token <ID> --side sell --price <bid> --size <clean_size> --order-type GTC
 ```
 
 Sizing notes: keep `amount` at 2 decimals (pUSD), keep `size` at a precision

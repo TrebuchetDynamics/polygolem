@@ -64,7 +64,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/universal` | Single client wrapping Gamma + CLOB + Data API + Discovery + Stream. |
 | `pkg/upstreamdrift` | Checks saved official Polymarket docs indexes (`llms.txt`) against the Polygolem compatibility surface (`pkg/upstreamdrift/llms.go:1`). |
 | `pkg/wallet` | Public deposit-wallet identity/readiness primitives — derive the POLY_1271 wallet and report wallet identity. |
-| `pkg/experimental/orders` | **Experimental helper only** — fluent `OrderIntent` validation; stable user-directed order transactions live in `pkg/clob` and `polygolem clob create-order`. |
+| `pkg/experimental/orders` | **Experimental helper only** — fluent `OrderIntent` validation; stable user-directed order transactions live in `pkg/clob` and `polygolem exchange create-order`. |
 | `pkg/experimental/auth` | **Experimental** — EIP-712 domain helpers, signature type constants, and hex utilities (staged for SDK promotion). |
 
 ### Internal packages (`internal/`)

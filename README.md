@@ -52,7 +52,7 @@
 ```bash
 go install github.com/TrebuchetDynamics/polygolem/cmd/polygolem@latest
 
-polygolem health
+polygolem ping
 # {"clob":"ok","gamma":"ok"}
 ```
 
@@ -90,10 +90,10 @@ official service is for, its auth model, and where its documentation lives on
 
 ## Known Limitations
 
-Polygolem is safest when used as a read-only CLI/SDK, paper-trading harness,
+Polygolem is safest when used as a read-only CLI/SDK, sim-trading harness,
 and deposit-wallet V2 implementation reference. Before funding a wallet, note:
 
-- **Live trading can lose funds.** Use paper mode and preflight checks first;
+- **Live trading can lose funds.** Use sim mode and doctor checks first;
   live mutation commands require explicit credentials and confirmations.
 - **New-user deposit-wallet setup may require one-time browser login.** The CLI
   supports headless pieces, but Polymarket account/session state can still
@@ -114,13 +114,13 @@ You installed polygolem. Now try three things with zero setup:
 
 ```bash
 # 1. Check API reachability (no credentials)
-polygolem health --json
+polygolem ping --json
 
 # 2. Search active markets
-polygolem discover search --query "Will BTC" --limit 5 --json
+polygolem markets search --query "Will BTC" --limit 5 --json
 
 # 3. Read a real order book
-polygolem orderbook get --token-id 71321045679252249115448234976983616835904229510371422584850212744998471172014 --json
+polygolem book get --token-id 71321045679252249115448234976983616835904229510371422584850212744998471172014 --json
 ```
 
 Every command accepts `--json` and returns a stable envelope: `{"ok": true, "version": "1", "data": ..., "meta": ...}`.
@@ -137,18 +137,18 @@ one window, and paper trade it without connecting a wallet.
 
 ```bash
 # 1. List current + next-hour 5-minute markets for every supported asset
-polygolem discover crypto-5m --hours-ahead 1 --timezone America/Denver --json
+polygolem markets crypto-5m --hours-ahead 1 --timezone America/Denver --json
 
 # Optional: narrow to liquid majors and fetch live CLOB quote fields
-polygolem discover crypto-5m --asset BTC --asset ETH --asset SOL --hours-ahead 1 --enrich --json
+polygolem markets crypto-5m --asset BTC --asset ETH --asset SOL --hours-ahead 1 --enrich --json
 
 # 2. Focus on the current BTC 5-minute window
-polygolem discover crypto-window --asset BTC --interval 5m --enrich --json
+polygolem markets crypto-window --asset BTC --interval 5m --enrich --json
 
 # 3. Start with a clean paper account, then simulate an UP trade
-polygolem paper reset --cash 100 --json
-polygolem paper trade --asset BTC --interval 5m --side up --size 1 --json
-polygolem paper positions --json
+polygolem sim reset --cash 100 --json
+polygolem sim trade --asset BTC --interval 5m --side up --size 1 --json
+polygolem sim positions --json
 ```
 
 Look for `data.markets[].token_ids`, `outcomes`, `liquidity_clob`, `best_bid`,
@@ -185,7 +185,7 @@ cd polygolem && go build -o polygolem ./cmd/polygolem
 - **Read-only MCP server** — expose health, discovery, data positions, orderbook, and marketdata snapshot tools through the Model Context Protocol for AI agent integration (`pkg/mcp`, `cmd/polygolem_mcp`)
 - **Read-only OpenAPI spec** — emit a minimal OpenAPI 3.1 document for local proxy/tooling experiments (`pkg/openapi`, `cmd/polygolem_openapi`)
 - **Public signer adapters** — stable `Signer` interface with local, HTTP remote, KMS-style, and Turnkey-style adapters (`pkg/signers`)
-- **Polygolem diag** — redacted local diagnostics, endpoint configuration, and preflight state (`polygolem diag`)
+- **Polygolem diag** — redacted local diagnostics, endpoint configuration, and preflight state (`polygolem debug`)
 - **Bridge withdrawal dry-run** — typed withdrawal DTOs, validation, and explicit unsupported-submit guard (`pkg/bridge`)
 - **RFQ typed models** — request/quote/response DTOs, positive-decimal validation, and unsupported-submit guard (`pkg/rfq`)
 - **CTF split/merge/redeem dry-runs** — high-level operation previews with readiness-gated submit-plan artifacts (`pkg/ctf`)
@@ -239,7 +239,7 @@ your stack. Use Polygolem when you need:
 |---|---|
 | Official Python/TypeScript clients exist | `https://github.com/Polymarket/py-clob-client` and `https://github.com/Polymarket/clob-client` |
 | Polygolem is Go-native | `go.mod`, `cmd/polygolem`, and `pkg/` packages |
-| Read-only commands work without credentials | `polygolem health --json`, `polygolem discover search`, `polygolem orderbook get` |
+| Read-only commands work without credentials | `polygolem ping --json`, `polygolem markets search`, `polygolem book get` |
 | Deposit-wallet/POLY_1271 flow is fixture-tested | `fixtures/conformance/order_v2_poly1271.json`, `fixtures/protocol/eip712_orders.json`, `tests/conformance_vectors_test.go` |
 | Secret redaction is tested | `internal/cli/cmd_diag_test.go` |
 | Public API shapes are pinned | `fixtures/schemas/`, `tests/json_schema_contract_test.go` |
@@ -360,16 +360,16 @@ discovers them deterministically — no search index lag:
 
 ```bash
 # Current + next-hour 5m markets in one call
-polygolem discover crypto-5m --hours-ahead 1 --timezone America/Denver
+polygolem markets crypto-5m --hours-ahead 1 --timezone America/Denver
 
 # Liquid-major sweep only
-polygolem discover crypto-5m --asset BTC --asset ETH --asset SOL --hours-ahead 1 --enrich
+polygolem markets crypto-5m --asset BTC --asset ETH --asset SOL --hours-ahead 1 --enrich
 
 # Specific window
-polygolem discover crypto-window --asset BTC --interval 5m
+polygolem markets crypto-window --asset BTC --interval 5m
 
-# Paper trade the current window in one step
-polygolem paper trade --asset BTC --interval 5m --side up --size 1
+# Sim trade the current window in one step
+polygolem sim trade --asset BTC --interval 5m --side up --size 1
 ```
 
 Assets supported: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE.
@@ -412,18 +412,18 @@ pays only for the single ERC-20 transfer that funds the deposit wallet.
 
 | I want to... | Run |
 |---|---|
-| Find an active market | `polygolem discover search --query "..."` |
-| List all 5m crypto markets | `polygolem discover crypto-5m` |
-| Inspect the book | `polygolem clob book <token-id>` |
-| Derive deposit wallet | `polygolem deposit-wallet derive` |
-| Onboard deposit wallet | `polygolem deposit-wallet onboard` |
-| Check deposit wallet status | `polygolem deposit-wallet status --check-enable-trading` |
-| Prepare by inspecting the exact book | `polygolem orderbook get --token-id <TOKEN_ID>` |
-| Place a limit buy | `polygolem clob create-order --token <ID> --side buy --price 0.5 --size 10` |
-| Place a market FOK buy | `polygolem clob market-order --token <ID> --side buy --amount 1 --price <cap>` |
-| Cancel everything | `polygolem clob cancel-all` |
-| Read collateral balance | `polygolem clob balance --asset-type collateral` |
-| Paper trade | `polygolem paper trade --asset BTC --interval 5m --side up` |
+| Find an active market | `polygolem markets search --query "..."` |
+| List all 5m crypto markets | `polygolem markets crypto-5m` |
+| Inspect the book | `polygolem exchange book <token-id>` |
+| Derive deposit wallet | `polygolem wallet derive` |
+| Onboard deposit wallet | `polygolem wallet onboard` |
+| Check deposit wallet status | `polygolem wallet status --check-enable-trading` |
+| Prepare by inspecting the exact book | `polygolem book get --token-id <TOKEN_ID>` |
+| Place a limit buy | `polygolem exchange create-order --token <ID> --side buy --price 0.5 --size 10` |
+| Place a market FOK buy | `polygolem exchange market-order --token <ID> --side buy --amount 1 --price <cap>` |
+| Cancel everything | `polygolem exchange cancel-all` |
+| Read collateral balance | `polygolem exchange balance --asset-type collateral` |
+| Sim trade | `polygolem sim trade --asset BTC --interval 5m --side up` |
 
 Full CLI reference: [docs/COMMANDS.md](docs/COMMANDS.md).
 
@@ -458,13 +458,13 @@ lifecycle with real txes.
 export SIGNER_PRIVATE_KEY="0x..."
 
 # One-command onboarding: auth + deploy + approve + fund
-polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
+polygolem wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
 
 # Sync CLOB balance
-polygolem clob update-balance --asset-type collateral
+polygolem exchange update-balance --asset-type collateral
 
 # Place a market FOK buy
-polygolem clob market-order \
+polygolem exchange market-order \
   --token <ID> --side buy --amount 1 --price 0.012 --order-type FOK
 # {
 #   "success": true,
@@ -479,7 +479,7 @@ After onboarding, every trade is fully headless. Total user-paid cost on the
 reference run was **~$0.01 in POL gas** for the single ERC-20 transfer that
 funds the deposit wallet.
 
-> **Note:** Polymarket login signs with the EOA. `polygolem auth login` is still
+> **Note:** Polymarket login signs with the EOA. `polygolem credentials login` is still
 > available as an explicit refresh/inspection command. Browser setup is
 > fallback-only; see [docs/BROWSER-SETUP.md](docs/BROWSER-SETUP.md).
 

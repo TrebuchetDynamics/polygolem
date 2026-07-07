@@ -4,7 +4,7 @@ import "testing"
 
 func TestDiscoverCryptoCommandKeepsSearchFlags(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version"})
-	cmd, _, err := root.Find([]string{"discover", "crypto"})
+	cmd, _, err := root.Find([]string{"markets", "crypto"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestDiscoverCryptoCommandKeepsSearchFlags(t *testing.T) {
 
 func TestDiscoverCryptoWindowCommandKeepsFlags(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version"})
-	cmd, _, err := root.Find([]string{"discover", "crypto-window"})
+	cmd, _, err := root.Find([]string{"markets", "crypto-window"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestDiscoverCryptoWindowCommandKeepsFlags(t *testing.T) {
 
 func TestDiscoverCrypto5mCommandKeepsEnrichFlag(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version"})
-	cmd, _, err := root.Find([]string{"discover", "crypto-5m"})
+	cmd, _, err := root.Find([]string{"markets", "crypto-5m"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -50,7 +50,7 @@ func TestDiscoverCrypto5mCommandKeepsEnrichFlag(t *testing.T) {
 
 func TestDiscoverOpportunitiesCommandKeepsScannerFlags(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version"})
-	cmd, _, err := root.Find([]string{"discover", "opportunities"})
+	cmd, _, err := root.Find([]string{"markets", "opportunities"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}

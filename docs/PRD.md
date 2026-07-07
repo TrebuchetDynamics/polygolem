@@ -174,7 +174,7 @@ Observed live-mode issues:
 - Live run blocker observed on 2026-05-07: `go-bot live` found the repo-local
   Polygolem binary, but failed with `unknown command "clob" for "polygolem"`.
   `go-bot` requires a compatibility command surface at
-  `polygolem clob book`, `tick-size`, `create-api-key`, `balance`,
+  `polygolem exchange book`, `tick-size`, `create-api-key`, `balance`,
   `update-balance`, `orders`, `trades`, `create-order`, and `market-order`.
 - Resolved requirement: Polygolem must own all CLOB L1/L2 authentication.
   `create-api-key` creates or derives CLOB API credentials at runtime with L1
@@ -187,7 +187,7 @@ Observed live-mode issues:
   profile cap. Polygolem must normalize collateral and conditional CLOB amounts
   from 6-decimal base units to human units at the CLI boundary and preserve the
   raw value as `balance_raw`.
-- Resolved behavior required: `polygolem clob balance --asset-type collateral
+- Resolved behavior required: `polygolem exchange balance --asset-type collateral
   --output json` returns human `balance`, raw `balance_raw`, and
   `balance_decimals: 6`, while allowances remain raw strings for approval
   readiness checks.
@@ -246,7 +246,7 @@ Observed live-mode issues:
   See [DEPOSIT-WALLET-MIGRATION.md](./DEPOSIT-WALLET-MIGRATION.md) for the
   full migration survival guide, common pitfalls, and implementation status.
 - Live run blocker observed on 2026-05-07 after deposit-wallet order signing
-  was added: `polygolem clob balance --asset-type collateral` returned CLOB
+  was added: `polygolem exchange balance --asset-type collateral` returned CLOB
   pUSD balance `0.000000` and zero allowances, while the
   owner EOA still holds `0.709708` pUSD. Polymarket's migration guide is
   explicit that pUSD held by the EOA does not fund deposit-wallet orders.
@@ -275,7 +275,7 @@ Observed live-mode issues:
 ### R1. Market Discovery ✅
 
 > **Status:** Fulfilled. Implemented in `internal/marketdiscovery` and
-> `internal/gamma`, exposed via `polygolem discover search|market|enrich`.
+> `internal/gamma`, exposed via `polygolem markets search|market|enrich`.
 > Identifier normalization and Gamma+CLOB enrichment are covered by tests.
 
 The SDK must provide a `MarketDiscovery` service over Gamma and CLOB metadata.
@@ -314,8 +314,8 @@ Acceptance criteria:
 
 > **Status:** Fulfilled. Implemented in `internal/clob` and re-exposed via
 > `pkg/clob`, `pkg/orderbook`, and `pkg/universal`; surfaced through
-> `polygolem clob book|market|tick-size|price-history` and the
-> `polygolem orderbook` group. Public read DTOs live in `pkg/types`.
+> `polygolem exchange book|market|tick-size|price-history` and the
+> `polygolem book` group. Public read DTOs live in `pkg/types`.
 > Bid/ask normalization (high-to-low / low-to-high) ships behind
 > `orderbook.Reader`.
 
@@ -347,7 +347,7 @@ Acceptance criteria:
 > **Status:** Fulfilled. `internal/auth` covers L0/L1/L2, EIP-712 CLOB auth,
 > POLY_1271/ERC-7739 deposit-wallet signing, builder attribution, and
 > redaction; signer abstraction lives behind injectable interfaces. See
-> `polygolem auth status` and `polygolem clob create-api-key`.
+> `polygolem credentials status` and `polygolem exchange create-api-key`.
 
 The SDK must model Polymarket authentication as explicit access levels.
 
@@ -391,8 +391,8 @@ Acceptance criteria:
 
 > **Status:** Fulfilled. `internal/wallet`, `internal/preflight`, and
 > `internal/auth` separate signer-EOA from funder/deposit-wallet, expose
-> CREATE2 derivation, and surface readiness via `polygolem auth status`,
-> `polygolem deposit-wallet onboard`, and `polygolem health`.
+> CREATE2 derivation, and surface readiness via `polygolem credentials status`,
+> `polygolem wallet onboard`, and `polygolem ping`.
 
 The SDK must separate wallet readiness from trading execution.
 
@@ -419,8 +419,8 @@ Acceptance criteria:
 
 > **Status:** Partial. Live order construction, validation, and V2
 > deposit-wallet (`signatureType=3`) signing live in `internal/clob`
-> (+ `internal/auth`), surfaced via `polygolem clob create-order` and
-> `polygolem clob market-order`. The earlier standalone `internal/orders`
+> (+ `internal/auth`), surfaced via `polygolem exchange create-order` and
+> `polygolem exchange market-order`. The earlier standalone `internal/orders`
 > OrderIntent/fluent-builder surface was unused by the live path and has been
 > removed; a dedicated public builder is not currently shipped.
 
@@ -458,7 +458,7 @@ Acceptance criteria:
 > **Status:** Fulfilled. `internal/clob` covers place/cancel/query with public
 > account/order/trading DTOs re-exposed through `pkg/clob` and `pkg/universal`,
 > including SDK batch order placement and heartbeats. Live commands
-> (`polygolem live ...` and the `polygolem clob create-order|orders|trades`)
+> (`polygolem risk ...` and the `polygolem exchange create-order|orders|trades`)
 > ship behind preflight gates. (The earlier separate `internal/execution`
 > paper/live executor surface was unused by the live path and has been removed;
 > paper simulation lives in `internal/paper`.)
@@ -499,7 +499,7 @@ Acceptance criteria:
 > balance/allowance, open orders, order lookup, and trade history;
 > `internal/dataapi` covers positions, trades, activity, top holders,
 > leaderboards, and live volume. Surfaced via
-> `polygolem clob balance|orders|order|trades` and `polygolem data *`.
+> `polygolem exchange balance|orders|order|trades` and `polygolem analytics *`.
 
 The SDK must expose read-oriented account state before any live trading path is
 enabled.
@@ -565,7 +565,7 @@ Acceptance criteria:
 
 > **Status:** Fulfilled. `internal/paper` holds local-only cash/positions/fills
 > and simulates buys and sells (see `internal/workflows/paperaccount`). Surfaced
-> via the `polygolem paper` command group with explicit "simulated" markers.
+> via the `polygolem sim` command group with explicit "simulated" markers.
 
 Paper execution must remain local-only.
 
@@ -590,7 +590,7 @@ Acceptance criteria:
 
 > **Status:** Fulfilled. `internal/modes`, `internal/preflight`, and
 > `internal/risk` enforce read-only/paper/live gates and structured
-> blocked-error paths. Surfaced via `polygolem preflight`, `polygolem
+> blocked-error paths. Surfaced via `polygolem doctor`, `polygolem
 > health`, and the `--confirm-live` + `POLYMARKET_LIVE_PROFILE` gates on
 > live commands.
 

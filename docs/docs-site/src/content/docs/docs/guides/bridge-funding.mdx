@@ -14,7 +14,7 @@ For accounts created **after May 2026**, bridging USDC to your EOA is _not_
 sufficient to enable trading. New API users must complete the
 [deposit wallet onboarding flow](/docs/concepts/deposit-wallets); only pUSD held by
 the deposit wallet counts as CLOB buying power. See
-[`polygolem deposit-wallet onboard`](/docs/concepts/deposit-wallets).
+[`polygolem wallet onboard`](/docs/concepts/deposit-wallets).
 </Aside>
 
 ## Supported assets
@@ -82,7 +82,7 @@ The deposit wallet flow is required for all trading:
 
 ```bash
 SIGNER_PRIVATE_KEY="0x..." \
-  polygolem deposit-wallet onboard --fund-amount 0.71
+  polygolem wallet onboard --fund-amount 0.71
 ```
 
 Read [Deposit Wallets & Signature Types](/docs/concepts/deposit-wallets) for the full

@@ -7,8 +7,8 @@ Find active prediction markets on Polymarket — no authentication required.
 ## Search markets
 
 ```bash
-polygolem discover search --query "btc 5m" --limit 10
-polygolem discover search --query "ethereum" --limit 5
+polygolem markets search --query "btc 5m" --limit 10
+polygolem markets search --query "ethereum" --limit 5
 ```
 
 ## Discover crypto markets
@@ -17,13 +17,13 @@ Find active crypto prediction markets with asset and interval filtering:
 
 ```bash
 # Bitcoin 5-minute up/down markets
-polygolem discover crypto --asset BTC --interval 5m --limit 10
+polygolem markets crypto --asset BTC --interval 5m --limit 10
 
 # Ethereum markets with CLOB price enrichment
-polygolem discover crypto --asset ETH --interval 15m --enrich
+polygolem markets crypto --asset ETH --interval 15m --enrich
 
 # All crypto markets
-polygolem discover crypto --limit 50
+polygolem markets crypto --limit 50
 ```
 
 Returns token IDs, outcomes, prices, and optionally live CLOB price/spread data.
@@ -35,10 +35,10 @@ instead of search — faster and immune to search index lag:
 
 ```bash
 # Exact current BTC 5m window
-polygolem discover crypto-window --asset BTC --interval 5m
+polygolem markets crypto-window --asset BTC --interval 5m
 
 # With live CLOB price and spread
-polygolem discover crypto-window --asset ETH --interval 15m --enrich
+polygolem markets crypto-window --asset ETH --interval 15m --enrich
 ```
 
 This hits the event directly by its deterministic slug
@@ -50,10 +50,10 @@ Scan every supported crypto asset and return the current 5m window for each:
 
 ```bash
 # All 6 markets at once
-polygolem discover crypto-5m
+polygolem markets crypto-5m
 
 # With live CLOB price and spread (slower, one API call per market)
-polygolem discover crypto-5m --enrich
+polygolem markets crypto-5m --enrich
 ```
 
 Assets scanned: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE.
@@ -74,15 +74,15 @@ polygolem stream crypto --asset ETH --custom-features
 Fetch current CLOB snapshots (price, spread, midpoint, tick size) for crypto markets:
 
 ```bash
-polygolem marketdata crypto --asset BTC --interval 5m --limit 10
-polygolem marketdata crypto --asset SOL --limit 5
+polygolem prices crypto --asset BTC --interval 5m --limit 10
+polygolem prices crypto --asset SOL --limit 5
 ```
 
 ## Get market details
 
 ```bash
-polygolem discover market --id "0xbd31dc8a..."   # by Gamma ID
-polygolem discover market --slug "will-btc-..."    # by slug
+polygolem markets market --id "0xbd31dc8a..."   # by Gamma ID
+polygolem markets market --slug "will-btc-..."    # by slug
 ```
 
 ## Enrich a market
@@ -90,7 +90,7 @@ polygolem discover market --slug "will-btc-..."    # by slug
 Joins Gamma metadata with CLOB data in one call:
 
 ```bash
-polygolem discover enrich --id "0x..."
+polygolem markets enrich --id "0x..."
 ```
 
 Returns: question, outcomes, prices, best bid/ask, spread, volume, tick size, fee rate, neg risk status, orderbook snapshot.

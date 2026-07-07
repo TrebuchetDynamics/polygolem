@@ -14,7 +14,7 @@ type clobSimulationCommandRunner interface {
 func addCLOBSimulateOrderCommand(cmd *cobra.Command, runner clobSimulationCommandRunner) {
 	var output, token, side, amount, limitPrice string
 	simulateCmd := &cobra.Command{
-		Use:   "simulate-order",
+		Use:   "simulate",
 		Short: "Simulate a read-only CLOB order fill from the current book",
 		Long: `Walks the opposing side of the live CLOB book and estimates the fill,
 average price, and slippage for a proposed order. This command is read-only:

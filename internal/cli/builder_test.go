@@ -13,7 +13,7 @@ import (
 // the root tree. Drives the wiring change in root.go.
 func TestBuilderOnboardCommandRegistered(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	builderCmd, _, err := root.Find([]string{"builder", "onboard"})
+	builderCmd, _, err := root.Find([]string{"builder-keys", "onboard"})
 	if err != nil {
 		t.Fatalf("builder onboard not found: %v", err)
 	}

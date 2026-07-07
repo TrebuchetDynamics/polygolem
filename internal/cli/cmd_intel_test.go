@@ -50,7 +50,7 @@ func (f *fakeIntelRunner) MarketFlow(_ context.Context, market string, opts inte
 func TestIntelWalletCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 	fake := &fakeIntelRunner{dossierResult: &sdkintel.WalletDossier{Wallet: "0xwallet", Status: sdkintel.DossierStatusComplete}}
 	root := intelTestRoot(fake)
-	root.SetArgs([]string{"--json", "intel", "wallet", "0xwallet", "--limit", "7"})
+	root.SetArgs([]string{"--json", "wallets", "wallet", "0xwallet", "--limit", "7"})
 	var stdout bytes.Buffer
 	root.SetOut(&stdout)
 
@@ -61,7 +61,7 @@ func TestIntelWalletCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 		t.Fatalf("request wallet=%q opts=%+v", fake.wallet, fake.dossierOpts)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "intel wallet" {
+	if got.Meta.Command != "wallets wallet" {
 		t.Fatalf("meta.command=%q", got.Meta.Command)
 	}
 	var dossier sdkintel.WalletDossier
@@ -76,7 +76,7 @@ func TestIntelWalletCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 func TestIntelLeaderboardCommandDelegatesToRunner(t *testing.T) {
 	fake := &fakeIntelRunner{leaderResult: []sdkintel.LeaderboardRow{{Rank: 1, Wallet: "0xwallet"}}}
 	root := intelTestRoot(fake)
-	root.SetArgs([]string{"--json", "intel", "leaderboard", "--limit", "5"})
+	root.SetArgs([]string{"--json", "wallets", "leaderboard", "--limit", "5"})
 	var stdout bytes.Buffer
 	root.SetOut(&stdout)
 
@@ -87,7 +87,7 @@ func TestIntelLeaderboardCommandDelegatesToRunner(t *testing.T) {
 		t.Fatalf("opts=%+v", fake.leaderOpts)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "intel leaderboard" {
+	if got.Meta.Command != "wallets leaderboard" {
 		t.Fatalf("meta.command=%q", got.Meta.Command)
 	}
 	var rows []sdkintel.LeaderboardRow
@@ -102,7 +102,7 @@ func TestIntelLeaderboardCommandDelegatesToRunner(t *testing.T) {
 func TestIntelAlertsCommandDelegatesToRunner(t *testing.T) {
 	fake := &fakeIntelRunner{alertsResult: []sdkintel.Signal{{Wallet: "0xwallet", Score: 80}}}
 	root := intelTestRoot(fake)
-	root.SetArgs([]string{"--json", "intel", "alerts", "--user", "0xwallet", "--limit", "9", "--min-score", "75"})
+	root.SetArgs([]string{"--json", "wallets", "alerts", "--user", "0xwallet", "--limit", "9", "--min-score", "75"})
 	var stdout bytes.Buffer
 	root.SetOut(&stdout)
 
@@ -113,7 +113,7 @@ func TestIntelAlertsCommandDelegatesToRunner(t *testing.T) {
 		t.Fatalf("opts=%+v", fake.alertsOpts)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "intel alerts" {
+	if got.Meta.Command != "wallets alerts" {
 		t.Fatalf("meta.command=%q", got.Meta.Command)
 	}
 	var payload sdkintel.DossierAlerts
@@ -128,7 +128,7 @@ func TestIntelAlertsCommandDelegatesToRunner(t *testing.T) {
 func TestIntelMarketFlowCommandDelegatesToRunner(t *testing.T) {
 	fake := &fakeIntelRunner{flowResult: &sdkintel.MarketFlow{Market: "0xmarket", TradeCount: 2}}
 	root := intelTestRoot(fake)
-	root.SetArgs([]string{"--json", "intel", "market-flow", "0xmarket", "--limit", "11"})
+	root.SetArgs([]string{"--json", "wallets", "market-flow", "0xmarket", "--limit", "11"})
 	var stdout bytes.Buffer
 	root.SetOut(&stdout)
 
@@ -139,7 +139,7 @@ func TestIntelMarketFlowCommandDelegatesToRunner(t *testing.T) {
 		t.Fatalf("market=%q opts=%+v", fake.flowMarket, fake.flowOpts)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "intel market-flow" {
+	if got.Meta.Command != "wallets market-flow" {
 		t.Fatalf("meta.command=%q", got.Meta.Command)
 	}
 	var flow sdkintel.MarketFlow
@@ -153,7 +153,7 @@ func TestIntelMarketFlowCommandDelegatesToRunner(t *testing.T) {
 
 func TestIntelLeaderboardRejectsUnsupportedSort(t *testing.T) {
 	root := intelTestRoot(&fakeIntelRunner{})
-	root.SetArgs([]string{"intel", "leaderboard", "--sort", "shrinkage-win-rate"})
+	root.SetArgs([]string{"wallets", "leaderboard", "--sort", "shrinkage-win-rate"})
 
 	err := root.Execute()
 	if err == nil {
@@ -166,7 +166,7 @@ func TestIntelLeaderboardRejectsUnsupportedSort(t *testing.T) {
 
 func TestRootHasIntelCommands(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	for _, args := range [][]string{{"intel", "wallet"}, {"intel", "leaderboard"}, {"intel", "alerts"}, {"intel", "market-flow"}} {
+	for _, args := range [][]string{{"wallets", "wallet"}, {"wallets", "leaderboard"}, {"wallets", "alerts"}, {"wallets", "market-flow"}} {
 		cmd, _, err := root.Find(args)
 		if err != nil {
 			t.Fatalf("Find(%v) returned error: %v", args, err)

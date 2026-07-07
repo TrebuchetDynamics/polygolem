@@ -77,7 +77,7 @@ func TestDocumentationSafety(t *testing.T) {
 	for _, relativePath := range loginDocs {
 		content := readRepositoryFile(t, root, relativePath)
 		for _, required := range []string{
-			"polygolem auth login",
+			"polygolem credentials login",
 			"Polymarket login signs with the EOA",
 			"deposit wallet",
 		} {

@@ -119,7 +119,7 @@ if status.Deployed {
 }
 ```
 
-`polygolem deposit-wallet status` reports both fields:
+`polygolem wallet status` reports both fields:
 
 ```json
 {
@@ -130,7 +130,7 @@ if status.Deployed {
 }
 ```
 
-`polygolem deposit-wallet deploy --wait` also checks bytecode before
+`polygolem wallet deploy --wait` also checks bytecode before
 submitting `WALLET-CREATE`; if code already exists, it returns
 `state=already_deployed` and skips the relayer mutation.
 
@@ -266,7 +266,7 @@ This is pure local computation — no on-chain call needed for derivation.
 
 ### 4.2 How to Obtain
 
-Preferred V2 relayer keys are minted by `polygolem auth login`
+Preferred V2 relayer keys are minted by `polygolem credentials login`
 through SIWE login plus `POST /relayer/api/auth`. The settings page remains a
 manual fallback for legacy builder-relayer HMAC credentials.
 
@@ -332,9 +332,9 @@ The relayer pays gas for all on-chain operations. Users need pUSD for trading am
 
 ### 6.1 What Is Automated
 
-1. **CLOB L2 credential issuance** — `polygolem builder auto`
-2. **V2 relayer key issuance** — `polygolem auth login`
-3. **Builder fee key issuance** — `polygolem clob create-builder-fee-key`
+1. **CLOB L2 credential issuance** — `polygolem builder-keys auto`
+2. **V2 relayer key issuance** — `polygolem credentials login`
+3. **Builder fee key issuance** — `polygolem exchange create-builder-fee-key`
 
 ### 6.2 Wallet Lifecycle Automation
 
@@ -359,7 +359,7 @@ SIGNER_PRIVATE_KEY="0x..." \
 POLYMARKET_BUILDER_API_KEY="..." \
 POLYMARKET_BUILDER_SECRET="..." \
 POLYMARKET_BUILDER_PASSPHRASE="..." \
-  polygolem deposit-wallet onboard --fund-amount 0.71 --json
+  polygolem wallet onboard --fund-amount 0.71 --json
 ```
 
 ---

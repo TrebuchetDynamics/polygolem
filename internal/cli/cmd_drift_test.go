@@ -24,7 +24,7 @@ func TestDriftLLMSCommandReadsSavedFile(t *testing.T) {
 	}
 	out := &bytes.Buffer{}
 	root := NewRootCommand(Options{Version: "test", Stdout: out, Stderr: &bytes.Buffer{}})
-	root.SetArgs([]string{"drift", "llms", "--file", path})
+	root.SetArgs([]string{"check-upstream", "llms", "--file", path})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("drift llms failed: %v\n%s", err, out.String())
 	}
@@ -40,7 +40,7 @@ func TestDriftLLMSCommandFailsOnMissingSurface(t *testing.T) {
 	}
 	out := &bytes.Buffer{}
 	root := NewRootCommand(Options{Version: "test", Stdout: out, Stderr: &bytes.Buffer{}})
-	root.SetArgs([]string{"drift", "llms", "--file", path})
+	root.SetArgs([]string{"check-upstream", "llms", "--file", path})
 	err := root.Execute()
 	if err == nil {
 		t.Fatalf("expected drift failure, output=%s", out.String())
@@ -57,7 +57,7 @@ func TestDriftLLMSCommandSupportsJSON(t *testing.T) {
 	}
 	out := &bytes.Buffer{}
 	root := NewRootCommand(Options{Version: "test", Stdout: out, Stderr: &bytes.Buffer{}})
-	root.SetArgs([]string{"--json", "drift", "llms", "--file", path})
+	root.SetArgs([]string{"--json", "check-upstream", "llms", "--file", path})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("drift llms json failed: %v\n%s", err, out.String())
 	}

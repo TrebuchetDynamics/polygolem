@@ -47,7 +47,7 @@ transport, and chain failures.
 | Command | Current shape | Drift from v1 envelope |
 |---|---|---|
 | `auth` | cobra group help text on stdout; exit 0 | not-json; group help bypasses `--json` entirely. v1 expects `error.code: USAGE_SUBCOMMAND_UNKNOWN` (or a help envelope) and a non-zero exit. |
-| `auth status` | plain text `polygolem auth status: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9, and an envelope. |
+| `auth status` | plain text `polygolem credentials status: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9, and an envelope. |
 | `bridge` | cobra group help text on stdout; exit 0 | not-json; group help bypasses `--json`. Same drift as `auth`. |
 | `bridge assets` | bare object `{"supportedAssets":[...]}` | partial-success; payload is unwrapped. Missing `ok`, `version`, `meta`; should be wrapped in `data`. |
 | `bridge deposit` | bare object `{"address":"...","note":"..."}` (positional `<address>`) | partial-success; payload is unwrapped. Auth/relayer failures not exercised here, but the success path already lacks the envelope. |
@@ -80,7 +80,7 @@ transport, and chain failures.
 | `events list` | array of 20 event objects at top level | partial-success; payload is a top-level JSON array. Missing envelope; `--limit` flag also missing in code (silently ignored). |
 | `health` | bare object `{"clob":"ok","gamma":"ok"}` | partial-success; missing `ok`, `version`, `meta`. Inner `clob`/`gamma` keys should sit under `data`. |
 | `live` | cobra group help text on stdout; exit 0 | not-json; group help bypasses `--json`. |
-| `live status` | plain text `polygolem live status: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
+| `live status` | plain text `polygolem risk status: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
 | `orderbook` | cobra group help text on stdout; exit 0 | not-json; group help bypasses `--json`. |
 | `orderbook fee-rate` | stderr text `HTTP 404 .../fee-rate?token_id=...: {"error":"fee rate not found for market"}`; exit 1 | error-not-json; expected `error.code: PROTOCOL_GAMMA_4XX`, exit 7. |
 | `orderbook get` | stderr text `HTTP 404 .../book?token_id=...: {"error":"No orderbook exists..."}`; exit 1 | error-not-json; expected `error.code: VALIDATION_TOKEN_ID_INVALID` (token resolves but book is closed) or 4xx-mapped, exit 4 or 7. |
@@ -90,10 +90,10 @@ transport, and chain failures.
 | `orderbook spread` | stderr text `HTTP 404 .../spread?token_id=...: {"error":"No orderbook exists..."}`; exit 1 | error-not-json; expected `error.code: PROTOCOL_GAMMA_4XX`, exit 7. |
 | `orderbook tick-size` | stderr text `HTTP 404 .../tick-size?token_id=...: {"error":"market not found"}`; exit 1 | error-not-json; expected `error.code: PROTOCOL_GAMMA_4XX`, exit 7. |
 | `paper` | cobra group help text on stdout; exit 0 | not-json; group help bypasses `--json`. |
-| `paper buy` | plain text `polygolem paper buy: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
-| `paper positions` | plain text `polygolem paper positions: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
-| `paper reset` | plain text `polygolem paper reset: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
-| `paper sell` | plain text `polygolem paper sell: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
+| `paper buy` | plain text `polygolem sim buy: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
+| `paper positions` | plain text `polygolem sim positions: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
+| `paper reset` | plain text `polygolem sim reset: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
+| `paper sell` | plain text `polygolem sim sell: not implemented` on stdout; exit 0 | not-json; success-coded stub. v1 expects `error.code: INTERNAL_UNIMPLEMENTED`, exit 9. |
 | `preflight` | bare object `{"checks":[...],"ok":true}` | partial-success; inner `ok` collides with envelope `ok`; missing `version`, `meta`; should be wrapped in `data`. |
 | `version` | bare object `{"version":"dev"}` | partial-success; inner `version` collides with envelope `version` field name. Missing `ok`, `meta`; payload should sit under `data`. |
 

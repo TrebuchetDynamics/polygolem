@@ -8,31 +8,31 @@ Three realistic workflows to get you productive.
 
 ```bash
 # Search for active BTC markets
-polygolem discover search --query "btc 5m" --limit 5
+polygolem markets search --query "btc 5m" --limit 5
 
 # Discover crypto markets with enrichment
-polygolem discover crypto --asset BTC --interval 5m --enrich
+polygolem markets crypto --asset BTC --interval 5m --enrich
 
 # Resolve the current window directly (deterministic, no search)
-polygolem discover crypto-window --asset BTC --interval 5m --enrich
+polygolem markets crypto-window --asset BTC --interval 5m --enrich
 
 # Get full market details
-polygolem discover market --id "0xbd31dc8a..."
+polygolem markets market --id "0xbd31dc8a..."
 
 # Get everything at once — Gamma metadata + CLOB tick size, fee, orderbook
-polygolem discover enrich --id "0xbd31dc8a..."
+polygolem markets enrich --id "0xbd31dc8a..."
 
 # Live stream crypto market events
 polygolem stream crypto --asset BTC --interval 5m --max-messages 10
 
 # Quick marketdata snapshots for crypto
-polygolem marketdata crypto --asset ETH --limit 5
+polygolem prices crypto --asset ETH --limit 5
 
 # List all 6 active 5m crypto markets
-polygolem discover crypto-5m --enrich
+polygolem markets crypto-5m --enrich
 
 # One-command paper trade on current window
-polygolem paper trade --asset BTC --interval 5m --side up --size 1
+polygolem sim trade --asset BTC --interval 5m --side up --size 1
 ```
 
 ## 2. Onboard your deposit wallet (required for trading)
@@ -47,16 +47,16 @@ SIGNER_PRIVATE_KEY="0x..." \
 POLYMARKET_BUILDER_API_KEY="..." \
 POLYMARKET_BUILDER_SECRET="..." \
 POLYMARKET_BUILDER_PASSPHRASE="..." \
-  polygolem deposit-wallet onboard --fund-amount 14 --confirm ONBOARD_WALLET --json
+  polygolem wallet onboard --fund-amount 14 --confirm ONBOARD_WALLET --json
 
 # Sync CLOB balance
-polygolem clob update-balance --asset-type collateral
+polygolem exchange update-balance --asset-type collateral
 
 # Check your balance
-polygolem clob balance --asset-type collateral
+polygolem exchange balance --asset-type collateral
 
 # Place an order
-polygolem clob create-order \
+polygolem exchange create-order \
   --token "123..." \
   --side buy \
   --price 0.51 \

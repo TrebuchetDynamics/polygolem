@@ -194,7 +194,7 @@ envelope remains authoritative; exit codes are a convenience.
 
 ## Worked examples
 
-### Success — `polygolem discover search --query "btc" --limit 1 --json`
+### Success — `polygolem markets search --query "btc" --limit 1 --json`
 
 ```json
 {
@@ -219,7 +219,7 @@ envelope remains authoritative; exit codes are a convenience.
 }
 ```
 
-### Error — `polygolem deposit-wallet onboard --fund-amount 10 --json` without builder creds
+### Error — `polygolem wallet onboard --fund-amount 10 --json` without builder creds
 
 ```json
 {
@@ -242,7 +242,7 @@ envelope remains authoritative; exit codes are a convenience.
 
 Exit code: `3` (`auth`).
 
-### Error — `polygolem orderbook get --token-id "" --json`
+### Error — `polygolem book get --token-id "" --json`
 
 ```json
 {
@@ -252,7 +252,7 @@ Exit code: `3` (`auth`).
     "code": "VALIDATION_TOKEN_ID_INVALID",
     "category": "validation",
     "message": "--token-id is required and must be a non-empty CLOB token id",
-    "hint": "Pass --token-id from `polygolem discover market` output"
+    "hint": "Pass --token-id from `polygolem markets market` output"
   },
   "meta": {
     "command": "orderbook get",

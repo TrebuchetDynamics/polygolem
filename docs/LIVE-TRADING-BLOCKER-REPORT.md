@@ -6,7 +6,7 @@
 
 > **Archived:** This report captured an older hypothesis about
 > deposit-wallet-bound CLOB keys. The current onboarding source of truth is
-> `docs/ONBOARDING.md`: Polymarket login signs with the EOA, `polygolem auth
+> `docs/ONBOARDING.md`: Polymarket login signs with the EOA, `polygolem credentials
 > login` handles SIWE/profile/relayer credentials headlessly, and the deposit
 > wallet remains the trading wallet for POLY_1271 orders and settlement.
 
@@ -32,7 +32,7 @@ in the relayer client.
 ### Step 1: Auth Status Check ✅ / ❌
 
 ```bash
-polygolem auth status --check-deposit-key
+polygolem credentials status --check-deposit-key
 ```
 
 **Result:**
@@ -44,7 +44,7 @@ polygolem auth status --check-deposit-key
   "depositWalletDeployed": false,
   "eoaAddress": "0x33e4aD5A1367fbf7004c637F628A5b78c44Fa76C",
   "eoaApiKeyExists": true,
-  "nextStep": "Run: polygolem deposit-wallet deploy --wait"
+  "nextStep": "Run: polygolem wallet deploy --wait"
 }
 ```
 
@@ -55,7 +55,7 @@ polygolem auth status --check-deposit-key
 ### Step 2: Relayer Credential Minting ✅
 
 ```bash
-polygolem auth login
+polygolem credentials login
 ```
 
 **Result:** ✅ Success
@@ -70,7 +70,7 @@ polygolem auth login
 ### Step 3: Deposit Wallet Deployment ⚠️ PARTIAL
 
 ```bash
-polygolem deposit-wallet deploy --wait
+polygolem wallet deploy --wait
 ```
 
 **Result:** Deployment transaction submitted and **confirmed on-chain** (tx: `0xf5272733...`), but CLI polling failed with:
@@ -105,7 +105,7 @@ WALLET-CREATE poll: relayer: get transaction: decode response:
 ### Step 4: Deposit-Wallet-Owned API Key Creation ❌ BLOCKED
 
 ```bash
-polygolem clob create-api-key-for-address --owner 0x33e4aD5A1367fbf7004c637F628A5b78c44Fa76C
+polygolem exchange create-api-key-for-address --owner 0x33e4aD5A1367fbf7004c637F628A5b78c44Fa76C
 ```
 
 **Result:**
@@ -120,7 +120,7 @@ HTTP 401 https://clob.polymarket.com/auth/api-key: {"error":"Invalid L1 Request 
 ### Step 5: Balance Check ❌ BLOCKED
 
 ```bash
-polygolem clob balance --asset-type collateral
+polygolem exchange balance --asset-type collateral
 ```
 
 **Result:**
@@ -136,7 +136,7 @@ derive deposit-wallet api key: HTTP 401 https://clob.polymarket.com/auth/derive-
 ### Step 6: Order Placement ❌ BLOCKED
 
 ```bash
-polygolem clob create-order --token 8501497159083948713316135768103773293754490207922884688769443031624417212426 --side buy --price 0.01 --size 0.01
+polygolem exchange create-order --token 8501497159083948713316135768103773293754490207922884688769443031624417212426 --side buy --price 0.01 --size 0.01
 ```
 
 **Result:**
@@ -206,8 +206,8 @@ tx := txs[0]
 
 | Workaround | Viable? | Notes |
 |------------|---------|-------|
-| EOA SIWE via `polygolem auth login` | ✅ Current | Registers profile and mints V2 relayer credentials. |
-| EOA ClobAuth via `polygolem builder auto` | ✅ Current | Creates or derives CLOB L2 credentials for HTTP auth. |
+| EOA SIWE via `polygolem credentials login` | ✅ Current | Registers profile and mints V2 relayer credentials. |
+| EOA ClobAuth via `polygolem builder-keys auto` | ✅ Current | Creates or derives CLOB L2 credentials for HTTP auth. |
 | POLY_1271 deposit-wallet orders | ✅ Current | Deposit wallet remains maker/signer in the order payload. |
 | Browser fallback | ⚠️ Fallback | Use only when headless login is blocked by an upstream/account/network issue. |
 

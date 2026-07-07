@@ -24,16 +24,16 @@ func newDiscoverCommand(w *wire, reads discoverReadRunner) *cobra.Command {
 	var query, marketID, marketSlug string
 	var limit int
 
-	cmd := commandGroup("discover", "Market discovery via Polymarket Gamma API")
+	cmd := commandGroup("markets", "Market discovery via Polymarket Gamma API")
 	cmd.Long = `Find Polymarket markets and events. Read-only; no credentials required.
 
 Search and list markets, look one up by id/slug/token, enrich with live CLOB
 quotes, browse tags/series/comments, and resolve crypto up/down windows
 (crypto-5m, crypto-window). This is the usual starting point: use it to find the
-token id you then pass to orderbook, clob, or paper.`
-	cmd.Example = `  polygolem discover search --query "Will BTC" --limit 5
-  polygolem discover crypto-5m --asset BTC --hours-ahead 1 --enrich
-  polygolem discover market --slug <market-slug>`
+token id you then pass to book, exchange, or sim.`
+	cmd.Example = `  polygolem markets search --query "Will BTC" --limit 5
+  polygolem markets crypto-5m --asset BTC --hours-ahead 1 --enrich
+  polygolem markets market --slug <market-slug>`
 
 	var marketsLimit, marketsOffset, marketsTagID int
 	var marketsOrder string
@@ -192,10 +192,10 @@ Extracts markets from events and filters by title patterns. Returns token IDs
 ready for orderbook inspection or trading.
 
 Examples:
-  polygolem discover crypto --asset BTC --interval 5m    # BTC Up/Down 5m markets
-  polygolem discover crypto --asset ETH --interval 15m   # ETH Up/Down 15m markets
-  polygolem discover crypto --asset BTC --interval 5m --enrich  # With CLOB prices
-  polygolem discover crypto --limit 50                   # All crypto markets
+  polygolem markets crypto --asset BTC --interval 5m    # BTC Up/Down 5m markets
+  polygolem markets crypto --asset ETH --interval 15m   # ETH Up/Down 15m markets
+  polygolem markets crypto --asset BTC --interval 5m --enrich  # With CLOB prices
+  polygolem markets crypto --limit 50                   # All crypto markets
 
 Assets: BTC, ETH, SOL, XRP, DOGE, BNB, HYPE, etc.
 Intervals: 5m, 15m, 1h, daily, weekly (matches title patterns)`,
@@ -230,8 +230,8 @@ This bypasses search and hits the exact current window directly — much faster
 and more reliable than discovery via public search.
 
 Examples:
-  polygolem discover crypto-window --asset BTC --interval 5m
-  polygolem discover crypto-window --asset ETH --interval 15m --enrich`,
+  polygolem markets crypto-window --asset BTC --interval 5m
+  polygolem markets crypto-window --asset ETH --interval 15m --enrich`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			result, err := cryptowindow.New(w.gamma, w.clob).Run(cmd.Context(), cryptowindow.Request{
@@ -297,10 +297,10 @@ Scanner types:
   crypto-5m
 
 Examples:
-  polygolem discover opportunities --type wide-spread --limit 20
-  polygolem discover opportunities --type closing-soon --hours 6
-  polygolem discover opportunities --type low-liquidity-high-volume
-  polygolem discover opportunities --type crypto-5m --asset BTC`,
+  polygolem markets opportunities --type wide-spread --limit 20
+  polygolem markets opportunities --type closing-soon --hours 6
+  polygolem markets opportunities --type low-liquidity-high-volume
+  polygolem markets opportunities --type crypto-5m --asset BTC`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := opportunities.New(opportunities.Config{Gamma: w.gamma, Pricer: w.clob})

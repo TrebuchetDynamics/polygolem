@@ -16,7 +16,7 @@ func streamCmd(jsonOut bool) *cobra.Command {
 
 'stream market' and 'stream crypto' need no credentials; 'stream user' streams your
 own order/trade events and needs CLOB L2 credentials. These emit raw channel events —
-for a normalized latest-snapshot view, use 'polygolem marketdata live' instead.`
+for a normalized latest-snapshot view, use 'polygolem prices live' instead.`
 	cmd.Example = `  polygolem stream market --asset-ids <id> --stats
   polygolem stream crypto --asset BTC --stats`
 

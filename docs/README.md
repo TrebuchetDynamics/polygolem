@@ -49,7 +49,7 @@ Use this page to choose the right doc. Prefer the canonical docs listed below ov
 | Doc | What It Covers | Status |
 |-----|---------------|--------|
 | [ONBOARDING.md](./ONBOARDING.md) | Complete automatic deposit wallet onboarding flow: derive, SIWE/profile/relayer auth, deploy, approve, enable trading, fund, trade. Polymarket login signs with the EOA; the deposit wallet remains the trading wallet. | **Canonical** |
-| [BROWSER-SETUP.md](./BROWSER-SETUP.md) | Manual signing fallback and security guidance when `polygolem auth login` is blocked. | **Canonical** |
+| [BROWSER-SETUP.md](./BROWSER-SETUP.md) | Manual signing fallback and security guidance when `polygolem credentials login` is blocked. | **Canonical** |
 | [ENABLE-TRADING-HEADLESS.md](./ENABLE-TRADING-HEADLESS.md) | SDK flow for the UI Enable Trading typed-data prompts: ClobAuth API keys and token approvals. | **Canonical** |
 | [COMMANDS.md](./COMMANDS.md) | Auto-generated CLI reference. Every command, flag, and example. | **Auto-generated** |
 | [OPERATOR-ONE-PAGER.md](./OPERATOR-ONE-PAGER.md) | One-page path for no-wallet checks and pre-live stop conditions. | **Canonical** |

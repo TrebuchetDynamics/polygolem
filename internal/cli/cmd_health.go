@@ -25,7 +25,7 @@ func healthCmd(jsonOut bool) *cobra.Command {
 
 func newHealthCommand(runner healthRunner) *cobra.Command {
 	return &cobra.Command{
-		Use: "health", Short: "Check Gamma and CLOB API reachability", Args: cobra.NoArgs,
+		Use: "ping", Short: "Check Gamma and CLOB API reachability", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return writeCommandJSON(cmd, runner.Run(cmd.Context()))
 		},

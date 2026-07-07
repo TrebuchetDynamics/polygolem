@@ -23,13 +23,13 @@ func intelCmd(jsonOut bool) *cobra.Command {
 }
 
 func newIntelCommand(runner intelRunner) *cobra.Command {
-	cmd := commandGroup("intel", "Read-only wallet intelligence")
+	cmd := commandGroup("wallets", "Read-only wallet intelligence")
 	cmd.Long = `Reproducible, read-only statistical signals about public wallet activity.
 
 Scores are computed only from public Data API rows (trades, activity, closed
 positions) with a named formula version and the source rows exposed. A signal is
 research context, not trading advice and not a finding of misconduct.`
-	cmd.Example = `  polygolem intel wallet <address> --json`
+	cmd.Example = `  polygolem wallets wallet <address> --json`
 
 	var walletLimit int
 	walletCmd := &cobra.Command{

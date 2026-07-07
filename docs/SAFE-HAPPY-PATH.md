@@ -7,8 +7,8 @@ For an automated read-only smoke check, run `scripts/live-smoke.sh`. It does not
 ## 1. Read-only health
 
 ```bash
-polygolem health --json
-polygolem diag --json
+polygolem ping --json
+polygolem debug --json
 ```
 
 Expected: Gamma and CLOB are reachable, endpoints are the ones you intended, and no private key is required.
@@ -16,8 +16,8 @@ Expected: Gamma and CLOB are reachable, endpoints are the ones you intended, and
 ## 2. Discover a market
 
 ```bash
-polygolem discover crypto-5m --enrich --json
-polygolem discover crypto-window --asset BTC --interval 5m --enrich --json
+polygolem markets crypto-5m --enrich --json
+polygolem markets crypto-window --asset BTC --interval 5m --enrich --json
 ```
 
 Record the event slug, condition ID, token IDs, prices, spread, and market window. If the window does not match your strategy decision time, stop.
@@ -25,9 +25,9 @@ Record the event slug, condition ID, token IDs, prices, spread, and market windo
 ## 3. Paper trade first
 
 ```bash
-polygolem paper reset --cash 100 --json
-polygolem paper trade --asset BTC --interval 5m --side up --size 1 --json
-polygolem paper positions --json
+polygolem sim reset --cash 100 --json
+polygolem sim trade --asset BTC --interval 5m --side up --size 1 --json
+polygolem sim positions --json
 ```
 
 Expected: local-only state changes. No private key, signing, CLOB auth, relayer call, or chain transaction should be needed.
@@ -38,9 +38,9 @@ Only after paper behavior looks right:
 
 ```bash
 export SIGNER_PRIVATE_KEY="0x..."
-polygolem auth status --check-deposit-key --json
-polygolem deposit-wallet status --check-enable-trading --json
-polygolem clob update-balance --asset-type collateral --json
+polygolem credentials status --check-deposit-key --json
+polygolem wallet status --check-enable-trading --json
+polygolem exchange update-balance --asset-type collateral --json
 ```
 
 Expected: deposit wallet is derived/deployed, CLOB credentials are available, enable-trading approvals are ready, and the deposit wallet has enough pUSD. The EOA balance is not the trading balance.
@@ -52,7 +52,7 @@ Use a tiny amount you are willing to lose. Prefer a maker-only order first so an
 ```bash
 export POLYGOLEM_MAX_LIVE_ORDER_USD=1
 
-polygolem clob create-order \
+polygolem exchange create-order \
   --token <TOKEN_ID> \
   --side buy \
   --price 0.01 \
@@ -64,8 +64,8 @@ polygolem clob create-order \
 Then immediately inspect and cancel if the order is live:
 
 ```bash
-polygolem clob orders --json
-polygolem clob cancel --order-id <ORDER_ID> --json
+polygolem exchange orders --json
+polygolem exchange cancel --order-id <ORDER_ID> --json
 ```
 
 ## Stop conditions

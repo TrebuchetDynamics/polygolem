@@ -7,13 +7,13 @@ import (
 )
 
 func relayerCmd(jsonOut bool) *cobra.Command {
-	cmd := commandGroup("relayer", "Inspect Polymarket relayer state")
+	cmd := commandGroup("tx", "Inspect Polymarket relayer state")
 	cmd.Long = `Inspect Polymarket V2 relayer state. Read-only.
 
 Look up a relayer transaction by id to see its state and on-chain hash. The
 wallet lifecycle mutations the relayer sponsors (deploy, batch, approvals) are
-driven from 'polygolem deposit-wallet', not here.`
-	cmd.Example = `  polygolem relayer transaction <tx-id> --json`
+driven from 'polygolem wallet', not here.`
+	cmd.Example = `  polygolem tx transaction <tx-id> --json`
 	cmd.AddCommand(relayerTransactionCmd(jsonOut))
 	return cmd
 }

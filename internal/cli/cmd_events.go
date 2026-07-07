@@ -23,7 +23,7 @@ func newEventsCommand(runner eventsRunner) *cobra.Command {
 	cmd.Long = `List Polymarket events. Read-only; no credentials.
 
 An event groups related markets under one question set. Browse events, then drill
-into a specific market with 'polygolem discover market'.`
+into a specific market with 'polygolem markets market'.`
 	cmd.Example = `  polygolem events list --json`
 	cmd.AddCommand(&cobra.Command{
 		Use: "list", Short: "List events", Args: cobra.NoArgs,

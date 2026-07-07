@@ -10,16 +10,16 @@ surface.
 ## CLI
 
 ```bash
-polygolem data positions --user 0x...
-polygolem data closed-positions --user 0x...
-polygolem data trades --user 0x... --limit 20
-polygolem data activity --user 0x... --limit 20
-polygolem data holders --token-id <token-id> --limit 20
-polygolem data value --user 0x...
-polygolem data markets-traded --user 0x...
-polygolem data open-interest --token-id <token-id>
-polygolem data leaderboard --limit 20
-polygolem data live-volume --limit <event-id>
+polygolem analytics positions --user 0x...
+polygolem analytics closed-positions --user 0x...
+polygolem analytics trades --user 0x... --limit 20
+polygolem analytics activity --user 0x... --limit 20
+polygolem analytics holders --token-id <token-id> --limit 20
+polygolem analytics value --user 0x...
+polygolem analytics markets-traded --user 0x...
+polygolem analytics open-interest --token-id <token-id>
+polygolem analytics leaderboard --limit 20
+polygolem analytics live-volume --limit <event-id>
 ```
 
 The current `live-volume` CLI flag is named `--limit`, but the SDK method and

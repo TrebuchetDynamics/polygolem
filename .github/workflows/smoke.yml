@@ -30,4 +30,4 @@ jobs:
       - name: Official docs drift check
         run: |
           curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/llms.txt
-          /tmp/polygolem drift llms --file /tmp/llms.txt --json
+          /tmp/polygolem check-upstream llms --file /tmp/llms.txt --json

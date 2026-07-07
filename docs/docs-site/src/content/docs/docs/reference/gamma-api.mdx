@@ -15,17 +15,17 @@ Polygolem wraps Gamma in two places:
 - **`pkg/gamma`** — the public read-only surface that downstream Go consumers
   can import. Gamma response and query DTOs are exported from `pkg/types`.
 
-The `polygolem discover` family is the CLI interface to Gamma:
+The `polygolem markets` family is the CLI interface to Gamma:
 
 ```bash
-polygolem discover search --query "btc 5m" --limit 10
-polygolem discover markets --limit 20 --active
-polygolem discover market --id    0xbd31dc8a...
-polygolem discover market --slug  will-btc-be-above
-polygolem discover enrich --id    0xbd31dc8a...   # joins Gamma + CLOB
-polygolem discover tags --limit 100
-polygolem discover series --limit 20
-polygolem discover comments --entity-id 123 --entity-type market
+polygolem markets search --query "btc 5m" --limit 10
+polygolem markets markets --limit 20 --active
+polygolem markets market --id    0xbd31dc8a...
+polygolem markets market --slug  will-btc-be-above
+polygolem markets enrich --id    0xbd31dc8a...   # joins Gamma + CLOB
+polygolem markets tags --limit 100
+polygolem markets series --limit 20
+polygolem markets comments --entity-id 123 --entity-type market
 ```
 
 ## Endpoint categories
@@ -78,9 +78,9 @@ polygolem discover comments --entity-id 123 --entity-type market
 - Base URL: `https://gamma-api.polymarket.com`
 
 <Aside type="note">
-**Source of truth** for `polygolem discover` flag semantics is
+**Source of truth** for `polygolem markets` flag semantics is
 [`docs/COMMANDS.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/COMMANDS.md)
-(see the `discover` section). Run `polygolem discover --help` for live help.
+(see the `discover` section). Run `polygolem markets --help` for live help.
 </Aside>
 
 ## Related

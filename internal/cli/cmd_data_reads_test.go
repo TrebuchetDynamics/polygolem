@@ -29,7 +29,7 @@ func TestDataTradesCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 	root.SetErr(&stderr)
 	root.PersistentFlags().Bool("json", false, "emit JSON output")
 	root.AddCommand(newDataCommand(fake))
-	root.SetArgs([]string{"--json", "data", "trades", "--user", "0xuser", "--limit", "7"})
+	root.SetArgs([]string{"--json", "analytics", "trades", "--user", "0xuser", "--limit", "7"})
 	installJSONContract(root)
 
 	if err := root.Execute(); err != nil {
@@ -39,8 +39,8 @@ func TestDataTradesCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 		t.Fatalf("request=%+v", fake.request)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "data trades" {
-		t.Fatalf("meta.command=%q, want data trades", got.Meta.Command)
+	if got.Meta.Command != "analytics trades" {
+		t.Fatalf("meta.command=%q, want analytics trades", got.Meta.Command)
 	}
 	var data []dataapi.Trade
 	if err := json.Unmarshal(got.Data, &data); err != nil {

@@ -25,7 +25,7 @@ type diagEnvValue struct {
 }
 
 func diagCmd(_ bool, version string) *cobra.Command {
-	cmd := &cobra.Command{Use: "diag", Short: "Print redacted local diagnostics", Args: cobra.NoArgs,
+	cmd := &cobra.Command{Use: "debug", Short: "Print redacted local diagnostics", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := localpreflight.New(localpreflight.Config{Version: version, BuilderCode: builderCodeFromFlagOrEnv("")})
 			report := buildDiagReport(cmd.Context(), version, runner)

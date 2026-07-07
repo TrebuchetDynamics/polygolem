@@ -37,7 +37,7 @@ func TestHealthCommandUsesRunnerAndJSONEnvelope(t *testing.T) {
 		t.Fatal("health runner was not called")
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "health" {
+	if got.Meta.Command != "ping" {
 		t.Fatalf("meta.command=%q, want health", got.Meta.Command)
 	}
 	var data map[string]string

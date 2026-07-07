@@ -61,7 +61,7 @@ The same market shows up in two places, with different fields:
 | Contains | Question, description, outcomes, end date, image | Bid/ask depth, last trade, fee rate |
 | Auth | None (read-only) | None for L0; key+wallet for L1/L2 |
 
-`polygolem discover enrich --id <conditionID>` joins both views into a single
+`polygolem markets enrich --id <conditionID>` joins both views into a single
 JSON document — see [Market Discovery](/docs/guides/market-discovery).
 
 ## Token IDs are the trading primitive
@@ -70,9 +70,9 @@ Every CLOB endpoint that touches market data takes a **token ID** (ERC-1155
 asset ID), not a condition ID:
 
 ```bash
-polygolem orderbook get      --token-id 71321045679...
-polygolem orderbook tick-size --token-id 71321045679...
-polygolem clob create-order  --token-id 71321045679... --side BUY ...
+polygolem book get      --token-id 71321045679...
+polygolem book tick-size --token-id 71321045679...
+polygolem exchange create-order  --token-id 71321045679... --side BUY ...
 ```
 
 The token ID is the integer encoding of the position in the CTF.

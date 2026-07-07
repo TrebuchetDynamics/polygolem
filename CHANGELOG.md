@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking CLI rename:** top-level commands now use shorter names: `ping`,
+  `markets`, `book`, `exchange`, `analytics`, `wallet`, `sim`, `prices`,
+  `credentials`, `risk`, `doctor`, `debug`, `check-upstream`, `tx`, and
+  `builder-keys`. The CLOB order simulator is now `exchange simulate`.
+
 ## [v0.4.2] — 2026-07-07
 
 ### Added

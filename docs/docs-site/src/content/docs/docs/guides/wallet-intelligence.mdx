@@ -35,16 +35,16 @@ and disclaimers. It should not assert intent.
 
 ```bash
 # Build a public wallet dossier
-polygolem intel wallet 0xwallet --limit 25 --json
+polygolem wallets wallet 0xwallet --limit 25 --json
 
 # List Data-API-ranked wallet intelligence rows
-polygolem intel leaderboard --limit 20 --json
+polygolem wallets leaderboard --limit 20 --json
 
 # Emit user-scoped dossier alerts above a threshold
-polygolem intel alerts --user 0xwallet --min-score 75 --json
+polygolem wallets alerts --user 0xwallet --min-score 75 --json
 
 # Summarize holder/trade/open-interest flow for a market or token
-polygolem intel market-flow <market-or-token-id> --limit 50 --json
+polygolem wallets market-flow <market-or-token-id> --limit 50 --json
 ```
 
 All commands are read-only. They use public Polymarket data adapters and do not

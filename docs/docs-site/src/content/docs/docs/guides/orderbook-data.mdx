@@ -5,12 +5,12 @@ description: Read CLOB order books, prices, midpoints, spreads, tick sizes, fee 
 
 import { Aside } from "@astrojs/starlight/components";
 
-The `polygolem orderbook` family wraps the public CLOB market-data endpoints.
+The `polygolem book` family wraps the public CLOB market-data endpoints.
 Every command on this page is **read-only** — no API key, no wallet, no risk.
 
 <Aside type="note">
 You only need a CLOB token ID to use these commands. Find one with
-[`polygolem discover search`](/docs/guides/market-discovery) or `discover enrich`.
+[`polygolem markets search`](/docs/guides/market-discovery) or `discover enrich`.
 </Aside>
 
 ## Get the order book
@@ -18,7 +18,7 @@ You only need a CLOB token ID to use these commands. Find one with
 Full L2 depth (top bids and asks):
 
 ```bash
-polygolem orderbook get --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
+polygolem book get --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
 ```
 
 ```json
@@ -40,7 +40,7 @@ polygolem orderbook get --token-id 713210456792522125946263855327069127503327285
 ## Best bid / ask
 
 ```bash
-polygolem orderbook price --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
+polygolem book price --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
 ```
 
 ```json
@@ -52,7 +52,7 @@ polygolem orderbook price --token-id 7132104567925221259462638553270691275033272
 The CLOB-computed midpoint between best bid and best ask:
 
 ```bash
-polygolem orderbook midpoint --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
+polygolem book midpoint --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
 ```
 
 ```json
@@ -62,7 +62,7 @@ polygolem orderbook midpoint --token-id 7132104567925221259462638553270691275033
 ## Spread
 
 ```bash
-polygolem orderbook spread --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
+polygolem book spread --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
 ```
 
 ```json
@@ -75,7 +75,7 @@ The minimum price increment and order size for a market. Required before placing
 any order:
 
 ```bash
-polygolem orderbook tick-size --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
+polygolem book tick-size --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
 ```
 
 ```json
@@ -87,7 +87,7 @@ polygolem orderbook tick-size --token-id 713210456792522125946263855327069127503
 Maker/taker fees in basis points:
 
 ```bash
-polygolem orderbook fee-rate --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
+polygolem book fee-rate --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
 ```
 
 ```json
@@ -99,7 +99,7 @@ polygolem orderbook fee-rate --token-id 7132104567925221259462638553270691275033
 The most recent fill on this token:
 
 ```bash
-polygolem orderbook last-trade --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
+polygolem book last-trade --token-id 71321045679252212594626385532706912750332728571942134274583709853755746957851
 ```
 
 ```json
@@ -122,7 +122,7 @@ default so `best_bid_ask` updates can refresh top-of-book snapshots without a
 full book delta.
 
 ```bash
-polygolem marketdata live \
+polygolem prices live \
   --asset-ids 71321045679252212594626385532706912750332728571942134274583709853755746957851 \
   --max-messages 10
 ```
@@ -148,6 +148,6 @@ See [Go-Bot Integration](/docs/guides/go-bot-integration) for the full SDK story
 
 ## Reference
 
-- `polygolem orderbook --help` — flag-level reference for every subcommand
+- `polygolem book --help` — flag-level reference for every subcommand
 - [`docs/COMMANDS.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/COMMANDS.md) — canonical command list
 - [CLOB API](/docs/reference/clob-api) — endpoint surface

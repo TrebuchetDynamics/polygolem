@@ -17,7 +17,7 @@ Polygolem splits the V2 setup into three credential systems:
 Polymarket login signs with the EOA. The deposit wallet remains the trading
 wallet for pUSD, POLY_1271 orders, CTF positions, approvals, and redemption.
 Wallet commands can run `auth login` automatically when relayer credentials
-are missing. Run `polygolem auth login` yourself when you want to inspect or
+are missing. Run `polygolem credentials login` yourself when you want to inspect or
 refresh the relayer key explicitly.
 </Aside>
 
@@ -29,33 +29,33 @@ openssl rand -hex 32 > key.txt
 
 # Step 2: Sign in to Polymarket and mint relayer credentials
 SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
-  polygolem auth login
+  polygolem credentials login
 
 # Step 3: Create or derive CLOB L2 credentials
 SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
-  polygolem builder auto
+  polygolem builder-keys auto
 
 # Step 4: Mint a builder fee key, then export its key as a bytes32 builder code
 SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
-  polygolem clob create-builder-fee-key
+  polygolem exchange create-builder-fee-key
 export POLYMARKET_BUILDER_CODE="0x..."
 
 # Step 5: Deploy deposit wallet + approve + enable trading + fund
 SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
-  polygolem deposit-wallet onboard --fund-amount 10 --json
+  polygolem wallet onboard --fund-amount 10 --json
 
 # Step 6: Verify the deposit wallet address and authenticated CLOB path
 DEPOSIT_WALLET=$(SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem --json deposit-wallet derive | jq -r '.data.depositWallet')
 SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
-  polygolem auth status --check-deposit-key
+  polygolem credentials status --check-deposit-key
 
 # Step 7: Sync balance and trade
 SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
-  polygolem clob update-balance --asset-type collateral
+  polygolem exchange update-balance --asset-type collateral
 
 SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
-  polygolem clob create-order --token <id> --side buy --price 0.5 --size 10 \
+  polygolem exchange create-order --token <id> --side buy --price 0.5 --size 10 \
     --builder-code "$POLYMARKET_BUILDER_CODE"
 ```
 
@@ -94,7 +94,7 @@ message with the EOA, exchanges it for a Gamma session, and mints the V2
 relayer key at `relayer-v2.polymarket.com/relayer/api/auth`.
 
 `auth headless-onboard` is the older compatibility command name for this same
-flow. New automation should use `polygolem auth login`.
+flow. New automation should use `polygolem credentials login`.
 
 `deposit-wallet deploy`, `deposit-wallet approve`, and
 `deposit-wallet onboard` prefer `RELAYER_API_KEY` +

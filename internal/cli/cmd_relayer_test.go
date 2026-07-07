@@ -4,7 +4,7 @@ import "testing"
 
 func TestRelayerTransactionCommandIsRegistered(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version"})
-	cmd, _, err := root.Find([]string{"relayer", "transaction", "tx-1"})
+	cmd, _, err := root.Find([]string{"tx", "transaction", "tx-1"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}

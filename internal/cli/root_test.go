@@ -89,7 +89,7 @@ func TestJSONVersionUsesSuccessEnvelope(t *testing.T) {
 }
 
 func TestJSONPreflightUsesSuccessEnvelope(t *testing.T) {
-	stdout, stderr, err := executeRootForTest("--json", "preflight")
+	stdout, stderr, err := executeRootForTest("--json", "doctor")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -97,7 +97,7 @@ func TestJSONPreflightUsesSuccessEnvelope(t *testing.T) {
 	if !got.OK {
 		t.Fatalf("ok=false, want true\nenvelope=%s", stdout)
 	}
-	if got.Meta.Command != "preflight" {
+	if got.Meta.Command != "doctor" {
 		t.Fatalf("meta.command=%q, want preflight", got.Meta.Command)
 	}
 	var data struct {
@@ -116,7 +116,7 @@ func TestJSONPreflightUsesSuccessEnvelope(t *testing.T) {
 }
 
 func TestJSONGroupCommandUsesUsageErrorEnvelope(t *testing.T) {
-	stdout, stderr, err := executeRootForTest("--json", "clob")
+	stdout, stderr, err := executeRootForTest("--json", "exchange")
 	if err == nil {
 		t.Fatal("expected Execute to return usage error")
 	}
@@ -133,8 +133,8 @@ func TestJSONGroupCommandUsesUsageErrorEnvelope(t *testing.T) {
 	if got.OK {
 		t.Fatalf("ok=true, want false\nenvelope=%s", stderr)
 	}
-	if got.Meta.Command != "clob" {
-		t.Fatalf("meta.command=%q, want clob", got.Meta.Command)
+	if got.Meta.Command != "exchange" {
+		t.Fatalf("meta.command=%q, want exchange", got.Meta.Command)
 	}
 	if got.Error == nil || got.Error.Code != "USAGE_SUBCOMMAND_UNKNOWN" || got.Error.Category != "usage" {
 		t.Fatalf("unexpected error envelope: %+v\n%s", got.Error, stderr)
@@ -145,7 +145,7 @@ func TestJSONLiveStatusReportsBlockedByDefault(t *testing.T) {
 	t.Setenv("POLYMARKET_LIVE_PROFILE", "")
 	t.Setenv("POLYMARKET_LIVE_TRADING_ENABLED", "false")
 
-	stdout, stderr, err := executeRootForTest("--json", "live", "status")
+	stdout, stderr, err := executeRootForTest("--json", "risk", "status")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr=%s", err, stderr)
 	}
@@ -156,8 +156,8 @@ func TestJSONLiveStatusReportsBlockedByDefault(t *testing.T) {
 	if !got.OK {
 		t.Fatalf("ok=false, want true\nenvelope=%s", stdout)
 	}
-	if got.Meta.Command != "live status" {
-		t.Fatalf("meta.command=%q, want live status", got.Meta.Command)
+	if got.Meta.Command != "risk status" {
+		t.Fatalf("meta.command=%q, want risk status", got.Meta.Command)
 	}
 	var data struct {
 		Allowed  bool `json:"allowed"`
@@ -166,13 +166,13 @@ func TestJSONLiveStatusReportsBlockedByDefault(t *testing.T) {
 		} `json:"failures"`
 	}
 	if err := json.Unmarshal(got.Data, &data); err != nil {
-		t.Fatalf("decode live status data: %v\n%s", err, got.Data)
+		t.Fatalf("decode risk status data: %v\n%s", err, got.Data)
 	}
 	if data.Allowed {
-		t.Fatal("live status allowed by default")
+		t.Fatal("risk status allowed by default")
 	}
 	if len(data.Failures) == 0 {
-		t.Fatal("live status should explain blocked gates")
+		t.Fatal("risk status should explain blocked gates")
 	}
 }
 
@@ -180,7 +180,7 @@ func TestJSONLiveStatusReportsAllowedWhenAllGatesPass(t *testing.T) {
 	t.Setenv("POLYMARKET_LIVE_PROFILE", "on")
 	t.Setenv("POLYMARKET_LIVE_TRADING_ENABLED", "true")
 
-	stdout, stderr, err := executeRootForTest("--json", "live", "status", "--confirm-live")
+	stdout, stderr, err := executeRootForTest("--json", "risk", "status", "--confirm-live")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr=%s", err, stderr)
 	}
@@ -193,7 +193,7 @@ func TestJSONLiveStatusReportsAllowedWhenAllGatesPass(t *testing.T) {
 		Failures []interface{} `json:"failures"`
 	}
 	if err := json.Unmarshal(got.Data, &data); err != nil {
-		t.Fatalf("decode live status data: %v\n%s", err, got.Data)
+		t.Fatalf("decode risk status data: %v\n%s", err, got.Data)
 	}
 	if !data.Allowed {
 		t.Fatalf("allowed=false, want true; data=%s", got.Data)
@@ -206,7 +206,7 @@ func TestJSONLiveStatusReportsAllowedWhenAllGatesPass(t *testing.T) {
 func TestJSONMissingPrivateKeyUsesAuthErrorEnvelope(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
 
-	stdout, stderr, err := executeRootForTest("--json", "clob", "create-api-key")
+	stdout, stderr, err := executeRootForTest("--json", "exchange", "create-api-key")
 	if err == nil {
 		t.Fatal("expected Execute to return auth error")
 	}
@@ -226,8 +226,8 @@ func TestJSONMissingPrivateKeyUsesAuthErrorEnvelope(t *testing.T) {
 	if got.OK {
 		t.Fatalf("ok=true, want false\nenvelope=%s", stderr)
 	}
-	if got.Meta.Command != "clob create-api-key" {
-		t.Fatalf("meta.command=%q, want clob create-api-key", got.Meta.Command)
+	if got.Meta.Command != "exchange create-api-key" {
+		t.Fatalf("meta.command=%q, want exchange create-api-key", got.Meta.Command)
 	}
 	if got.Error == nil || got.Error.Code != "AUTH_PRIVATE_KEY_MISSING" || got.Error.Category != "auth" {
 		t.Fatalf("unexpected error envelope: %+v\n%s", got.Error, stderr)
@@ -237,7 +237,7 @@ func TestJSONMissingPrivateKeyUsesAuthErrorEnvelope(t *testing.T) {
 func TestJSONAuthStatusMissingPrivateKeyUsesAuthErrorEnvelope(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
 
-	stdout, stderr, err := executeRootForTest("--json", "auth", "status")
+	stdout, stderr, err := executeRootForTest("--json", "credentials", "status")
 	if err == nil {
 		t.Fatal("expected Execute to return auth error")
 	}
@@ -251,8 +251,8 @@ func TestJSONAuthStatusMissingPrivateKeyUsesAuthErrorEnvelope(t *testing.T) {
 	if got.OK {
 		t.Fatalf("ok=true, want false\nenvelope=%s", stderr)
 	}
-	if got.Meta.Command != "auth status" {
-		t.Fatalf("meta.command=%q, want auth status", got.Meta.Command)
+	if got.Meta.Command != "credentials status" {
+		t.Fatalf("meta.command=%q, want credentials status", got.Meta.Command)
 	}
 	if got.Error == nil || got.Error.Code != "AUTH_PRIVATE_KEY_MISSING" || got.Error.Category != "auth" {
 		t.Fatalf("unexpected error envelope: %+v\n%s", got.Error, stderr)
@@ -262,7 +262,7 @@ func TestJSONAuthStatusMissingPrivateKeyUsesAuthErrorEnvelope(t *testing.T) {
 func TestAuthExportKeyRequiresConfirm(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
 
-	stdout, _, err := executeRootForTest("auth", "export-key")
+	stdout, _, err := executeRootForTest("credentials", "export-key")
 	if err == nil {
 		t.Fatal("expected confirmation error")
 	}
@@ -276,7 +276,7 @@ func TestAuthExportKeyRequiresConfirm(t *testing.T) {
 
 func TestAuthHeadlessOnboardHasProfileRegistrationFlags(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"auth", "headless-onboard"})
+	cmd, _, err := root.Find([]string{"credentials", "headless-onboard"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -292,15 +292,15 @@ func TestAuthHeadlessOnboardHasProfileRegistrationFlags(t *testing.T) {
 
 func TestAuthLoginCommandExplainsEOASignerAndDepositWallet(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"auth", "login"})
+	cmd, _, err := root.Find([]string{"credentials", "login"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
 	if cmd == nil {
 		t.Fatal("auth login command missing")
 	}
-	if cmd.CommandPath() != "polygolem auth login" {
-		t.Fatalf("found command path %q, want polygolem auth login", cmd.CommandPath())
+	if cmd.CommandPath() != "polygolem credentials login" {
+		t.Fatalf("found command path %q, want polygolem credentials login", cmd.CommandPath())
 	}
 	signatureTypeFlag := cmd.Flags().Lookup("signature-type")
 	if signatureTypeFlag == nil {
@@ -364,7 +364,7 @@ func TestAuthCLOBProbeUsesConfiguredCredentialsForReadOnlyEndpoints(t *testing.T
 		CLOB: client,
 	}).Probe(context.Background())
 	if err != nil {
-		t.Fatalf("auth clob probe workflow returned error: %v", err)
+		t.Fatalf("auth exchange probe workflow returned error: %v", err)
 	}
 	if sawAPIKey != "configured-key" {
 		t.Fatalf("POLY_API_KEY=%q, want configured-key", sawAPIKey)
@@ -387,7 +387,7 @@ func TestAuthCLOBProbeUsesConfiguredCredentialsForReadOnlyEndpoints(t *testing.T
 
 func TestAuthCLOBProbeCommandIsRegistered(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"auth", "clob-probe"})
+	cmd, _, err := root.Find([]string{"credentials", "clob-probe"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -414,7 +414,7 @@ func TestCLOBMarketTradesProbeEmitsRedactedSummary(t *testing.T) {
 	t.Setenv("POLYMARKET_CLOB_SECRET", "c2VjcmV0")
 	t.Setenv("POLYMARKET_CLOB_PASSPHRASE", "pass")
 
-	stdout, stderr, err := executeRootForTest("--json", "clob", "market-trades-probe", "--asset-id", "12345")
+	stdout, stderr, err := executeRootForTest("--json", "exchange", "market-trades-probe", "--asset-id", "12345")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -439,7 +439,7 @@ func TestJSONAuthExportKeyConfirmedOutputsWalletImportData(t *testing.T) {
 	}
 	suffix := addressSuffix(signer.Address(), 6)
 
-	stdout, stderr, err := executeRootForTest("--json", "auth", "export-key", "--confirm", "EXPORT_PRIVATE_KEY", "--confirm-address-suffix", suffix)
+	stdout, stderr, err := executeRootForTest("--json", "credentials", "export-key", "--confirm", "EXPORT_PRIVATE_KEY", "--confirm-address-suffix", suffix)
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -450,8 +450,8 @@ func TestJSONAuthExportKeyConfirmedOutputsWalletImportData(t *testing.T) {
 	if !got.OK {
 		t.Fatalf("ok=false, want true\nenvelope=%s", stdout)
 	}
-	if got.Meta.Command != "auth export-key" {
-		t.Fatalf("meta.command=%q, want auth export-key", got.Meta.Command)
+	if got.Meta.Command != "credentials export-key" {
+		t.Fatalf("meta.command=%q, want credentials export-key", got.Meta.Command)
 	}
 	var data struct {
 		EOAAddress    string `json:"eoaAddress"`
@@ -470,7 +470,7 @@ func TestJSONAuthExportKeyConfirmedOutputsWalletImportData(t *testing.T) {
 }
 
 func TestJSONMissingPositionalArgUsesUsageErrorEnvelope(t *testing.T) {
-	stdout, stderr, err := executeRootForTest("--json", "clob", "book")
+	stdout, stderr, err := executeRootForTest("--json", "exchange", "book")
 	if err == nil {
 		t.Fatal("expected Execute to return usage error")
 	}
@@ -484,8 +484,8 @@ func TestJSONMissingPositionalArgUsesUsageErrorEnvelope(t *testing.T) {
 	if got.OK {
 		t.Fatalf("ok=true, want false\nenvelope=%s", stderr)
 	}
-	if got.Meta.Command != "clob book" {
-		t.Fatalf("meta.command=%q, want clob book", got.Meta.Command)
+	if got.Meta.Command != "exchange book" {
+		t.Fatalf("meta.command=%q, want exchange book", got.Meta.Command)
 	}
 	if got.Error == nil || got.Error.Code != "USAGE_ARG_INVALID" || got.Error.Category != "usage" {
 		t.Fatalf("unexpected error envelope: %+v\n%s", got.Error, stderr)
@@ -508,7 +508,7 @@ func TestVersionCommandPrintsVersion(t *testing.T) {
 func TestJSONFlagIsAcceptedAndPreflightEmitsJSON(t *testing.T) {
 	var stdout bytes.Buffer
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &stdout, Stderr: &bytes.Buffer{}})
-	root.SetArgs([]string{"--json", "preflight"})
+	root.SetArgs([]string{"--json", "doctor"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("Execute returned error: %v", err)
 	}
@@ -533,72 +533,72 @@ func TestJSONFlagIsAcceptedAndPreflightEmitsJSON(t *testing.T) {
 
 func TestDocumentedSubcommandsAreRegistered(t *testing.T) {
 	for _, args := range [][]string{
-		{"discover", "search"},
-		{"discover", "markets"},
-		{"discover", "market"},
-		{"discover", "enrich"},
-		{"discover", "tags"},
-		{"discover", "series"},
-		{"discover", "comments"},
-		{"discover", "opportunities"},
-		{"orderbook", "get"},
-		{"orderbook", "price"},
-		{"orderbook", "midpoint"},
-		{"orderbook", "spread"},
-		{"orderbook", "tick-size"},
-		{"orderbook", "fee-rate"},
-		{"orderbook", "last-trade"},
-		{"clob", "book"},
-		{"clob", "tick-size"},
-		{"clob", "create-api-key"},
-		{"clob", "create-api-key-for-address"},
-		{"clob", "create-builder-fee-key"},
-		{"clob", "list-builder-fee-keys"},
-		{"clob", "revoke-builder-fee-key"},
-		{"clob", "balance"},
-		{"clob", "update-balance"},
-		{"clob", "orders"},
-		{"clob", "order"},
-		{"clob", "trades"},
-		{"clob", "market-trades-probe"},
-		{"clob", "cancel"},
-		{"clob", "cancel-orders"},
-		{"clob", "cancel-all"},
-		{"clob", "cancel-market"},
-		{"clob", "create-order"},
-		{"clob", "batch-orders"},
-		{"clob", "market-order"},
-		{"clob", "heartbeat"},
-		{"clob", "price-history"},
-		{"clob", "market"},
-		{"clob", "market-by-token"},
-		{"clob", "markets"},
-		{"data", "positions"},
-		{"data", "closed-positions"},
-		{"data", "trades"},
-		{"data", "activity"},
-		{"data", "holders"},
-		{"data", "value"},
-		{"data", "markets-traded"},
-		{"data", "open-interest"},
-		{"data", "leaderboard"},
-		{"data", "live-volume"},
+		{"markets", "search"},
+		{"markets", "markets"},
+		{"markets", "market"},
+		{"markets", "enrich"},
+		{"markets", "tags"},
+		{"markets", "series"},
+		{"markets", "comments"},
+		{"markets", "opportunities"},
+		{"book", "get"},
+		{"book", "price"},
+		{"book", "midpoint"},
+		{"book", "spread"},
+		{"book", "tick-size"},
+		{"book", "fee-rate"},
+		{"book", "last-trade"},
+		{"exchange", "book"},
+		{"exchange", "tick-size"},
+		{"exchange", "create-api-key"},
+		{"exchange", "create-api-key-for-address"},
+		{"exchange", "create-builder-fee-key"},
+		{"exchange", "list-builder-fee-keys"},
+		{"exchange", "revoke-builder-fee-key"},
+		{"exchange", "balance"},
+		{"exchange", "update-balance"},
+		{"exchange", "orders"},
+		{"exchange", "order"},
+		{"exchange", "trades"},
+		{"exchange", "market-trades-probe"},
+		{"exchange", "cancel"},
+		{"exchange", "cancel-orders"},
+		{"exchange", "cancel-all"},
+		{"exchange", "cancel-market"},
+		{"exchange", "create-order"},
+		{"exchange", "batch-orders"},
+		{"exchange", "market-order"},
+		{"exchange", "heartbeat"},
+		{"exchange", "price-history"},
+		{"exchange", "market"},
+		{"exchange", "market-by-token"},
+		{"exchange", "markets"},
+		{"analytics", "positions"},
+		{"analytics", "closed-positions"},
+		{"analytics", "trades"},
+		{"analytics", "activity"},
+		{"analytics", "holders"},
+		{"analytics", "value"},
+		{"analytics", "markets-traded"},
+		{"analytics", "open-interest"},
+		{"analytics", "leaderboard"},
+		{"analytics", "live-volume"},
 		{"stream", "market"},
 		{"events", "list"},
 		{"bridge", "assets"},
 		{"bridge", "deposit"},
 		{"bridge", "status"},
 		{"bridge", "quote"},
-		{"health"},
-		{"paper", "buy"},
-		{"paper", "sell"},
-		{"paper", "positions"},
-		{"paper", "reset"},
-		{"auth", "status"},
-		{"auth", "export-key"},
-		{"auth", "login"},
-		{"auth", "headless-onboard"},
-		{"live", "status"},
+		{"ping"},
+		{"sim", "buy"},
+		{"sim", "sell"},
+		{"sim", "positions"},
+		{"sim", "reset"},
+		{"credentials", "status"},
+		{"credentials", "export-key"},
+		{"credentials", "login"},
+		{"credentials", "headless-onboard"},
+		{"risk", "status"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			var stdout bytes.Buffer
@@ -617,7 +617,7 @@ func TestDocumentedSubcommandsAreRegistered(t *testing.T) {
 
 func TestCLOBCreateAPIKeyForAddressHasOwnerFlag(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"clob", "create-api-key-for-address"})
+	cmd, _, err := root.Find([]string{"exchange", "create-api-key-for-address"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -632,9 +632,9 @@ func TestCLOBCreateAPIKeyForAddressHasOwnerFlag(t *testing.T) {
 
 func TestCLOBOrderCommandsHaveBuilderCodeFlag(t *testing.T) {
 	for _, args := range [][]string{
-		{"clob", "create-order"},
-		{"clob", "batch-orders"},
-		{"clob", "market-order"},
+		{"exchange", "create-order"},
+		{"exchange", "batch-orders"},
+		{"exchange", "market-order"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
@@ -655,7 +655,7 @@ func TestCLOBOrderCommandsHaveBuilderCodeFlag(t *testing.T) {
 
 func TestCLOBBatchOrdersHasOrdersFileFlag(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"clob", "batch-orders"})
+	cmd, _, err := root.Find([]string{"exchange", "batch-orders"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -670,7 +670,7 @@ func TestCLOBBatchOrdersHasOrdersFileFlag(t *testing.T) {
 
 func TestCLOBHeartbeatHasIDFlag(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"clob", "heartbeat"})
+	cmd, _, err := root.Find([]string{"exchange", "heartbeat"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -765,7 +765,7 @@ func TestPreflightRejectsInvalidBuilderCodeEnv(t *testing.T) {
 	}
 	for _, check := range result.Checks {
 		if check.Name == "clob_builder_code" {
-			if check.Status != "fail" || !strings.Contains(check.Message, "builder") {
+			if check.Status != "fail" || !strings.Contains(check.Message, "builder code") {
 				t.Fatalf("unexpected builder-code check: %+v", check)
 			}
 			return
@@ -780,11 +780,11 @@ func TestPreflightRejectsInvalidBuilderCodeEnv(t *testing.T) {
 // flag would only let callers pick a value that production rejects.
 func TestCLOBSignatureTypeFlagRemoved(t *testing.T) {
 	for _, args := range [][]string{
-		{"clob", "balance"},
-		{"clob", "update-balance"},
-		{"clob", "create-order"},
-		{"clob", "market-order"},
-		{"deposit-wallet", "derive"},
+		{"exchange", "balance"},
+		{"exchange", "update-balance"},
+		{"exchange", "create-order"},
+		{"exchange", "market-order"},
+		{"wallet", "derive"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
@@ -801,7 +801,7 @@ func TestCLOBSignatureTypeFlagRemoved(t *testing.T) {
 
 func TestCLOBCreateOrderExpirationDefaultsToZero(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"clob", "create-order"})
+	cmd, _, err := root.Find([]string{"exchange", "create-order"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -816,7 +816,7 @@ func TestCLOBCreateOrderExpirationDefaultsToZero(t *testing.T) {
 
 func TestCLOBCreateOrderHasPostOnlyFlag(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"clob", "create-order"})
+	cmd, _, err := root.Find([]string{"exchange", "create-order"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -833,7 +833,7 @@ func TestCLOBLimitOrderCapRejectsBeforePrivateKey(t *testing.T) {
 	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "0.50")
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
 
-	stdout, _, err := executeRootForTest("clob", "create-order", "--token", "1", "--price", "0.25", "--size", "3")
+	stdout, _, err := executeRootForTest("exchange", "create-order", "--token", "1", "--price", "0.25", "--size", "3")
 	if err == nil {
 		t.Fatal("expected live order cap error")
 	}
@@ -852,7 +852,7 @@ func TestCLOBMarketOrderCapRejectsBeforePrivateKey(t *testing.T) {
 	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "0.50")
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
 
-	_, _, err := executeRootForTest("clob", "market-order", "--token", "1", "--amount", "0.51")
+	_, _, err := executeRootForTest("exchange", "market-order", "--token", "1", "--amount", "0.51")
 	if err == nil {
 		t.Fatal("expected live order cap error")
 	}
@@ -877,7 +877,7 @@ func TestCLOBBatchOrdersCapRejectsAggregateNotional(t *testing.T) {
 		t.Fatalf("write orders file: %v", err)
 	}
 
-	stdout, _, err := executeRootForTest("clob", "batch-orders", "--orders-file", ordersFile)
+	stdout, _, err := executeRootForTest("exchange", "batch-orders", "--orders-file", ordersFile)
 	if err == nil {
 		t.Fatal("expected live order cap error for aggregate notional")
 	}
@@ -903,7 +903,7 @@ func TestCLOBBatchOrdersCapRejectsSingleOversizedOrder(t *testing.T) {
 		t.Fatalf("write orders file: %v", err)
 	}
 
-	_, _, err := executeRootForTest("clob", "batch-orders", "--orders-file", ordersFile)
+	_, _, err := executeRootForTest("exchange", "batch-orders", "--orders-file", ordersFile)
 	if err == nil {
 		t.Fatal("expected live order cap error for oversized order")
 	}
@@ -1091,7 +1091,7 @@ func TestMarketDataLiveEmitsEnrichedSnapshots(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &stdout, Stderr: &bytes.Buffer{}})
 	root.SetArgs([]string{
 		"--json",
-		"marketdata", "live",
+		"prices", "live",
 		"--url", "ws" + strings.TrimPrefix(server.URL, "http"),
 		"--asset-ids", "token-1",
 		"--max-messages", "1",
@@ -1125,11 +1125,11 @@ func TestMarketDataLiveEmitsEnrichedSnapshots(t *testing.T) {
 func TestDocumentedSubcommandArgsAreNotHandledByParentOnly(t *testing.T) {
 	var stdout bytes.Buffer
 	root := NewRootCommand(Options{Version: "test-version", Stdout: &stdout, Stderr: &bytes.Buffer{}})
-	root.SetArgs([]string{"discover", "search", "--help"})
+	root.SetArgs([]string{"markets", "search", "--help"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("Execute returned error: %v", err)
 	}
-	if !strings.Contains(stdout.String(), "polygolem discover search") {
-		t.Fatalf("discover search was not handled by its own command:\n%s", stdout.String())
+	if !strings.Contains(stdout.String(), "polygolem markets search") {
+		t.Fatalf("markets search was not handled by its own command:\n%s", stdout.String())
 	}
 }

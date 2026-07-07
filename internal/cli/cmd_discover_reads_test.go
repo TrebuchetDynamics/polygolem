@@ -29,7 +29,7 @@ func TestDiscoverSearchCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 	root.SetErr(&stderr)
 	root.PersistentFlags().Bool("json", false, "emit JSON output")
 	root.AddCommand(newDiscoverCommand(nil, fake))
-	root.SetArgs([]string{"--json", "discover", "search", "--query", "btc", "--limit", "5"})
+	root.SetArgs([]string{"--json", "markets", "search", "--query", "btc", "--limit", "5"})
 	installJSONContract(root)
 
 	if err := root.Execute(); err != nil {
@@ -39,8 +39,8 @@ func TestDiscoverSearchCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 		t.Fatalf("request=%+v", fake.request)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "discover search" {
-		t.Fatalf("meta.command=%q, want discover search", got.Meta.Command)
+	if got.Meta.Command != "markets search" {
+		t.Fatalf("meta.command=%q, want markets search", got.Meta.Command)
 	}
 	var data polytypes.SearchResponse
 	if err := json.Unmarshal(got.Data, &data); err != nil {

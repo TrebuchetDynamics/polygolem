@@ -94,10 +94,10 @@ const description = "Beginner-friendly Polymarket API guide plus a safe Go CLI a
 
       <section class="proof-block compact-section">
         <p class="section-label">Try it</p>
-        <pre><code>$ polygolem health --json
+        <pre><code>$ polygolem ping --json
 {`{"ok":true,"data":{"clob":"ok","gamma":"ok"}}`}
 
-$ polygolem discover crypto-5m --enrich --json
+$ polygolem markets crypto-5m --enrich --json
 # current BTC/ETH/SOL/XRP/BNB/DOGE/HYPE 5-minute markets</code></pre>
         <p class="caption">
           Read-only commands need no credentials. Live mutations require explicit wallet

@@ -79,25 +79,25 @@ paths are opt-in only when SIGNER_PRIVATE_KEY is set, and every command that
 moves funds gates on an explicit cap and a typed --confirm token.
 
 Start here (no credentials needed):
-  polygolem health                 # is the API reachable?
-  polygolem discover search --query "Will BTC" --limit 5
-  polygolem orderbook get --token-id <id>
-  polygolem paper reset --cash 100 # simulate trading with zero risk
+  polygolem ping                   # is the API reachable?
+  polygolem markets search --query "Will BTC" --limit 5
+  polygolem book get --token-id <id>
+  polygolem sim reset --cash 100   # simulate trading with zero risk
 
 When you are ready to trade with real funds, read the safety model first:
   docs/SAFETY.md and docs/SAFE-HAPPY-PATH.md
 
 Every command accepts --json for a stable {ok,version,data,meta} envelope.`,
 		Example: `  # Read-only: check reachability and read a live order book
-  polygolem health --json
-  polygolem orderbook get --token-id 7132104567... --json
+  polygolem ping --json
+  polygolem book get --token-id 7132104567... --json
 
   # Paper trade with no wallet and no risk
-  polygolem paper reset --cash 100
-  polygolem paper trade --asset BTC --interval 5m --side up --size 1
+  polygolem sim reset --cash 100
+  polygolem sim trade --asset BTC --interval 5m --side up --size 1
 
   # Live: the smallest capped order (needs SIGNER_PRIVATE_KEY + a funded deposit wallet)
-  POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem clob create-order \
+  POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem exchange create-order \
     --token <id> --side buy --price 0.40 --size 2`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -139,7 +139,7 @@ Every command accepts --json for a stable {ok,version,data,meta} envelope.`,
 	})
 
 	addTo(groupStart, &cobra.Command{
-		Use: "preflight", Short: "Inspect local CLI readiness", Args: cobra.NoArgs,
+		Use: "doctor", Short: "Inspect local CLI readiness", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := localpreflight.New(localpreflight.Config{Version: opts.Version, BuilderCode: builderCodeFromFlagOrEnv("")})
 			result := runner.Run(cmd.Context())
@@ -162,14 +162,14 @@ Every command accepts --json for a stable {ok,version,data,meta} envelope.`,
 	)
 	addTo(groupPaper, paperCmd(jsonOutput))
 
-	authCmd := commandGroup("auth", "Inspect authentication readiness",
+	authCmd := commandGroup("credentials", "Inspect authentication readiness",
 		newAuthStatusCommand(jsonOutput),
 	)
 	authCmd.Long = `Authentication readiness and login for Polymarket.
 
-Read-only: 'auth status' and 'auth clob-probe' report credential readiness.
-Live: 'auth login' and 'auth headless-onboard' sign SIWE and mint/persist V2
-relayer credentials. 'auth export-key' prints your private key and is
+Read-only: 'credentials status' and 'credentials clob-probe' report credential readiness.
+Live: 'credentials login' and 'credentials headless-onboard' sign SIWE and mint/persist V2
+relayer credentials. 'credentials export-key' prints your private key and is
 double-confirmed — avoid it unless importing into a temporary browser wallet.`
 	authCmd.AddCommand(newAuthCLOBProbeCommand(jsonOutput))
 	authCmd.AddCommand(newAuthLoginCommand(jsonOutput))

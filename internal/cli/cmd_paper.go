@@ -15,16 +15,16 @@ func paperCmd(jsonOut bool) *cobra.Command {
 }
 
 func newPaperCommand(jsonOut bool, pricer paperaccount.Pricer) *cobra.Command {
-	cmd := commandGroup("paper", "Paper trading simulation for crypto markets")
+	cmd := commandGroup("sim", "Paper trading simulation for crypto markets")
 	cmd.Long = `Simulate crypto up/down trading with no wallet and no risk.
 
 Paper mode holds a local cash/position ledger and prices simulations against live
 public market data. It never loads a private key, signs, or submits anything — a
 safe way to rehearse the flow before trading real funds.
 
-  polygolem paper reset --cash 100
-  polygolem paper trade --asset BTC --interval 5m --side up --size 1
-  polygolem paper positions`
+  polygolem sim reset --cash 100
+  polygolem sim trade --asset BTC --interval 5m --side up --size 1
+  polygolem sim positions`
 
 	var paperCash float64
 	var tokenID string
@@ -101,8 +101,8 @@ Uses current best bid price if --price is not specified.`,
 		Long: `Find active crypto markets and get token IDs for paper trading.
 
 Examples:
-  polygolem paper crypto --asset BTC --interval 5m
-  polygolem paper crypto --asset ETH --limit 10`,
+  polygolem sim crypto --asset BTC --interval 5m
+  polygolem sim crypto --asset ETH --limit 10`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			w := newWire(jsonOut)
@@ -130,8 +130,8 @@ Examples:
 		Long: `Resolve the current crypto window, fetch live price, and execute a paper trade.
 
 Examples:
-  polygolem paper trade --asset BTC --interval 5m --side up --size 1
-  polygolem paper trade --asset ETH --interval 15m --side down --size 2 --price 0.48`,
+  polygolem sim trade --asset BTC --interval 5m --side up --size 1
+  polygolem sim trade --asset ETH --interval 15m --side down --size 2 --price 0.48`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			runner := papertrade.New(marketresolver.NewResolver(gammaBaseURL), pricer, paperState)

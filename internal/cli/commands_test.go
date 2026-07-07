@@ -15,7 +15,7 @@ func TestHelpListsPhaseOneCommands(t *testing.T) {
 		t.Fatalf("Execute returned error: %v", err)
 	}
 	help := stdout.String()
-	for _, want := range []string{"preflight", "discover", "diag", "orderbook", "health", "paper", "auth", "live"} {
+	for _, want := range []string{"doctor", "markets", "debug", "book", "ping", "sim", "credentials", "risk"} {
 		if !strings.Contains(help, want) {
 			t.Fatalf("help missing %q:\n%s", want, help)
 		}
@@ -24,7 +24,7 @@ func TestHelpListsPhaseOneCommands(t *testing.T) {
 
 func TestDataCommandExposesOrderResultsAudit(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"data", "order-results"})
+	cmd, _, err := root.Find([]string{"analytics", "order-results"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestDataCommandExposesOrderResultsAudit(t *testing.T) {
 
 func TestDepositWalletCommandExposesSettlementStatus(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	cmd, _, err := root.Find([]string{"deposit-wallet", "settlement-status"})
+	cmd, _, err := root.Find([]string{"wallet", "settlement-status"})
 	if err != nil {
 		t.Fatalf("Find returned error: %v", err)
 	}

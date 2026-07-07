@@ -5,11 +5,11 @@ If you only read one page before trying polygolem, read this one.
 ## No-wallet path
 
 ```bash
-polygolem health --json
-polygolem discover crypto-5m --enrich --json
-polygolem paper reset --cash 100 --json
-polygolem paper trade --asset BTC --interval 5m --side up --size 1 --json
-polygolem paper positions --json
+polygolem ping --json
+polygolem markets crypto-5m --enrich --json
+polygolem sim reset --cash 100 --json
+polygolem sim trade --asset BTC --interval 5m --side up --size 1 --json
+polygolem sim positions --json
 ```
 
 This path should not need `SIGNER_PRIVATE_KEY`, CLOB credentials, relayer credentials, or Polygon RPC signing.
@@ -25,23 +25,23 @@ This path should not need `SIGNER_PRIVATE_KEY`, CLOB credentials, relayer creden
 2. Verify identity and readiness:
 
    ```bash
-   polygolem diag --json
-   polygolem auth status --check-deposit-key --json
-   polygolem deposit-wallet status --check-enable-trading --json
-   polygolem clob update-balance --asset-type collateral --json
+   polygolem debug --json
+   polygolem credentials status --check-deposit-key --json
+   polygolem wallet status --check-enable-trading --json
+   polygolem exchange update-balance --asset-type collateral --json
    ```
 
 3. Verify the exact market:
 
    ```bash
-   polygolem discover crypto-window --asset BTC --interval 5m --enrich --json
-   polygolem clob book --token <TOKEN_ID> --json
+   polygolem markets crypto-window --asset BTC --interval 5m --enrich --json
+   polygolem exchange book --token <TOKEN_ID> --json
    ```
 
 4. Start with a maker-only order you can afford to lose:
 
    ```bash
-   polygolem clob create-order \
+   polygolem exchange create-order \
      --token <TOKEN_ID> \
      --side buy \
      --price 0.01 \

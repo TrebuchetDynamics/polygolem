@@ -11,7 +11,7 @@ func TestDiagJSONRedactsSecretsAndIncludesPreflight(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", secret)
 	t.Setenv("POLYMARKET_CLOB_URL", "https://example.invalid")
 
-	stdout, stderr, err := executeRootForTest("--json", "diag")
+	stdout, stderr, err := executeRootForTest("--json", "debug")
 	if err != nil {
 		t.Fatalf("diag failed: %v\nstderr=%s", err, stderr)
 	}
@@ -22,7 +22,7 @@ func TestDiagJSONRedactsSecretsAndIncludesPreflight(t *testing.T) {
 	if !got.OK {
 		t.Fatalf("ok=false: %s", stdout)
 	}
-	if got.Meta.Command != "diag" {
+	if got.Meta.Command != "debug" {
 		t.Fatalf("command=%q want diag", got.Meta.Command)
 	}
 	var data struct {
@@ -57,7 +57,7 @@ func TestDiagJSONRedactsSecretsAndIncludesPreflight(t *testing.T) {
 func TestDiagTextIncludesEndpointsAndRedactedEnv(t *testing.T) {
 	secret := "0xabcdefabcdefabcdef"
 	t.Setenv("POLYMARKET_PRIVATE_KEY", secret)
-	stdout, stderr, err := executeRootForTest("diag")
+	stdout, stderr, err := executeRootForTest("debug")
 	if err != nil {
 		t.Fatalf("diag failed: %v\nstderr=%s", err, stderr)
 	}

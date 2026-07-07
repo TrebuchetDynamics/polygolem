@@ -48,7 +48,7 @@ func (f *fakeCLOBMarketDataRunner) Markets(_ context.Context, req clobmarketdata
 
 func TestCLOBMarketDataBuilderDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 	fake := &fakeCLOBMarketDataRunner{}
-	clobCmd := commandGroup("clob", "CLOB market data")
+	clobCmd := commandGroup("exchange", "CLOB market data")
 	addCLOBMarketDataCommands(clobCmd, fake)
 
 	root := &cobra.Command{Use: "polygolem", SilenceUsage: true, SilenceErrors: true}
@@ -57,7 +57,7 @@ func TestCLOBMarketDataBuilderDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 	root.SetErr(&stderr)
 	root.PersistentFlags().Bool("json", false, "emit JSON output")
 	root.AddCommand(clobCmd)
-	root.SetArgs([]string{"--json", "clob", "markets", "--cursor", "cursor-1"})
+	root.SetArgs([]string{"--json", "exchange", "markets", "--cursor", "cursor-1"})
 	installJSONContract(root)
 
 	if err := root.Execute(); err != nil {
@@ -67,8 +67,8 @@ func TestCLOBMarketDataBuilderDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 		t.Fatalf("request=%+v", fake.marketsRequest)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "clob markets" {
-		t.Fatalf("meta.command=%q, want clob markets", got.Meta.Command)
+	if got.Meta.Command != "exchange markets" {
+		t.Fatalf("meta.command=%q, want exchange markets", got.Meta.Command)
 	}
 	var data polytypes.CLOBPaginatedMarkets
 	if err := json.Unmarshal(got.Data, &data); err != nil {
@@ -134,7 +134,7 @@ func (f *fakeCLOBSimulationRunner) SimulateOrder(_ context.Context, req clobsimu
 func TestCLOBAuthenticatedReadBuilderDelegatesToRunnersAndJSONEnvelope(t *testing.T) {
 	t.Run("balance", func(t *testing.T) {
 		balances := &fakeCLOBBalanceRunner{}
-		stdout, stderr, err := executeCLOBAuthHelperForTest([]string{"--json", "clob", "balance", "--asset-type", "conditional", "--token-id", "token-1"}, balances, &fakeCLOBAccountReadRunner{}, &fakeCLOBDiagnosticRunner{})
+		stdout, stderr, err := executeCLOBAuthHelperForTest([]string{"--json", "exchange", "balance", "--asset-type", "conditional", "--token-id", "token-1"}, balances, &fakeCLOBAccountReadRunner{}, &fakeCLOBDiagnosticRunner{})
 		if err != nil {
 			t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 		}
@@ -142,8 +142,8 @@ func TestCLOBAuthenticatedReadBuilderDelegatesToRunnersAndJSONEnvelope(t *testin
 			t.Fatalf("request=%+v", balances.balanceRequest)
 		}
 		got := parseJSONEnvelopeForTest(t, stdout)
-		if got.Meta.Command != "clob balance" {
-			t.Fatalf("meta.command=%q, want clob balance", got.Meta.Command)
+		if got.Meta.Command != "exchange balance" {
+			t.Fatalf("meta.command=%q, want exchange balance", got.Meta.Command)
 		}
 		var data map[string]string
 		if err := json.Unmarshal(got.Data, &data); err != nil {
@@ -156,7 +156,7 @@ func TestCLOBAuthenticatedReadBuilderDelegatesToRunnersAndJSONEnvelope(t *testin
 
 	t.Run("order", func(t *testing.T) {
 		accounts := &fakeCLOBAccountReadRunner{}
-		stdout, stderr, err := executeCLOBAuthHelperForTest([]string{"--json", "clob", "order", "order-1"}, &fakeCLOBBalanceRunner{}, accounts, &fakeCLOBDiagnosticRunner{})
+		stdout, stderr, err := executeCLOBAuthHelperForTest([]string{"--json", "exchange", "order", "order-1"}, &fakeCLOBBalanceRunner{}, accounts, &fakeCLOBDiagnosticRunner{})
 		if err != nil {
 			t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 		}
@@ -175,7 +175,7 @@ func TestCLOBAuthenticatedReadBuilderDelegatesToRunnersAndJSONEnvelope(t *testin
 
 	t.Run("diagnostic probe", func(t *testing.T) {
 		diagnostics := &fakeCLOBDiagnosticRunner{}
-		stdout, stderr, err := executeCLOBAuthHelperForTest([]string{"--json", "clob", "market-trades-probe", "--market", "0xmarket", "--asset-id", "asset-1", "--cursor", "cursor-1"}, &fakeCLOBBalanceRunner{}, &fakeCLOBAccountReadRunner{}, diagnostics)
+		stdout, stderr, err := executeCLOBAuthHelperForTest([]string{"--json", "exchange", "market-trades-probe", "--market", "0xmarket", "--asset-id", "asset-1", "--cursor", "cursor-1"}, &fakeCLOBBalanceRunner{}, &fakeCLOBAccountReadRunner{}, diagnostics)
 		if err != nil {
 			t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 		}
@@ -194,7 +194,7 @@ func TestCLOBAuthenticatedReadBuilderDelegatesToRunnersAndJSONEnvelope(t *testin
 }
 
 func executeCLOBAuthHelperForTest(args []string, balances *fakeCLOBBalanceRunner, accounts *fakeCLOBAccountReadRunner, diagnostics *fakeCLOBDiagnosticRunner) (string, string, error) {
-	clobCmd := commandGroup("clob", "CLOB authenticated reads")
+	clobCmd := commandGroup("exchange", "CLOB authenticated reads")
 	addCLOBAuthenticatedReadCommands(clobCmd, balances, accounts, diagnostics)
 
 	root := &cobra.Command{Use: "polygolem", SilenceUsage: true, SilenceErrors: true}
@@ -211,7 +211,7 @@ func executeCLOBAuthHelperForTest(args []string, balances *fakeCLOBBalanceRunner
 
 func TestCLOBSimulateOrderCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
 	fake := &fakeCLOBSimulationRunner{}
-	clobCmd := commandGroup("clob", "CLOB simulation")
+	clobCmd := commandGroup("exchange", "CLOB simulation")
 	addCLOBSimulateOrderCommand(clobCmd, fake)
 
 	root := &cobra.Command{Use: "polygolem", SilenceUsage: true, SilenceErrors: true}
@@ -220,7 +220,7 @@ func TestCLOBSimulateOrderCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) 
 	root.SetErr(&stderr)
 	root.PersistentFlags().Bool("json", false, "emit JSON output")
 	root.AddCommand(clobCmd)
-	root.SetArgs([]string{"--json", "clob", "simulate-order", "--token", "token-1", "--side", "sell", "--amount", "2", "--limit-price", "0.40"})
+	root.SetArgs([]string{"--json", "exchange", "simulate", "--token", "token-1", "--side", "sell", "--amount", "2", "--limit-price", "0.40"})
 	installJSONContract(root)
 
 	if err := root.Execute(); err != nil {
@@ -230,8 +230,8 @@ func TestCLOBSimulateOrderCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) 
 		t.Fatalf("request=%+v", fake.request)
 	}
 	got := parseJSONEnvelopeForTest(t, stdout.String())
-	if got.Meta.Command != "clob simulate-order" {
-		t.Fatalf("meta.command=%q, want clob simulate-order", got.Meta.Command)
+	if got.Meta.Command != "exchange simulate" {
+		t.Fatalf("meta.command=%q, want exchange simulate", got.Meta.Command)
 	}
 	var data clobsimulation.Result
 	if err := json.Unmarshal(got.Data, &data); err != nil {
@@ -248,13 +248,13 @@ func TestCLOBReadOnlyMarketDataCommandsKeepFlags(t *testing.T) {
 		args  []string
 		flags []string
 	}{
-		{args: []string{"clob", "book"}, flags: []string{"output"}},
-		{args: []string{"clob", "tick-size"}, flags: []string{"output"}},
-		{args: []string{"clob", "price-history"}, flags: []string{"output", "interval"}},
-		{args: []string{"clob", "market"}, flags: []string{"output"}},
-		{args: []string{"clob", "market-by-token"}, flags: []string{"output"}},
-		{args: []string{"clob", "markets"}, flags: []string{"output", "cursor"}},
-		{args: []string{"clob", "simulate-order"}, flags: []string{"output", "token", "side", "amount", "limit-price"}},
+		{args: []string{"exchange", "book"}, flags: []string{"output"}},
+		{args: []string{"exchange", "tick-size"}, flags: []string{"output"}},
+		{args: []string{"exchange", "price-history"}, flags: []string{"output", "interval"}},
+		{args: []string{"exchange", "market"}, flags: []string{"output"}},
+		{args: []string{"exchange", "market-by-token"}, flags: []string{"output"}},
+		{args: []string{"exchange", "markets"}, flags: []string{"output", "cursor"}},
+		{args: []string{"exchange", "simulate"}, flags: []string{"output", "token", "side", "amount", "limit-price"}},
 	} {
 		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
 			cmd, _, err := root.Find(tc.args)
@@ -272,8 +272,8 @@ func TestCLOBReadOnlyMarketDataCommandsKeepFlags(t *testing.T) {
 
 func TestCLOBReadOnlyMarketDataValidatesOutputBeforeNetwork(t *testing.T) {
 	for _, args := range [][]string{
-		{"clob", "book", "token-1", "--output", "table"},
-		{"clob", "simulate-order", "--token", "token-1", "--amount", "1", "--output", "table"},
+		{"exchange", "book", "token-1", "--output", "table"},
+		{"exchange", "simulate", "--token", "token-1", "--amount", "1", "--output", "table"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
@@ -296,13 +296,13 @@ func TestCLOBAuthenticatedReadCommandsKeepFlags(t *testing.T) {
 		args  []string
 		flags []string
 	}{
-		{args: []string{"clob", "balance"}, flags: []string{"output", "asset-type", "token-id"}},
-		{args: []string{"clob", "update-balance"}, flags: []string{"output", "asset-type", "token-id"}},
-		{args: []string{"clob", "list-builder-fee-keys"}, flags: []string{"output"}},
-		{args: []string{"clob", "market-trades-probe"}, flags: []string{"output", "market", "asset-id", "cursor"}},
-		{args: []string{"clob", "orders"}, flags: []string{"output"}},
-		{args: []string{"clob", "order"}, flags: []string{"output"}},
-		{args: []string{"clob", "trades"}, flags: []string{"output"}},
+		{args: []string{"exchange", "balance"}, flags: []string{"output", "asset-type", "token-id"}},
+		{args: []string{"exchange", "update-balance"}, flags: []string{"output", "asset-type", "token-id"}},
+		{args: []string{"exchange", "list-builder-fee-keys"}, flags: []string{"output"}},
+		{args: []string{"exchange", "market-trades-probe"}, flags: []string{"output", "market", "asset-id", "cursor"}},
+		{args: []string{"exchange", "orders"}, flags: []string{"output"}},
+		{args: []string{"exchange", "order"}, flags: []string{"output"}},
+		{args: []string{"exchange", "trades"}, flags: []string{"output"}},
 	} {
 		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
 			cmd, _, err := root.Find(tc.args)
@@ -321,10 +321,10 @@ func TestCLOBAuthenticatedReadCommandsKeepFlags(t *testing.T) {
 func TestCLOBAuthenticatedReadValidatesOutputBeforeLoadingPrivateKey(t *testing.T) {
 	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
 	for _, args := range [][]string{
-		{"clob", "balance", "--output", "table"},
-		{"clob", "list-builder-fee-keys", "--output", "table"},
-		{"clob", "market-trades-probe", "--output", "table"},
-		{"clob", "orders", "--output", "table"},
+		{"exchange", "balance", "--output", "table"},
+		{"exchange", "list-builder-fee-keys", "--output", "table"},
+		{"exchange", "market-trades-probe", "--output", "table"},
+		{"exchange", "orders", "--output", "table"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})

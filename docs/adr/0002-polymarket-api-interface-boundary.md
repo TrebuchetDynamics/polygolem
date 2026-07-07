@@ -4,4 +4,4 @@ Polygolem is an interface into Polymarket APIs and contracts. It provides typed 
 
 Polygolem must not choose markets, sides, prices, sizes, timing, or whether to trade. Those decisions belong to the human operator or an external application that calls Polygolem. Documentation and code should avoid describing Polygolem as a bot, strategy engine, autonomous trader, or decision maker.
 
-Stable user-directed order transactions live in `pkg/clob` and `polygolem clob create-order` / `polygolem clob market-order`. Experimental order helper packages may validate or shape DTOs, but they do not replace the stable transaction interface and must not introduce autonomous decision logic.
+Stable user-directed order transactions live in `pkg/clob` and `polygolem exchange create-order` / `polygolem exchange market-order`. Experimental order helper packages may validate or shape DTOs, but they do not replace the stable transaction interface and must not introduce autonomous decision logic.
