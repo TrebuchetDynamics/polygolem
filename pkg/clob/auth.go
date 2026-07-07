@@ -62,21 +62,33 @@ func jsonStringOrNumber(raw json.RawMessage) string {
 
 // CreateOrderParams is the public input to CreateLimitOrder.
 type CreateOrderParams struct {
-	TokenID    string
-	Side       string
-	Price      string
-	Size       string
-	OrderType  string
+	TokenID string
+	Side    string
+	Price   string
+	Size    string
+	// OrderType is GTC (default), GTD, FOK, or FAK. Unknown values are
+	// rejected, never silently coerced.
+	OrderType string
+	// Expiration is required for GTD (unix seconds, at least one minute
+	// in the future) and must be empty or "0" for every other order type.
 	Expiration string
-	PostOnly   bool
+	// PostOnly makes the order maker-only: it is rejected instead of
+	// crossing the book. Valid for GTC and GTD only.
+	PostOnly bool
 }
 
 // MarketOrderParams is the public input to CreateMarketOrder.
 type MarketOrderParams struct {
-	TokenID   string
-	Side      string
-	Amount    string
-	Price     string
+	TokenID string
+	Side    string
+	// Amount is the USDC notional to spend for BUY orders and the number
+	// of shares to sell for SELL orders.
+	Amount string
+	// Price optionally caps the worst acceptable price. When empty the
+	// price is swept from the current book.
+	Price string
+	// OrderType is FOK (default, all-or-nothing) or FAK (fill what
+	// crosses, cancel the rest). Resting types (GTC/GTD) are rejected.
 	OrderType string
 }
 

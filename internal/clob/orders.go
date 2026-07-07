@@ -431,9 +431,15 @@ func (c *Client) CreateLimitOrder(ctx context.Context, privateKey string, params
 		return nil, fmt.Errorf("price and size must be positive")
 	}
 
-	orderType := normalizeOrderType(params.OrderType, "GTC")
+	orderType, err := parseLimitOrderType(params.OrderType)
+	if err != nil {
+		return nil, err
+	}
 	if params.PostOnly && orderType != "GTC" && orderType != "GTD" {
 		return nil, fmt.Errorf("postOnly is only supported for GTC and GTD orders")
+	}
+	if err := validateOrderExpiration(orderType, params.Expiration, orderNow()); err != nil {
+		return nil, err
 	}
 
 	tick, err := c.TickSize(ctx, params.TokenID)
@@ -505,9 +511,15 @@ func (c *Client) CreateBatchOrders(ctx context.Context, privateKey string, param
 		if price.Sign() <= 0 || size.Sign() <= 0 {
 			return nil, fmt.Errorf("order %d: price and size must be positive", i)
 		}
-		orderType := normalizeOrderType(p.OrderType, "GTC")
+		orderType, err := parseLimitOrderType(p.OrderType)
+		if err != nil {
+			return nil, fmt.Errorf("order %d: %w", i, err)
+		}
 		if p.PostOnly && orderType != "GTC" && orderType != "GTD" {
 			return nil, fmt.Errorf("order %d: postOnly is only supported for GTC and GTD orders", i)
+		}
+		if err := validateOrderExpiration(orderType, p.Expiration, orderNow()); err != nil {
+			return nil, fmt.Errorf("order %d: %w", i, err)
 		}
 
 		// Validate price scale against the market tick size, matching the
@@ -995,6 +1007,10 @@ func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, param
 	if amount.Sign() <= 0 {
 		return nil, fmt.Errorf("amount must be positive")
 	}
+	orderType, err := parseMarketOrderType(params.OrderType)
+	if err != nil {
+		return nil, err
+	}
 	tick, err := c.TickSize(ctx, params.TokenID)
 	if err != nil {
 		return nil, fmt.Errorf("tick size lookup failed: %w", err)
@@ -1007,7 +1023,7 @@ func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, param
 			return nil, err
 		}
 	} else {
-		price, err = c.marketOrderPrice(ctx, params.TokenID, side, amount, normalizeOrderType(params.OrderType, "FOK"))
+		price, err = c.marketOrderPrice(ctx, params.TokenID, side, amount, orderType)
 		if err != nil {
 			return nil, err
 		}
@@ -1037,7 +1053,7 @@ func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, param
 		side:        side,
 		makerAmount: fixedDecimal(maker, 6),
 		takerAmount: fixedDecimal(taker, 6),
-		orderType:   normalizeOrderType(params.OrderType, "FOK"),
+		orderType:   orderType,
 	}
 	return c.signAndPostOrder(ctx, privateKey, draft)
 }
@@ -1416,17 +1432,66 @@ func normalizeOrderSide(raw string) (string, error) {
 	}
 }
 
-func normalizeOrderType(raw string, fallback string) string {
+// parseLimitOrderType validates the order type for limit orders. Empty
+// input defaults to GTC. Unknown values are rejected rather than silently
+// coerced: a typo must not turn fill-or-kill intent into a resting order.
+func parseLimitOrderType(raw string) (string, error) {
 	value := strings.ToUpper(strings.TrimSpace(raw))
 	if value == "" {
-		value = fallback
+		return "GTC", nil
 	}
 	switch value {
 	case "GTC", "GTD", "FAK", "FOK":
-		return value
-	default:
-		return fallback
+		return value, nil
 	}
+	return "", fmt.Errorf("unsupported order type %q: valid limit order types are GTC, GTD, FOK, FAK", raw)
+}
+
+// parseMarketOrderType validates the order type for market orders. Empty
+// input defaults to FOK. Market orders are amount-based and priced from the
+// book at submit time, so only immediate-or-cancel types are valid: a
+// GTC/GTD market order would rest on the book at a swept price.
+func parseMarketOrderType(raw string) (string, error) {
+	value := strings.ToUpper(strings.TrimSpace(raw))
+	if value == "" {
+		return "FOK", nil
+	}
+	switch value {
+	case "FOK", "FAK":
+		return value, nil
+	}
+	return "", fmt.Errorf("unsupported market order type %q: valid market order types are FOK (all-or-nothing) and FAK (partial fill allowed)", raw)
+}
+
+// minGTDExpirationLead is Polymarket's security threshold for GTD orders:
+// the CLOB rejects a GTD order whose expiration is less than one minute
+// in the future.
+const minGTDExpirationLead = time.Minute
+
+// validateOrderExpiration enforces the GTD/expiration pairing. GTD requires
+// a unix-seconds expiration at least minGTDExpirationLead in the future.
+// Every other order type must leave expiration unset ("" or "0"): the CLOB
+// ignores the field there, so a caller who set it has ambiguous intent
+// (probably meant GTD) and silence would hide that.
+func validateOrderExpiration(orderType, expiration string, now time.Time) error {
+	value := strings.TrimSpace(expiration)
+	if orderType != "GTD" {
+		if value == "" || value == "0" {
+			return nil
+		}
+		return fmt.Errorf("expiration is only valid for GTD orders (got order type %s); use order type GTD or drop the expiration", orderType)
+	}
+	if value == "" || value == "0" {
+		return fmt.Errorf("GTD orders require an expiration unix timestamp at least one minute in the future")
+	}
+	exp, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || exp <= 0 {
+		return fmt.Errorf("invalid GTD expiration %q: want a unix timestamp in seconds", expiration)
+	}
+	if time.Unix(exp, 0).Before(now.Add(minGTDExpirationLead)) {
+		return fmt.Errorf("GTD expiration %s is inside the CLOB's one-minute security threshold; set it at least one minute in the future", value)
+	}
+	return nil
 }
 
 func generateOrderSalt() (uint64, error) {

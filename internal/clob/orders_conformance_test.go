@@ -8,27 +8,21 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
 )
 
-func TestGTC_OrderTypeAccepted(t *testing.T) {
-	if got := normalizeOrderType("GTC", ""); got != "GTC" {
-		t.Fatalf("GTC not accepted: %s", got)
+func TestLimitOrderTypesAccepted(t *testing.T) {
+	for _, want := range []string{"GTC", "GTD", "FOK", "FAK"} {
+		got, err := parseLimitOrderType(want)
+		if err != nil || got != want {
+			t.Fatalf("parseLimitOrderType(%q)=(%q,%v), want %q,nil", want, got, err, want)
+		}
 	}
 }
 
-func TestGTD_OrderTypeAccepted(t *testing.T) {
-	if got := normalizeOrderType("GTD", ""); got != "GTD" {
-		t.Fatalf("GTD not accepted: %s", got)
-	}
-}
-
-func TestFOK_OrderTypeAccepted(t *testing.T) {
-	if got := normalizeOrderType("FOK", ""); got != "FOK" {
-		t.Fatalf("FOK not accepted: %s", got)
-	}
-}
-
-func TestFAK_OrderTypeAccepted(t *testing.T) {
-	if got := normalizeOrderType("FAK", ""); got != "FAK" {
-		t.Fatalf("FAK not accepted: %s", got)
+func TestMarketOrderTypesAccepted(t *testing.T) {
+	for _, want := range []string{"FOK", "FAK"} {
+		got, err := parseMarketOrderType(want)
+		if err != nil || got != want {
+			t.Fatalf("parseMarketOrderType(%q)=(%q,%v), want %q,nil", want, got, err, want)
+		}
 	}
 }
 
@@ -77,15 +71,21 @@ func TestGTC_DefaultExpirationZero(t *testing.T) {
 	}
 }
 
-func TestInvalidOrderType_FallsBack(t *testing.T) {
-	if got := normalizeOrderType("INVALID", "GTC"); got != "GTC" {
-		t.Fatalf("invalid type not falling back: %s", got)
+func TestInvalidOrderTypeRejected(t *testing.T) {
+	if _, err := parseLimitOrderType("INVALID"); err == nil {
+		t.Fatal("parseLimitOrderType accepted invalid type")
+	}
+	if _, err := parseMarketOrderType("GTC"); err == nil {
+		t.Fatal("parseMarketOrderType accepted resting type")
 	}
 }
 
-func TestEmptyOrderType_UsesFallback(t *testing.T) {
-	if got := normalizeOrderType("", "FOK"); got != "FOK" {
-		t.Fatalf("empty type fallback failed: %s", got)
+func TestEmptyOrderTypeUsesDefaults(t *testing.T) {
+	if got, err := parseLimitOrderType(""); err != nil || got != "GTC" {
+		t.Fatalf("parseLimitOrderType empty=(%q,%v), want GTC,nil", got, err)
+	}
+	if got, err := parseMarketOrderType(""); err != nil || got != "FOK" {
+		t.Fatalf("parseMarketOrderType empty=(%q,%v), want FOK,nil", got, err)
 	}
 }
 

@@ -659,6 +659,149 @@ func TestCreateLimitOrderWithPostOnlyGTCIncludesPostOnlyInPayload(t *testing.T) 
 	}
 }
 
+func TestParseLimitOrderType(t *testing.T) {
+	valid := map[string]string{
+		"":     "GTC",
+		" gtc": "GTC",
+		"GTD":  "GTD",
+		"fok":  "FOK",
+		"FAK":  "FAK",
+	}
+	for in, want := range valid {
+		got, err := parseLimitOrderType(in)
+		if err != nil || got != want {
+			t.Errorf("parseLimitOrderType(%q) = %q, %v; want %q, nil", in, got, err, want)
+		}
+	}
+	// Unknown values must error, never silently coerce: a typo like "FOC"
+	// must not turn fill-or-kill intent into a resting GTC order.
+	for _, in := range []string{"FOC", "GTX", "IOC", "limit", "market"} {
+		if _, err := parseLimitOrderType(in); err == nil {
+			t.Errorf("parseLimitOrderType(%q) must reject unknown order type", in)
+		}
+	}
+}
+
+func TestParseMarketOrderType(t *testing.T) {
+	valid := map[string]string{
+		"":     "FOK",
+		"fok":  "FOK",
+		" FAK": "FAK",
+	}
+	for in, want := range valid {
+		got, err := parseMarketOrderType(in)
+		if err != nil || got != want {
+			t.Errorf("parseMarketOrderType(%q) = %q, %v; want %q, nil", in, got, err, want)
+		}
+	}
+	// Market orders are amount-based and book-priced; resting types must be
+	// rejected, and typos must not silently become immediate-execution FOK.
+	for _, in := range []string{"GTC", "GTD", "FOC", "junk"} {
+		if _, err := parseMarketOrderType(in); err == nil {
+			t.Errorf("parseMarketOrderType(%q) must reject non-FOK/FAK order type", in)
+		}
+	}
+}
+
+func TestValidateOrderExpiration(t *testing.T) {
+	now := time.Unix(1_778_000_000, 0)
+	cases := []struct {
+		name       string
+		orderType  string
+		expiration string
+		wantErr    string // empty = must pass
+	}{
+		{"gtc empty", "GTC", "", ""},
+		{"gtc zero", "GTC", "0", ""},
+		{"fok zero", "FOK", "0", ""},
+		{"gtc with expiration", "GTC", "1778000120", "only valid for GTD"},
+		{"fak with expiration", "FAK", "1778000120", "only valid for GTD"},
+		{"gtd empty", "GTD", "", "require an expiration"},
+		{"gtd zero", "GTD", "0", "require an expiration"},
+		{"gtd garbage", "GTD", "tomorrow", "unix timestamp"},
+		{"gtd negative", "GTD", "-5", "unix timestamp"},
+		{"gtd in the past", "GTD", "1777999999", "one-minute security threshold"},
+		{"gtd inside lead window", "GTD", "1778000030", "one-minute security threshold"},
+		{"gtd exactly at lead", "GTD", "1778000060", ""},
+		{"gtd future", "GTD", "1778000120", ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateOrderExpiration(tc.orderType, tc.expiration, now)
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Fatalf("want pass, got %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("want error containing %q, got %v", tc.wantErr, err)
+			}
+		})
+	}
+}
+
+func TestCreateLimitOrderRejectsUnknownOrderType(t *testing.T) {
+	client := NewClient("http://unused.invalid/", nil)
+	_, err := client.CreateLimitOrder(context.Background(), testOrderPrivateKey, CreateOrderParams{
+		TokenID:   "12345",
+		Side:      "buy",
+		Price:     "0.500000",
+		Size:      "2.000000",
+		OrderType: "FOC",
+	})
+	if err == nil || !strings.Contains(err.Error(), "unsupported order type") {
+		t.Fatalf("want unsupported order type error before any HTTP, got %v", err)
+	}
+}
+
+func TestCreateMarketOrderRejectsRestingOrderType(t *testing.T) {
+	client := NewClient("http://unused.invalid/", nil)
+	for _, orderType := range []string{"GTC", "GTD", "FOC"} {
+		_, err := client.CreateMarketOrder(context.Background(), testOrderPrivateKey, MarketOrderParams{
+			TokenID:   "12345",
+			Side:      "buy",
+			Amount:    "5",
+			OrderType: orderType,
+		})
+		if err == nil || !strings.Contains(err.Error(), "unsupported market order type") {
+			t.Fatalf("order type %s: want unsupported market order type error before any HTTP, got %v", orderType, err)
+		}
+	}
+}
+
+func TestCreateLimitOrderGTDRequiresFutureExpiration(t *testing.T) {
+	client := NewClient("http://unused.invalid/", nil)
+	restoreNow := orderNow
+	orderNow = func() time.Time { return time.Unix(1_778_000_000, 0) }
+	defer func() { orderNow = restoreNow }()
+
+	// GTD with the default "0" expiration must fail before any HTTP.
+	_, err := client.CreateLimitOrder(context.Background(), testOrderPrivateKey, CreateOrderParams{
+		TokenID:   "12345",
+		Side:      "buy",
+		Price:     "0.500000",
+		Size:      "2.000000",
+		OrderType: "GTD",
+	})
+	if err == nil || !strings.Contains(err.Error(), "require an expiration") {
+		t.Fatalf("want missing-expiration error, got %v", err)
+	}
+
+	// Expiration on a non-GTD order is ambiguous intent, not a silent no-op.
+	_, err = client.CreateLimitOrder(context.Background(), testOrderPrivateKey, CreateOrderParams{
+		TokenID:    "12345",
+		Side:       "buy",
+		Price:      "0.500000",
+		Size:       "2.000000",
+		OrderType:  "GTC",
+		Expiration: "1778000120",
+	})
+	if err == nil || !strings.Contains(err.Error(), "only valid for GTD") {
+		t.Fatalf("want expiration-without-GTD error, got %v", err)
+	}
+}
+
 func TestCreateLimitOrderWithPostOnlyFOKRejectsValidation(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -693,6 +836,10 @@ func TestCreateLimitOrderWithPostOnlyFOKRejectsValidation(t *testing.T) {
 }
 
 func TestCreateLimitOrderWithPostOnlyGTDSucceeds(t *testing.T) {
+	restoreNow := orderNow
+	orderNow = func() time.Time { return time.Unix(1_778_000_000, 0) }
+	defer func() { orderNow = restoreNow }()
+
 	var posted map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

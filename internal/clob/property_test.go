@@ -106,12 +106,12 @@ func TestFixedDecimalRoundTrip(t *testing.T) {
 	}
 }
 
-// Property: normalizeOrderType returns either a known type or the fallback.
-func TestNormalizeOrderTypeReturnsKnownOrFallback(t *testing.T) {
+// Property: parseLimitOrderType returns only known order types when it succeeds.
+func TestParseLimitOrderTypeReturnsKnownOrError(t *testing.T) {
 	known := map[string]bool{"GTC": true, "GTD": true, "FAK": true, "FOK": true}
-	f := func(raw, fallback string) bool {
-		out := normalizeOrderType(raw, fallback)
-		return known[out] || out == fallback
+	f := func(raw string) bool {
+		out, err := parseLimitOrderType(raw)
+		return err != nil || known[out]
 	}
 	if err := quick.Check(f, &quick.Config{MaxCount: 1000}); err != nil {
 		t.Error(err)

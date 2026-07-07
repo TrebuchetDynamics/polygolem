@@ -903,10 +903,10 @@ polygolem clob create-order [flags]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
-| `--expiration` | `string` | `0` | unix timestamp for GTD orders (0 = no expiration) |
+| `--expiration` | `string` | `0` | GTD only: unix timestamp when the order expires; must be at least 1 minute in the future |
 | `-h, --help` | `bool` | `false` | help for create-order |
 | `--json` | `bool` | `false` | emit JSON output |
-| `--order-type` | `string` | `GTC` | order type |
+| `--order-type` | `string` | `GTC` | order type: GTC (rest on book), GTD (rest until --expiration), FOK (fill full size immediately or cancel), FAK (fill what crosses immediately, cancel the rest) |
 | `--output` | `string` | `json` | output format (json) |
 | `--post-only` | `bool` | `false` | post-only order (maker-only, rejected if it would take) |
 | `--price` | `string` | `""` | limit price |
@@ -1001,13 +1001,13 @@ polygolem clob market-order [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--amount` | `string` | `""` | USDC amount |
+| `--amount` | `string` | `""` | buy: USDC notional to spend; sell: number of shares to sell |
 | `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
 | `-h, --help` | `bool` | `false` | help for market-order |
 | `--json` | `bool` | `false` | emit JSON output |
-| `--order-type` | `string` | `FOK` | order type |
+| `--order-type` | `string` | `FOK` | market order type: FOK (all-or-nothing) or FAK (fill what crosses, cancel the rest) |
 | `--output` | `string` | `json` | output format (json) |
-| `--price` | `string` | `""` | limit price |
+| `--price` | `string` | `""` | optional worst acceptable price (default: swept from the book) |
 | `--side` | `string` | `buy` | order side |
 | `--token` | `string` | `""` | CLOB token id |
 
