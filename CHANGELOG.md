@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.5.0] — 2026-07-07
+
 ### Changed
 
 - **Breaking CLI rename:** top-level commands now use shorter names: `ping`,
@@ -17,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   abandoned sub-project PRDs, migration plans, and old blocker reports from
   top-level docs; current docs now point to the canonical onboarding, safety,
   wiki, and live-reference pages.
+- **Capability map refresh:** generated compatibility docs now use the renamed
+  CLI command paths.
 
 ## [v0.4.2] — 2026-07-07
 
@@ -486,7 +490,8 @@ the May 2026 deposit-wallet migration and the documentation overhaul.
   (headless for existing users), Builder Fee Key (headless via L2 HMAC), Relayer API Key
   (headless via SIWE). See `docs/ONBOARDING.md`.
 
-[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.2...v0.5.0
 [v0.4.2]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.1...v0.4.2
 [v0.4.1]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.0...v0.4.1
 [v0.4.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.3.0...v0.4.0
