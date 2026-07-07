@@ -156,7 +156,9 @@ polydart/
 
 ### 4.6 `orders` — Order Building
 
-**Mirrors:** `polygolem/internal/orders`
+**Mirrors:** `polygolem/internal/clob` (order construction, amount math, and V2
+deposit-wallet signing; the former standalone `internal/orders` builder package
+was removed on the Go side).
 
 ```dart
 final order = await client.orders

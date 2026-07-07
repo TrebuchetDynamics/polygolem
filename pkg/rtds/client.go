@@ -82,13 +82,13 @@ type ChainlinkPriceEvent struct {
 // crypto price topic. Set callbacks before Connect. Methods are safe for
 // concurrent use.
 type Client struct {
-	config    Config
-	feeds     map[string]struct{}
-	conn      *websocket.Conn
-	mu        sync.Mutex
-	ctx       context.Context
-	cancel    context.CancelFunc
-	connected atomic.Bool
+	config     Config
+	feeds      map[string]struct{}
+	conn       *websocket.Conn
+	mu         sync.Mutex
+	ctx        context.Context
+	cancel     context.CancelFunc
+	connected  atomic.Bool
 	reconnects int32
 
 	// OnChainlinkPrice receives each Chainlink price update that passes the
