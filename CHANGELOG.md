@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.2] — 2026-07-07
+
+### Added
+
+- `polygolem clob simulate-order`: read-only CLOB book walk that estimates
+  expected fill price, slippage, filled size, and unfilled amount without
+  loading a private key, signing, or submitting an order.
+
 ## [v0.4.1] — 2026-07-06
 
 Support for Polymarket's current wallet-approval flows (Get Paid Instantly
@@ -467,7 +475,8 @@ the May 2026 deposit-wallet migration and the documentation overhaul.
   (headless for existing users), Builder Fee Key (headless via L2 HMAC), Relayer API Key
   (headless via SIWE). See `docs/ONBOARDING.md`.
 
-[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.2...HEAD
+[v0.4.2]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.1...v0.4.2
 [v0.4.1]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.0...v0.4.1
 [v0.4.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.1...v0.3.0
