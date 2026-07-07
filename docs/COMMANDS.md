@@ -82,6 +82,7 @@ polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
     orders - List authenticated CLOB orders
     price-history - Get CLOB token price history
     revoke-builder-fee-key - Revoke a builder fee key (DELETE /auth/builder-api-key/{key})
+    simulate-order - Simulate a read-only CLOB order fill from the current book
     tick-size - Get minimum tick size
     trades - List authenticated CLOB trades
     update-balance - Refresh CLOB balance and allowances
@@ -631,7 +632,7 @@ CLOB market data and authenticated account commands
 Central Limit Order Book (CLOB) market data and trading.
 
 Read-only (no credentials): book, markets, market, market-by-token, price-history,
-tick-size.
+simulate-order, tick-size.
 
 Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
 account/key commands.
@@ -672,6 +673,7 @@ polygolem clob [flags]
 | `polygolem clob orders` | List authenticated CLOB orders |
 | `polygolem clob price-history` | Get CLOB token price history |
 | `polygolem clob revoke-builder-fee-key` | Revoke a builder fee key (DELETE /auth/builder-api-key/{key}) |
+| `polygolem clob simulate-order` | Simulate a read-only CLOB order fill from the current book |
 | `polygolem clob tick-size` | Get minimum tick size |
 | `polygolem clob trades` | List authenticated CLOB trades |
 | `polygolem clob update-balance` | Refresh CLOB balance and allowances |
@@ -1124,6 +1126,35 @@ polygolem clob revoke-builder-fee-key [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--key` | `string` | `""` | builder fee key to revoke |
 | `--output` | `string` | `json` | output format (json) |
+
+### polygolem clob simulate-order
+
+Simulate a read-only CLOB order fill from the current book
+
+Walks the opposing side of the live CLOB book and estimates the fill,
+average price, and slippage for a proposed order. This command is read-only:
+it does not load a private key, sign, or submit an order.
+
+For buys, --amount is USDC notional to spend. For sells, --amount is shares to sell.
+Use --limit-price to stop the walk at a worst acceptable price.
+
+**Usage:**
+
+```bash
+polygolem clob simulate-order [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--amount` | `string` | `""` | buy: USDC notional to spend; sell: number of shares to sell |
+| `-h, --help` | `bool` | `false` | help for simulate-order |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit-price` | `string` | `""` | optional worst acceptable price for simulated taker fill |
+| `--output` | `string` | `json` | output format (json) |
+| `--side` | `string` | `buy` | order side: buy or sell |
+| `--token` | `string` | `""` | CLOB token id |
 
 ### polygolem clob tick-size
 

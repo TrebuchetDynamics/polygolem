@@ -13,6 +13,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobbalances"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobdiagnostics"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobmarketdata"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobsimulation"
 	"github.com/spf13/cobra"
 )
 
@@ -121,6 +122,15 @@ func (f *fakeCLOBDiagnosticRunner) MarketTradesProbe(_ context.Context, req clob
 	return &internalclob.MarketTradesProbeResult{Classification: internalclob.ProbeMarketWide, RowCount: 2}, nil
 }
 
+type fakeCLOBSimulationRunner struct {
+	request clobsimulation.Request
+}
+
+func (f *fakeCLOBSimulationRunner) SimulateOrder(_ context.Context, req clobsimulation.Request) (*clobsimulation.Result, error) {
+	f.request = req
+	return &clobsimulation.Result{TokenID: req.TokenID, Side: req.Side, Complete: true, AveragePrice: "0.55", SlippageBps: "1000"}, nil
+}
+
 func TestCLOBAuthenticatedReadBuilderDelegatesToRunnersAndJSONEnvelope(t *testing.T) {
 	t.Run("balance", func(t *testing.T) {
 		balances := &fakeCLOBBalanceRunner{}
@@ -199,6 +209,39 @@ func executeCLOBAuthHelperForTest(args []string, balances *fakeCLOBBalanceRunner
 	return stdout.String(), stderr.String(), err
 }
 
+func TestCLOBSimulateOrderCommandDelegatesToRunnerAndJSONEnvelope(t *testing.T) {
+	fake := &fakeCLOBSimulationRunner{}
+	clobCmd := commandGroup("clob", "CLOB simulation")
+	addCLOBSimulateOrderCommand(clobCmd, fake)
+
+	root := &cobra.Command{Use: "polygolem", SilenceUsage: true, SilenceErrors: true}
+	var stdout, stderr bytes.Buffer
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.PersistentFlags().Bool("json", false, "emit JSON output")
+	root.AddCommand(clobCmd)
+	root.SetArgs([]string{"--json", "clob", "simulate-order", "--token", "token-1", "--side", "sell", "--amount", "2", "--limit-price", "0.40"})
+	installJSONContract(root)
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr.String())
+	}
+	if fake.request.TokenID != "token-1" || fake.request.Side != "sell" || fake.request.Amount != "2" || fake.request.LimitPrice != "0.40" || fake.request.Output != "json" {
+		t.Fatalf("request=%+v", fake.request)
+	}
+	got := parseJSONEnvelopeForTest(t, stdout.String())
+	if got.Meta.Command != "clob simulate-order" {
+		t.Fatalf("meta.command=%q, want clob simulate-order", got.Meta.Command)
+	}
+	var data clobsimulation.Result
+	if err := json.Unmarshal(got.Data, &data); err != nil {
+		t.Fatalf("data is not simulation payload: %v\n%s", err, got.Data)
+	}
+	if data.AveragePrice != "0.55" || data.SlippageBps != "1000" {
+		t.Fatalf("data=%+v", data)
+	}
+}
+
 func TestCLOBReadOnlyMarketDataCommandsKeepFlags(t *testing.T) {
 	root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
 	for _, tc := range []struct {
@@ -211,6 +254,7 @@ func TestCLOBReadOnlyMarketDataCommandsKeepFlags(t *testing.T) {
 		{args: []string{"clob", "market"}, flags: []string{"output"}},
 		{args: []string{"clob", "market-by-token"}, flags: []string{"output"}},
 		{args: []string{"clob", "markets"}, flags: []string{"output", "cursor"}},
+		{args: []string{"clob", "simulate-order"}, flags: []string{"output", "token", "side", "amount", "limit-price"}},
 	} {
 		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
 			cmd, _, err := root.Find(tc.args)
@@ -227,15 +271,22 @@ func TestCLOBReadOnlyMarketDataCommandsKeepFlags(t *testing.T) {
 }
 
 func TestCLOBReadOnlyMarketDataValidatesOutputBeforeNetwork(t *testing.T) {
-	root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
-	root.SetArgs([]string{"clob", "book", "token-1", "--output", "table"})
+	for _, args := range [][]string{
+		{"clob", "book", "token-1", "--output", "table"},
+		{"clob", "simulate-order", "--token", "token-1", "--amount", "1", "--output", "table"},
+	} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			root := NewRootCommand(Options{Version: "test", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
+			root.SetArgs(args)
 
-	err := root.Execute()
-	if err == nil {
-		t.Fatal("Execute returned nil error")
-	}
-	if !strings.Contains(err.Error(), "only --output json is supported") {
-		t.Fatalf("error=%q, want output validation error", err.Error())
+			err := root.Execute()
+			if err == nil {
+				t.Fatal("Execute returned nil error")
+			}
+			if !strings.Contains(err.Error(), "only --output json is supported") {
+				t.Fatalf("error=%q, want output validation error", err.Error())
+			}
+		})
 	}
 }
 

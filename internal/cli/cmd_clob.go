@@ -13,6 +13,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobbalances"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobdiagnostics"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobmarketdata"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobsimulation"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
@@ -256,7 +257,7 @@ func clobCmd(jsonOut bool) *cobra.Command {
 	cmd.Long = `Central Limit Order Book (CLOB) market data and trading.
 
 Read-only (no credentials): book, markets, market, market-by-token, price-history,
-tick-size.
+simulate-order, tick-size.
 
 Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
 account/key commands.
@@ -267,6 +268,7 @@ cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
 	cmd.Example = `  # Read-only
   polygolem clob book <token-id>
   polygolem clob price-history <token-id> --interval 1h
+  polygolem clob simulate-order --token <id> --side buy --amount 10
 
   # Live, capped (needs a funded deposit wallet)
   POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem clob create-order --token <id> --side buy --price 0.40 --size 2`
@@ -277,10 +279,12 @@ cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
 		return privateKeyFromEnv()
 	}
 	marketData := clobmarketdata.New(w.clob)
+	simulation := clobsimulation.New(w.clob)
 	accountReads := clobaccountreads.New(clobaccountreads.Config{Reader: w.clob, PrivateKey: privateKey})
 	balances := clobbalances.New(clobbalances.Config{Reader: w.clob, PrivateKey: privateKey})
 	diagnostics := clobdiagnostics.New(clobdiagnostics.Config{Reader: w.clob, PrivateKey: privateKey})
 	addCLOBMarketDataCommands(cmd, marketData)
+	addCLOBSimulateOrderCommand(cmd, simulation)
 	addCLOBAuthenticatedReadCommands(cmd, balances, accountReads, diagnostics)
 
 	var createKeyOutput string
