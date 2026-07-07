@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced `internal/config`'s Viper loader with stdlib environment parsing and
+  simple key-value YAML file support, removing the Viper dependency chain.
+
 ## [v0.5.0] — 2026-07-07
 
 ### Changed

@@ -76,7 +76,7 @@ Implementation. Not part of the public SDK contract.
 | `internal/auth` | L0/L1/L2 auth, EIP-712, deposit-wallet CREATE2 derivation, builder attribution, signers. |
 | `internal/cli` | Cobra command construction and dependency wiring. |
 | `internal/clob` | CLOB API client — full read + authenticated surface, EIP-712, POLY_1271, ERC-7739. |
-| `internal/config` | Viper-backed config loading, defaults, environment binding, validation, redaction. |
+| `internal/config` | Stdlib config loading, defaults, environment binding, simple YAML file support, validation. |
 | `internal/dataapi` | Data API client — positions, volume, leaderboards. |
 | `internal/errors` | Structured error types and code helpers. |
 | `internal/gamma` | Typed Gamma HTTP client — markets, events, search, tags, series, sports, comments, profiles. |

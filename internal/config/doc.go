@@ -1,10 +1,6 @@
-// Package config loads polygolem configuration via Viper — defaults,
-// environment binding, file overrides, validation, and credential
-// redaction.
+// Package config loads polygolem configuration with stdlib env parsing, simple
+// key-value YAML files, defaults, and validation.
 //
-// Every entry point reads config through Load. Builder credentials and
-// private keys are redacted at load time so no downstream logger or JSON
-// emitter ever sees the plaintext value.
-//
-// This package is internal and not part of the polygolem public SDK.
+// Every entry point reads config through Load. This package is internal and not
+// part of the polygolem public SDK.
 package config
