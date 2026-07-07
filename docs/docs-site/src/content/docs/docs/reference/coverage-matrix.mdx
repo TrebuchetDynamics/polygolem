@@ -7,37 +7,37 @@ description: Polygolem coverage across Gamma, CLOB, Data API, Bridge, WebSocket,
 
 | Surface | SDK | CLI | Status |
 |---|---|---|---|
-| Gamma markets | `internal/gamma`, `pkg/universal` | `discover search`, `discover markets`, `discover market`, `discover enrich` | Covered |
-| Gamma taxonomy | `internal/gamma`, `pkg/universal` | `discover tags`, `discover series`, `discover comments` | Covered |
-| CLOB public data | `internal/clob`, `pkg/clob`, `pkg/orderbook`, `pkg/types`, `pkg/universal` | `orderbook *`, `clob book`, `clob market`, `clob market-by-token`, `clob markets`, `clob price-history` | Covered |
+| Gamma markets | `internal/gamma`, `pkg/universal` | `markets search`, `markets markets`, `markets market`, `markets enrich` | Covered |
+| Gamma taxonomy | `internal/gamma`, `pkg/universal` | `markets tags`, `markets series`, `markets comments` | Covered |
+| CLOB public data | `internal/clob`, `pkg/clob`, `pkg/orderbook`, `pkg/types`, `pkg/universal` | `book *`, `exchange book`, `exchange market`, `exchange market-by-token`, `exchange markets`, `exchange price-history` | Covered |
 | CLOB market feeds | `internal/clob`, `pkg/clob`, `pkg/universal` | SDK only for simplified and sampling feeds | Covered in SDK |
 | CLOB rewards, rebates, scoring | `internal/clob`, `pkg/clob`, `pkg/universal` | SDK only | Covered in SDK |
-| CLOB account reads | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob create-api-key`, `clob create-api-key-for-address`, `clob balance`, `clob update-balance`, `clob orders`, `clob order`, `clob trades` | Covered |
-| CLOB cancellation | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob cancel`, `clob cancel-orders`, `clob cancel-market`, `clob cancel-all` | Covered |
-| CLOB placement | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob create-order`, `clob batch-orders`, `clob market-order`, `--builder-code` | Deposit wallet only |
-| CLOB V2 builder attribution | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob create-builder-fee-key`, `clob list-builder-fee-keys`, `clob revoke-builder-fee-key`, `--builder-code` | Covered |
-| Builder header signing | `internal/auth`, `pkg/builder` | `builder auto`, relayer fallback auth | Covered |
-| CLOB batch placement | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob batch-orders` | Covered |
-| CLOB heartbeat | `internal/clob`, `pkg/clob`, `pkg/universal` | `clob heartbeat` | Covered |
-| Data API | `internal/dataapi`, `pkg/data`, `pkg/types`, `pkg/universal` | `data *` | Covered |
+| CLOB account reads | `internal/clob`, `pkg/clob`, `pkg/universal` | `exchange create-api-key`, `exchange create-api-key-for-address`, `exchange balance`, `exchange update-balance`, `exchange orders`, `exchange order`, `exchange trades` | Covered |
+| CLOB cancellation | `internal/clob`, `pkg/clob`, `pkg/universal` | `exchange cancel`, `exchange cancel-orders`, `exchange cancel-market`, `exchange cancel-all` | Covered |
+| CLOB placement | `internal/clob`, `pkg/clob`, `pkg/universal` | `exchange create-order`, `exchange batch-orders`, `exchange market-order`, `--builder-code` | Deposit wallet only |
+| CLOB V2 builder attribution | `internal/clob`, `pkg/clob`, `pkg/universal` | `exchange create-builder-fee-key`, `exchange list-builder-fee-keys`, `exchange revoke-builder-fee-key`, `--builder-code` | Covered |
+| Builder header signing | `internal/auth`, `pkg/builder` | `builder-keys auto`, relayer fallback auth | Covered |
+| CLOB batch placement | `internal/clob`, `pkg/clob`, `pkg/universal` | `exchange batch-orders` | Covered |
+| CLOB heartbeat | `internal/clob`, `pkg/clob`, `pkg/universal` | `exchange heartbeat` | Covered |
+| Data API | `internal/dataapi`, `pkg/data`, `pkg/types`, `pkg/universal` | `analytics *` | Covered |
 | Bridge supported assets and deposit address | `pkg/bridge` | `bridge assets`, `bridge deposit` | Covered |
 | Bridge quote and status | `pkg/bridge` | Not exposed | SDK only |
-| Relayer V2 deposit-wallet flow | `pkg/relayer`, `internal/relayer`, `internal/auth` | `auth headless-onboard`, `deposit-wallet deploy`, `deposit-wallet approve`, `deposit-wallet approve-adapters`, `deposit-wallet enable-trading`, `deposit-wallet redeem` | Covered |
+| Relayer V2 deposit-wallet flow | `pkg/relayer`, `internal/relayer`, `internal/auth` | `credentials headless-onboard`, `wallet deploy`, `wallet approve`, `wallet approve-adapters`, `wallet enable-trading`, `wallet redeem` | Covered |
 | Relayer recent transaction list / relay payload / key listing | Not exposed | Not exposed | Gap |
-| Contracts actively used by SDK | `internal/rpc`, `pkg/contracts`, `pkg/relayer` compatibility wrapper | `deposit-wallet status`, `deposit-wallet deploy` preflight | Covered |
+| Contracts actively used by SDK | `internal/rpc`, `pkg/contracts`, `pkg/relayer` compatibility wrapper | `wallet status`, `wallet deploy` preflight | Covered |
 | Resolution contracts registry | Docs only | Not exposed | Documented, not wrapped |
 | Conditional Tokens helpers | `pkg/ctf` | Not exposed | SDK calldata helpers only |
 | Public WebSocket | `internal/stream`, `pkg/stream`, `pkg/universal` | `stream market --custom-features` | Covered |
-| Live market-data snapshots | `pkg/marketdata`, `pkg/stream` | `marketdata live` | Covered, custom features on by default |
-| User WebSocket | Planned | Planned | Gap |
-| Deposit wallet lifecycle | `pkg/relayer`, `pkg/contracts`, `internal/auth`, `internal/rpc` | `deposit-wallet *` | SDK deploy+approve and CLI full onboard covered; funding remains explicit |
+| Live market-data snapshots | `pkg/marketdata`, `pkg/stream` | `prices live` | Covered, custom features on by default |
+| User WebSocket | `pkg/stream.UserClient` | `stream user --stats` | Covered |
+| Deposit wallet lifecycle | `pkg/relayer`, `pkg/contracts`, `internal/auth`, `internal/rpc` | `wallet *` | SDK deploy+approve and CLI full onboard covered; funding remains explicit |
 
 The repository copy with test and documentation columns lives in
 [`docs/POLYMARKET-COVERAGE-MATRIX.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/POLYMARKET-COVERAGE-MATRIX.md).
 
 ## Gaps
 
-- Authenticated user WebSocket streams wait for L2 WebSocket auth tests.
+- Authenticated user WebSocket streams are available through the SDK and CLI; keep live use credential-gated and read-only unless the operator explicitly enables a mutating path.
 - Data API all-market open interest is not exposed by the CLI yet; the current
   command requires `--token-id`.
 - Bridge quote/status are SDK-only until CLI commands are added.

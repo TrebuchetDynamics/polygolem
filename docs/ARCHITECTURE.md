@@ -212,6 +212,3 @@ Refresh this page when:
 - a top-level command is added/removed in `internal/cli/root.go`;
 - `pkg/contracts` approval sets change;
 - any ADR changes the public SDK, bot/strategy boundary, or deposit-wallet-only model.
-
-See [Architecture and Taxonomy Improvement Plan](ARCHITECTURE-TAXONOMY-PLAN.md)
-for the next SDK naming and public-boundary cleanup work.

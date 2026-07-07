@@ -6,8 +6,10 @@ Audit: 2026-05-07
 > **⚠️ CORRECTION 2026-05-08 — This document contains outdated conclusions.**
 > The proxy-wallet (sigtype-1) claims below were based on a Playwright capture of the
 > polymarket.com web UI. However, **polygolem only supports deposit wallets (sigtype-3)**.
-> Empirical live testing with real funds (see [LIVE-TRADING-BLOCKER-REPORT.md](docs/LIVE-TRADING-BLOCKER-REPORT.md))
-> proved that deposit-wallet onboarding for new users **requires a one-time browser login**
+> Empirical live testing with real funds later superseded this blocker; see
+> [ONBOARDING.md](../ONBOARDING.md) for current onboarding guidance and
+> [LIVE-TRADE-WALKTHROUGH.md](../LIVE-TRADE-WALKTHROUGH.md) for the reference live run.
+> Earlier notes claimed new users needed one browser login; that claim is historical context, not current guidance.
 > to create the deposit-wallet-owned CLOB API key. The `/profiles` registration described
 > below does NOT create a deposit-wallet API key — it only registers a proxy-wallet profile,
 > which polygolem does not use.

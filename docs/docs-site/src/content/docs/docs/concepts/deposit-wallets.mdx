@@ -74,7 +74,7 @@ transaction landing on Polygon. Polygolem and the go-bot SDK therefore use
 derived deposit-wallet address, the wallet is treated as deployed and
 `WALLET-CREATE` is skipped. See
 [Deposit Wallet Lifecycle / Phase 2](/docs/guides/deposit-wallet-lifecycle/#phase-2-deploy-relayer-idempotent)
-for the full rule and the `deposit-wallet status --json` fields
+for the full rule and the `wallet status --json` fields
 (`relayerDeployed`, `onchainCodeDeployed`, `deploymentStatusSource`).
 
 ## Signing Flow (POLY_1271)
@@ -96,7 +96,7 @@ V2 orders include a `builder` field (bytes32). Upstream uses this builder code
 for order attribution. It is distinct from builder relayer credentials and does
 not use `POLY_BUILDER_*` HMAC headers on the order request.
 
-Polygolem signs orders with `builder = bytes32(0)` by default. Configure a
+Polygolem signs orders with `builder-keys = bytes32(0)` by default. Configure a
 non-zero builder code with `pkg/clob.Config.BuilderCode`,
 `pkg/universal.Config.BuilderCode`, CLI `--builder-code`, or
 `POLYMARKET_BUILDER_CODE`.

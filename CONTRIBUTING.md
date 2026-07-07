@@ -76,7 +76,7 @@ Where the planning artifacts live, in case a PR references them:
 
 - Specs: `docs/superpowers/specs/`
 - Plans: `docs/superpowers/plans/`
-- Working audit notes (when present): `docs/AUDIT-FINDINGS.md` (created
-  per project, deleted when consumed).
+- Working audit notes are temporary; keep consumed notes in git history or
+  `docs/history/`, not as permanent top-level docs.
 
 Thanks for reading.

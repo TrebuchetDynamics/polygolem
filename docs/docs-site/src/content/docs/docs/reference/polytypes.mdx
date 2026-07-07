@@ -96,7 +96,7 @@ type signedOrderPayload struct {
 This payload is the posted order object. The V2 signed struct omits
 `expiration`; it signs `salt`, `maker`, `signer`, `tokenId`, `makerAmount`,
 `takerAmount`, `side`, `signatureType`, `timestamp`, `metadata`, and `builder`.
-Polygolem emits `builder = bytes32(0)` by default. Set a non-zero code with
+Polygolem emits `builder-keys = bytes32(0)` by default. Set a non-zero code with
 `pkg/clob.Config.BuilderCode`, `pkg/universal.Config.BuilderCode`, CLI
 `--builder-code`, or `POLYMARKET_BUILDER_CODE`.
 

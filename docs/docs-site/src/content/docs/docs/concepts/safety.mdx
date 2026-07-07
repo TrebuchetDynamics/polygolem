@@ -28,7 +28,7 @@ the canonical doc wins.
 Two guards fire before any order or wallet transaction is signed:
 
 1. **Live-order cap.** Every order-placing command
-   (`clob create-order`, `market-order`, `batch-orders`) enforces
+   (`exchange create-order`, `market-order`, `batch-orders`) enforces
    `POLYGOLEM_MAX_LIVE_ORDER_USD` (default **$1**) — per order and on the summed
    batch notional — before the private key is loaded. There is no flag that
    bypasses it; raise the cap deliberately with the environment variable.
@@ -38,11 +38,11 @@ Two guards fire before any order or wallet transaction is signed:
 
    | Command | Required token |
    |---|---|
-   | `deposit-wallet approve-adapters` (with `--submit`) | `--confirm APPROVE_ADAPTERS` |
-   | `deposit-wallet redeem` (with `--submit`) | `--confirm REDEEM_WINNERS` |
-   | `deposit-wallet approve` (with `--submit`) | `--confirm APPROVE_TRADING` |
-   | `deposit-wallet batch` | `--confirm SUBMIT_BATCH` |
-   | `deposit-wallet onboard` | `--confirm ONBOARD_WALLET` |
+   | `wallet approve-adapters` (with `--submit`) | `--confirm APPROVE_ADAPTERS` |
+   | `wallet redeem` (with `--submit`) | `--confirm REDEEM_WINNERS` |
+   | `wallet approve` (with `--submit`) | `--confirm APPROVE_TRADING` |
+   | `wallet batch` | `--confirm SUBMIT_BATCH` |
+   | `wallet onboard` | `--confirm ONBOARD_WALLET` |
 
 <Aside type="note">
 `polygolem risk status` reports the advisory posture gates

@@ -73,7 +73,7 @@ polygolem exchange cancel --order-id <ORDER_ID> --json
 Stop instead of retrying in a different mode when:
 
 - the market window, condition ID, or token ID is ambiguous;
-- `diag`, `auth status`, `deposit-wallet status`, or `update-balance` fails;
+- `diag`, `credentials status`, `wallet status`, or `update-balance` fails;
 - the deposit wallet is not deployed or has no pUSD;
 - CLOB credentials or relayer credentials are missing;
 - upstream returns a protocol, network, or chain error envelope;

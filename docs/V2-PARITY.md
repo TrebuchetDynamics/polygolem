@@ -61,16 +61,16 @@ For each V2-touching surface, columns are SDK / CLI / Test status. ✅ wired,
 
 | Surface                         | SDK | CLI | Test | Notes                                                                                                  |
 |---------------------------------|-----|-----|------|--------------------------------------------------------------------------------------------------------|
-| V2 limit order signing (BUY)    | ✅  | ✅  | ✅   | `clob create-order`                                                                                    |
+| V2 limit order signing (BUY)    | ✅  | ✅  | ✅   | `exchange create-order`                                                                                    |
 | V2 limit order signing (SELL)   | ✅  | ✅  | ✅   | Same path; side is a parameter                                                                         |
 | V2 market order (BUY)           | ✅  | ✅  | ✅   | Buy market orders treat `amount` as USDC budget and discover price from asks when omitted                |
 | V2 market order (SELL)          | ✅  | ✅  | ✅   | Sell market orders treat `amount` as share size and discover price from bids when omitted               |
-| V2 cancel one / batch / all     | ✅  | ✅  | ✅   | `clob cancel`, `cancel-orders`, `cancel-all`, `cancel-market`                                          |
+| V2 cancel one / batch / all     | ✅  | ✅  | ✅   | `exchange cancel`, `cancel-orders`, `cancel-all`, `cancel-market`                                          |
 | V2 builder fee key              | ✅  | ✅  | ✅   | Create/list/revoke wired                                                                               |
 | V2 CLOB account reads           | ✅  | ✅  | ✅   | balance, orders, trades                                                                                |
-| V2 relayer wallet-create        | ✅  | ✅  | ✅   | `deposit-wallet onboard`                                                                               |
+| V2 relayer wallet-create        | ✅  | ✅  | ✅   | `wallet onboard`                                                                               |
 | V2 relayer wallet-batch         | ✅  | ✅  | ✅   | Approval/redeem flows                                                                                  |
-| V2 relayer transaction lookup   | ✅  | ✅  | ✅   | `Client.GetTransaction` / `PollTransaction`; CLI lookup via `relayer transaction <id>` or `deposit-wallet status --tx-id <id>` |
+| V2 relayer transaction lookup   | ✅  | ✅  | ✅   | `Client.GetTransaction` / `PollTransaction`; CLI lookup via `tx transaction <id>` or `wallet status --tx-id <id>` |
 | V2 collateral adapters          | ✅  | ✅  | ✅   | Approve/split/merge/redeem                                                                             |
 | WS market channel               | ✅  | ✅  | ✅   | `wss://ws-subscriptions-clob.polymarket.com/ws/market` — `internal/stream/client.go:16`                |
 | WS user channel (auth)          | ✅  | ✅  | ✅   | `pkg/stream.UserClient` and `polygolem stream user` handle authenticated order/trade events           |

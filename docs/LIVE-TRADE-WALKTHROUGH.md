@@ -95,7 +95,7 @@ Cost: **$0**.
 
 ### 2.2 CLOB API Key — `polygolem builder-keys auto`
 
-The CLOB HTTP layer is EOA-authenticated. `builder auto` signs the ClobAuth
+The CLOB HTTP layer is EOA-authenticated. `builder-keys auto` signs the ClobAuth
 EIP-712 message locally and creates or derives the CLOB L2 HMAC key. The
 deposit-wallet identity is carried by POLY_1271 order signing and
 `signature_type=3` CLOB reads.

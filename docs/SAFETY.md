@@ -22,9 +22,9 @@ on-chain paths. Paper mode may read public market data to price simulations.
 
 Only these command groups have live execution paths:
 
-- `clob create-order`, `clob market-order`, `clob batch-orders` — sign and post
+- `exchange create-order`, `exchange market-order`, `exchange batch-orders` — sign and post
   CLOB V2 orders.
-- `deposit-wallet deploy`, `approve`, `approve-adapters`, `batch`, `fund`,
+- `wallet deploy`, `approve`, `approve-adapters`, `batch`, `fund`,
   `onboard`, `redeem` — relayer-sponsored or direct on-chain transactions.
 
 Everything else is read-only. Bridge withdrawals, RFQ submission, and CTF
@@ -49,11 +49,11 @@ mistyped flag:
 
 | Command | Required token |
 |---|---|
-| `deposit-wallet approve-adapters` (with `--submit`) | `--confirm APPROVE_ADAPTERS` |
-| `deposit-wallet redeem` (with `--submit`) | `--confirm REDEEM_WINNERS` |
-| `deposit-wallet approve` (with `--submit`) | `--confirm APPROVE_TRADING` |
-| `deposit-wallet batch` | `--confirm SUBMIT_BATCH` |
-| `deposit-wallet onboard` | `--confirm ONBOARD_WALLET` |
+| `wallet approve-adapters` (with `--submit`) | `--confirm APPROVE_ADAPTERS` |
+| `wallet redeem` (with `--submit`) | `--confirm REDEEM_WINNERS` |
+| `wallet approve` (with `--submit`) | `--confirm APPROVE_TRADING` |
+| `wallet batch` | `--confirm SUBMIT_BATCH` |
+| `wallet onboard` | `--confirm ONBOARD_WALLET` |
 
 The dry-run-capable commands (`approve`, `approve-adapters`, `redeem`) print
 calldata for review when run without `--submit`. The confirmation token is
@@ -70,7 +70,7 @@ The `polygolem risk status` command evaluates advisory gates
 (`POLYMARKET_LIVE_PROFILE`, `--confirm-live`, preflight) and reports whether an
 operator has opted into a live posture. This status is **advisory**: it helps an
 operator confirm intent, but the enforced money guards are the live-order cap and
-the typed confirmation tokens above, not the `live status` flags.
+the typed confirmation tokens above, not the `risk status` flags.
 
 ## Failure behavior
 
@@ -82,7 +82,7 @@ hide operator intent and make automation unsafe.
 
 Read-only and paper workflows require no private key. The private key is read
 from the environment only, is never persisted or logged, and is printed only by
-`auth export-key`, which is double-confirmed. Diagnostics (`diag`) and config
+`credentials export-key`, which is double-confirmed. Diagnostics (`diag`) and config
 loading redact secrets; relayer and builder credentials are stored `0600` and
 never emitted in JSON output.
 
@@ -131,8 +131,7 @@ When `signature_type = 3` (deposit), the CLOB balance endpoint returns the
 3. Verify collateral allowances are non-zero
 4. Block before order submission if any check fails
 
-See [DEPOSIT-WALLET-MIGRATION.md](./DEPOSIT-WALLET-MIGRATION.md) for the full onboarding flow,
-common pitfalls, and recovery steps.
+See [ONBOARDING.md](./ONBOARDING.md) for the full onboarding flow and [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) for an end-to-end live reference run.
 
 ## Deposit Wallet Safety Rules
 
@@ -147,27 +146,27 @@ operations. These rules apply.
    on every load; no command emits them in JSON output.
 
 2. **Read-only deposit-wallet commands stay read-only.**
-   `deposit-wallet derive`, `deposit-wallet status`, and
-   `deposit-wallet nonce` perform no on-chain or relayer mutations.
+   `wallet derive`, `wallet status`, and
+   `wallet nonce` perform no on-chain or relayer mutations.
 
 3. **Batch signing requires explicit calldata input.**
-   `deposit-wallet batch --calls-json` requires structured input. The CLI
+   `wallet batch --calls-json` requires structured input. The CLI
    does not synthesize calls. The `approve` shortcut shows calldata before
    submission unless `--submit` is passed.
 
-4. **Funding moves real money.** `deposit-wallet fund --amount X`
+4. **Funding moves real money.** `wallet fund --amount X`
    transfers ERC-20 pUSD from the EOA to the deposit wallet via direct RPC.
    The amount must be specified explicitly. There is no default.
 
 5. **Onboarding is the only multi-step composite.**
-   `deposit-wallet onboard --fund-amount X` performs deploy → approve →
+   `wallet onboard --fund-amount X` performs deploy → approve →
    fund. Each step is gated; failure of any step aborts the composite and
    leaves the wallet in a recoverable state visible to
-   `deposit-wallet status`.
+   `wallet status`.
 
 6. **POLY_1271 orders use the deployed wallet's signature path.**
-   `clob create-order` and
-   `clob market-order` sign with the deposit
+   `exchange create-order` and
+   `exchange market-order` sign with the deposit
    wallet's POLY_1271 path. Orders signed without the deposit signature
    type after the May 2026 cutoff will be rejected by Polymarket for
    new accounts. Readiness must verify non-empty bytecode at the deposit

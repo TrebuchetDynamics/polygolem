@@ -294,7 +294,7 @@ Public Gamma + CLOB market discovery. Read-only. No credentials.
 - A market can be in Gamma without being tradeable in CLOB; combine with
   `discover enrich` to confirm tradability.
 - `--slug` is currently routed to the `/markets/<id>` path upstream and
-  rejects with `PROTOCOL_GAMMA_4XX`; track in `docs/AUDIT-FINDINGS.md`.
+  rejects with `PROTOCOL_GAMMA_4XX`; track in current issue/PR notes.
 
 ### `discover enrich`
 
@@ -1895,7 +1895,7 @@ Local paper-trading state. No upstream API calls; never authenticated.
     "code": "INTERNAL_UNIMPLEMENTED",
     "category": "internal",
     "message": "polygolem paper buy: not implemented",
-    "hint": "Track at docs/AUDIT-FINDINGS.md."
+    "hint": "Track in current issue/PR notes."
   },
   "meta": { "command": "paper buy", "ts": "2026-05-07T12:34:56Z", "duration_ms": 1 }
 }
@@ -1942,7 +1942,7 @@ Local paper-trading state. No upstream API calls; never authenticated.
     "code": "INTERNAL_UNIMPLEMENTED",
     "category": "internal",
     "message": "polygolem paper positions: not implemented",
-    "hint": "Track at docs/AUDIT-FINDINGS.md."
+    "hint": "Track in current issue/PR notes."
   },
   "meta": { "command": "paper positions", "ts": "2026-05-07T12:34:56Z", "duration_ms": 1 }
 }
@@ -2031,7 +2031,7 @@ Local paper-trading state. No upstream API calls; never authenticated.
     "code": "INTERNAL_UNIMPLEMENTED",
     "category": "internal",
     "message": "polygolem paper sell: not implemented",
-    "hint": "Track at docs/AUDIT-FINDINGS.md."
+    "hint": "Track in current issue/PR notes."
   },
   "meta": { "command": "paper sell", "ts": "2026-05-07T12:34:56Z", "duration_ms": 1 }
 }
@@ -2269,7 +2269,7 @@ List Polymarket events.
 **Caveats:**
 
 - The current binary returns a top-level array and silently ignores any
-  `--limit` flag; tracked in `docs/AUDIT-FINDINGS.md`.
+  `--limit` flag; track in current issue/PR notes.
 
 ### Command catalog — `health`
 
@@ -2506,7 +2506,7 @@ errored).
     "code": "INTERNAL_UNIMPLEMENTED",
     "category": "internal",
     "message": "polygolem auth status: not implemented",
-    "hint": "Track at docs/AUDIT-FINDINGS.md."
+    "hint": "Track in current issue/PR notes."
   },
   "meta": { "command": "auth status", "ts": "2026-05-07T12:34:56Z", "duration_ms": 1 }
 }

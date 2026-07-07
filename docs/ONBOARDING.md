@@ -35,14 +35,14 @@ polygolem credentials status --check-deposit-key
 polygolem exchange create-order --token <TOKEN_ID> --side buy --price 0.5 --size 10
 ```
 
-`deposit-wallet onboard` and `deposit-wallet enable-trading` first load V2
+`wallet onboard` and `wallet enable-trading` first load V2
 relayer credentials from env or Polygolem env files. If none exist, they run
 the SIWE login/profile/key-mint flow automatically, persist the relayer key to
 the 0600 env file, and continue with the WALLET batch. `polygolem credentials login`
 is still useful when you want to inspect or refresh authentication explicitly,
 but it is no longer a required manual pre-step for the deposit-wallet flow.
 
-`auth headless-onboard` remains as a compatibility command for older
+`credentials headless-onboard` remains as a compatibility command for older
 automation. New scripts should use `polygolem credentials login`.
 
 ## UI Enable Trading Prompts
@@ -97,7 +97,7 @@ result, err := enabletrading.EnableTradingHeadless(ctx, enabletrading.EnableTrad
 See [ENABLE-TRADING-HEADLESS.md](./ENABLE-TRADING-HEADLESS.md) for the typed
 data, approval calls, and live-submission safety rules.
 
-## What `auth login` Does
+## What `credentials login` Does
 
 `polygolem credentials login` handles the website sign-in step from the CLI:
 
@@ -115,18 +115,18 @@ the SIWE message. That distinction is intentional.
 
 | Operation | Headless? | Command |
 |---|---:|---|
-| Derive deposit wallet | Yes | `deposit-wallet derive` |
-| Polymarket SIWE login | Yes | `auth login` |
-| Profile registration | Yes | `auth login` |
-| V2 relayer key mint | Yes | `auth login` or automatic in wallet commands |
-| CLOB L2 key create/derive | Yes | `builder auto` or `clob create-api-key` |
-| Deposit wallet deploy | Yes | `deposit-wallet deploy` / `deposit-wallet onboard` |
-| Trading approvals | Yes | `deposit-wallet approve` / `deposit-wallet onboard` |
-| UI Enable Trading signs | Yes | `deposit-wallet onboard` / `deposit-wallet enable-trading` |
-| Adapter approvals for redeem | Yes | `deposit-wallet approve-adapters` |
-| Funding deposit wallet | Yes | `deposit-wallet fund` |
-| Orders and cancels | Yes | `clob create-order`, `market-order`, `cancel*` |
-| Redeem winners | Yes, gated by allowlist/readiness | `deposit-wallet settlement-status`, `redeemable`, `redeem` |
+| Derive deposit wallet | Yes | `wallet derive` |
+| Polymarket SIWE login | Yes | `credentials login` |
+| Profile registration | Yes | `credentials login` |
+| V2 relayer key mint | Yes | `credentials login` or automatic in wallet commands |
+| CLOB L2 key create/derive | Yes | `builder-keys auto` or `exchange create-api-key` |
+| Deposit wallet deploy | Yes | `wallet deploy` / `wallet onboard` |
+| Trading approvals | Yes | `wallet approve` / `wallet onboard` |
+| UI Enable Trading signs | Yes | `wallet onboard` / `wallet enable-trading` |
+| Adapter approvals for redeem | Yes | `wallet approve-adapters` |
+| Funding deposit wallet | Yes | `wallet fund` |
+| Orders and cancels | Yes | `exchange create-order`, `market-order`, `cancel*` |
+| Redeem winners | Yes, gated by allowlist/readiness | `wallet settlement-status`, `redeemable`, `redeem` |
 
 ## Prerequisites
 
@@ -136,13 +136,13 @@ the SIWE message. That distinction is intentional.
 - A little POL for the one ERC-20 funding transfer.
 - Relayer credentials are optional for live wallet commands. If
   `RELAYER_API_KEY` + `RELAYER_API_KEY_ADDRESS` are not configured or present
-  in a Polygolem env file, `deposit-wallet onboard`, `deploy`, `approve`,
+  in a Polygolem env file, `wallet onboard`, `deploy`, `approve`,
   `approve-adapters`, `nonce`, `status`, `enable-trading`, and live `redeem`
   mint and persist V2 relayer credentials automatically from
   `SIGNER_PRIVATE_KEY`.
 - CLOB L2 credentials are optional for the normal trading path. Polygolem can
   derive or create the EOA-bound CLOB key from `SIGNER_PRIVATE_KEY` when
-  needed. Use `builder auto`, `clob create-api-key`, or env when you want
+  needed. Use `builder-keys auto`, `exchange create-api-key`, or env when you want
   pre-provisioned credentials for probes and automation.
 
 ## Verification
@@ -181,7 +181,7 @@ is ready for Polygolem's headless trading path.
 ## Manual Fallback
 
 Use [BROWSER-SETUP.md](./BROWSER-SETUP.md) only when `polygolem credentials login`
-or `builder auto` is blocked by an upstream API change, account policy, or
+or `builder-keys auto` is blocked by an upstream API change, account policy, or
 local network restriction. The browser signs the same SIWE message with the
 EOA; it does not change the deposit wallet address.
 
@@ -231,8 +231,8 @@ polygolem wallet fund --amount 0.71
 
 ## Technical Background
 
-- [LIVE-TRADING-BLOCKER-REPORT.md](./LIVE-TRADING-BLOCKER-REPORT.md)
-- [DEPOSIT-WALLET-MIGRATION.md](./DEPOSIT-WALLET-MIGRATION.md)
+- [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md)
+- [DEPOSIT-WALLET-REDEEM-VALIDATION.md](./DEPOSIT-WALLET-REDEEM-VALIDATION.md)
 - [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md)
 
 This document is the canonical onboarding flow. If another doc contradicts it,

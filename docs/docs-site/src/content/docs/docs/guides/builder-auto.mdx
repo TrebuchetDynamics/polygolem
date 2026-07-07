@@ -7,16 +7,16 @@ import { Aside } from "@astrojs/starlight/components";
 
 Polygolem splits the V2 setup into three credential systems:
 
-- `builder auto` creates bootstrap CLOB L2 credentials at `clob.polymarket.com/auth/api-key`.
-- `auth login` performs SIWE login and mints `RELAYER_API_KEY` +
+- `builder-keys auto` creates bootstrap CLOB L2 credentials at `clob.polymarket.com/auth/api-key`.
+- `credentials login` performs SIWE login and mints `RELAYER_API_KEY` +
   `RELAYER_API_KEY_ADDRESS` for deposit-wallet deploy and approval batches.
-- `clob create-builder-fee-key` creates the builder attribution value used in
+- `exchange create-builder-fee-key` creates the builder attribution value used in
   the V2 order `builder` bytes32 field.
 
 <Aside type="note">
 Polymarket login signs with the EOA. The deposit wallet remains the trading
 wallet for pUSD, POLY_1271 orders, CTF positions, approvals, and redemption.
-Wallet commands can run `auth login` automatically when relayer credentials
+Wallet commands can run `credentials login` automatically when relayer credentials
 are missing. Run `polygolem credentials login` yourself when you want to inspect or
 refresh the relayer key explicitly.
 </Aside>
@@ -61,7 +61,7 @@ SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
 
 ## CLOB L2 Credentials
 
-`builder auto` signs a **ClobAuth EIP-712** typed data message locally and posts it to `clob.polymarket.com/auth/api-key` for bootstrap credentials:
+`builder-keys auto` signs a **ClobAuth EIP-712** typed data message locally and posts it to `clob.polymarket.com/auth/api-key` for bootstrap credentials:
 
 ```
 POST https://clob.polymarket.com/auth/api-key
@@ -85,19 +85,19 @@ Deposit-wallet identity is carried by the POLY_1271 order payload and by
 
 ## Idempotent
 
-Re-running `builder auto` for the same EOA returns the same credentials. The endpoint is idempotent — one EOA, one set of keys. Use `--force` to re-fetch and overwrite the local env file.
+Re-running `builder-keys auto` for the same EOA returns the same credentials. The endpoint is idempotent — one EOA, one set of keys. Use `--force` to re-fetch and overwrite the local env file.
 
 ## Relayer Keys
 
-Relayer writes use a different key. `auth login` signs a SIWE
+Relayer writes use a different key. `credentials login` signs a SIWE
 message with the EOA, exchanges it for a Gamma session, and mints the V2
 relayer key at `relayer-v2.polymarket.com/relayer/api/auth`.
 
-`auth headless-onboard` is the older compatibility command name for this same
+`credentials headless-onboard` is the older compatibility command name for this same
 flow. New automation should use `polygolem credentials login`.
 
-`deposit-wallet deploy`, `deposit-wallet approve`, and
-`deposit-wallet onboard` prefer `RELAYER_API_KEY` +
+`wallet deploy`, `wallet approve`, and
+`wallet onboard` prefer `RELAYER_API_KEY` +
 `RELAYER_API_KEY_ADDRESS` when present. If no relayer key is configured, live
 wallet commands run SIWE login, profile registration, relayer key minting, and
 env-file persistence automatically before submitting the WALLET batch.

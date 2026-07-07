@@ -37,7 +37,7 @@ Polymarket splits its platform across purpose-specific services. polygolem pins 
 
 Read-only REST service for finding and describing markets. No authentication.
 
-- polygolem client: `internal/gamma/client.go:15`, public SDK `pkg/gamma`, CLI `discover *` commands.
+- polygolem client: `internal/gamma/client.go:15`, public SDK `pkg/gamma`, CLI `markets *` commands.
 - Key official pages: [Fetching markets](https://docs.polymarket.com/market-data/fetching-markets), [List markets](https://docs.polymarket.com/api-reference/markets/list-markets), [List events](https://docs.polymarket.com/api-reference/events/list-events), [Tags](https://docs.polymarket.com/api-reference/tags/list-tags), [Search](https://docs.polymarket.com/api-reference/search/search-markets-events-and-profiles).
 - Concepts: [Markets & Events](https://docs.polymarket.com/concepts/markets-events) explains the event → market → outcome-token hierarchy; a market's `conditionId` and two `clobTokenIds` are the join keys into the CLOB API.
 
@@ -45,7 +45,7 @@ Read-only REST service for finding and describing markets. No authentication.
 
 The order book and matching engine. Market data endpoints are public; account and order endpoints require authentication.
 
-- polygolem client: `internal/clob/client.go:21`, public SDK `pkg/clob/client.go:19`, CLI `clob *` and `orderbook *` commands.
+- polygolem client: `internal/clob/client.go:21`, public SDK `pkg/clob/client.go:19`, CLI `exchange *` and `book *` commands.
 - Two auth levels ([Authentication](https://docs.polymarket.com/api-reference/authentication)):
   - **L1** — EIP-712 signature from the wallet's private key; used to create/derive API keys and sign orders. polygolem's deposit-wallet POLY_1271 signing flow is documented in [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md).
   - **L2** — API key HMAC headers (`POLY_ADDRESS`, `POLY_SIGNATURE`, `POLY_TIMESTAMP`, `POLY_API_KEY`, `POLY_PASSPHRASE`); used for order posting/cancel and account reads.
@@ -56,7 +56,7 @@ The order book and matching engine. Market data endpoints are public; account an
 
 Read-only REST service for wallet-level data. No authentication; keyed by wallet address.
 
-- polygolem client: `internal/dataapi/doc.go:4`, public SDK `pkg/data/client.go:12`, CLI `data *` commands.
+- polygolem client: `internal/dataapi/doc.go:4`, public SDK `pkg/data/client.go:12`, CLI `analytics *` commands.
 - Key official pages: [Current positions](https://docs.polymarket.com/api-reference/core/get-current-positions-for-a-user), [Closed positions](https://docs.polymarket.com/api-reference/core/get-closed-positions-for-a-user), [User activity](https://docs.polymarket.com/api-reference/core/get-user-activity), [Trades](https://docs.polymarket.com/api-reference/core/get-trades-for-a-user-or-markets), [Top holders](https://docs.polymarket.com/api-reference/core/get-top-holders-for-markets), [Leaderboard](https://docs.polymarket.com/api-reference/core/get-trader-leaderboard-rankings), [Open interest](https://docs.polymarket.com/api-reference/misc/get-open-interest).
 
 ## Relayer, Bridge, and on-chain surfaces
@@ -68,7 +68,7 @@ Read-only REST service for wallet-level data. No authentication; keyed by wallet
 
 ## WebSocket — real-time data
 
-- Market channel (public) and user channel (L2-authenticated) share the CLOB subscriptions host (`pkg/stream/client.go:16`, `pkg/stream/user.go:10`); CLI `stream market`, `stream user`, `marketdata live`.
+- Market channel (public) and user channel (L2-authenticated) share the CLOB subscriptions host (`pkg/stream/client.go:16`, `pkg/stream/user.go:10`); CLI `stream market`, `stream user`, `prices live`.
 - Official pages: [WebSocket overview](https://docs.polymarket.com/market-data/websocket/overview), [Market channel](https://docs.polymarket.com/market-data/websocket/market-channel), [User channel](https://docs.polymarket.com/market-data/websocket/user-channel), [Real-Time Data Socket](https://docs.polymarket.com/market-data/websocket/rtds).
 
 ## Additional official resources

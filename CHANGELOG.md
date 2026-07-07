@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `markets`, `book`, `exchange`, `analytics`, `wallet`, `sim`, `prices`,
   `credentials`, `risk`, `doctor`, `debug`, `check-upstream`, `tx`, and
   `builder-keys`. The CLOB order simulator is now `exchange simulate`.
+- **Docs cleanup:** removed deprecated drafts, point-in-time audit notes,
+  abandoned sub-project PRDs, migration plans, and old blocker reports from
+  top-level docs; current docs now point to the canonical onboarding, safety,
+  wiki, and live-reference pages.
 
 ## [v0.4.2] — 2026-07-07
 

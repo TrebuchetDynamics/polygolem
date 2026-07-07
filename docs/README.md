@@ -2,147 +2,70 @@
 
 ## What this is
 
-This is the canonical docs index for polygolem: a Go Polymarket CLI/SDK (`go.mod:1`, `go.mod:3`) with a Cobra command tree (`internal/cli/root.go:58`) and stable JSON command envelopes (`internal/output/output.go:32`).
+Canonical docs index for polygolem, a Go Polymarket CLI/SDK. Prefer these docs
+over historical plans; `docs/history/` preserves old audit context and may use
+old command names.
 
 ## Start here
 
-Use this page to choose the right doc. Prefer the canonical docs listed below over historical plans. Historical notes under `docs/history/` preserve audit context and may contain old wording; generated site output under `docs/docs-site/dist/` is not edited by hand.
+| Need | Read |
+|---|---|
+| Install and run | [../README.md](../README.md) |
+| Command reference | [COMMANDS.md](./COMMANDS.md) |
+| Compact source-backed wiki | [wiki/](./wiki/) |
+| Safe onboarding | [ONBOARDING.md](./ONBOARDING.md) |
+| Tiny live-order path | [SAFE-HAPPY-PATH.md](./SAFE-HAPPY-PATH.md) |
+| Operator quickstart | [OPERATOR-ONE-PAGER.md](./OPERATOR-ONE-PAGER.md) |
+| Browser/manual signing fallback | [BROWSER-SETUP.md](./BROWSER-SETUP.md) |
+| Safety and threat model | [SAFETY.md](./SAFETY.md), [THREAT-MODEL.md](./THREAT-MODEL.md) |
+| Real live trade reference | [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) |
+| Redeem incident/runbook | [DEPOSIT-WALLET-REDEEM-VALIDATION.md](./DEPOSIT-WALLET-REDEEM-VALIDATION.md) |
 
-## Quick Start
+## Technical reference
 
-| I want to... | Read this |
-|-------------|-----------|
-| Install and run polygolem | [../README.md](../README.md) |
-| Understand the deposit wallet onboarding flow | [ONBOARDING.md](./ONBOARDING.md) |
-| Use the browser fallback when headless login is blocked | [BROWSER-SETUP.md](./BROWSER-SETUP.md) |
-| See a real EOA-to-filled-sell trade with every tx and gas figure | [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) |
-| See all CLI commands | [COMMANDS.md](./COMMANDS.md) |
-| Understand the architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| Map Polymarket's official APIs (Gamma/CLOB/Data) to polygolem | [POLYMARKET-APIS.md](./POLYMARKET-APIS.md) |
-| Follow the smallest safe path from read-only to tiny live order | [SAFE-HAPPY-PATH.md](./SAFE-HAPPY-PATH.md) |
-| Read the one-page operator quickstart | [OPERATOR-ONE-PAGER.md](./OPERATOR-ONE-PAGER.md) |
-| Review safety and risk features | [SAFETY.md](./SAFETY.md) |
-| Review the funds/credential threat model | [THREAT-MODEL.md](./THREAT-MODEL.md) |
-| Understand the dependency/runtime story | [DEPENDENCIES.md](./DEPENDENCIES.md) |
-| Use read-only MCP/OpenAPI agent surfaces | [MCP-OPENAPI.md](./MCP-OPENAPI.md) |
-| Use the AI agent/SDK skill manifest | [../SKILL.md](../SKILL.md) |
-| Run copyable starter examples | [../examples/](../examples/) |
-| Run the opt-in live smoke script | [../scripts/live-smoke.sh](../scripts/live-smoke.sh) |
-| Investigate upstream API drift | [UPSTREAM-DRIFT-RUNBOOK.md](./UPSTREAM-DRIFT-RUNBOOK.md) |
-| Build or deploy the public docs website | [docs-site/](./docs-site/) |
-| Review the open-source reinforcement roadmap | [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) |
+| Doc | Purpose |
+|---|---|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Package boundaries and dependency direction. |
+| [adr/](./adr/) | Architecture decision records. |
+| [CONTRACTS.md](./CONTRACTS.md) | Contract addresses, factory ABI, CREATE2 derivation. |
+| [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md) | Deposit-wallet signing model. |
+| [POLYMARKET-APIS.md](./POLYMARKET-APIS.md) | Official Polymarket APIs mapped to polygolem. |
+| [POLYMARKET-COVERAGE-MATRIX.md](./POLYMARKET-COVERAGE-MATRIX.md) | SDK/CLI/docs/test coverage matrix. |
+| [COMPATIBILITY.md](./COMPATIBILITY.md) | Generated compatibility contract from `pkg/capabilities`. |
+| [DEPENDENCIES.md](./DEPENDENCIES.md) | Dependency/runtime rationale. |
+| [UPSTREAM-DRIFT-RUNBOOK.md](./UPSTREAM-DRIFT-RUNBOOK.md) | Upstream API drift response. |
 
-## Source-backed orientation
+## Agent and SDK docs
 
-| Area | Source of truth | Why it matters |
-|---|---|---|
-| CLI commands | `internal/cli/root.go:104`, `internal/cli/root.go:130` | Root command wires command groups and installs the JSON contract. |
-| Command reference | `cmd/polygolem_docs/main.go:23`, `internal/cli/docs_generation.go:22` | `docs/COMMANDS.md` is generated from Cobra metadata; do not edit it by hand. |
-| JSON envelope | `internal/cli/root.go:79`, `internal/output/output.go:54`, `internal/output/output.go:63` | Every command supports `--json`; success/error envelopes are rendered centrally. |
-| CLI/package boundary | `internal/cli/doc.go:1`, `internal/cli/doc.go:4` | Command handlers should delegate to typed packages instead of holding protocol logic. |
-| Runtime/deps | `go.mod:3`, `go.mod:8`, `go.mod:10` | Go version and core CLI/config dependencies live in the module manifest. |
+| Doc | Purpose |
+|---|---|
+| [../SKILL.md](../SKILL.md) | Agent/SDK skill manifest. |
+| [MCP-OPENAPI.md](./MCP-OPENAPI.md) | Read-only MCP/OpenAPI surfaces. |
+| [JSON-CONTRACT.md](./JSON-CONTRACT.md) | CLI JSON envelope and error codes. |
+| [POLYGOLEM-ROADMAP-MATRIX.md](./POLYGOLEM-ROADMAP-MATRIX.md) | Capability disposition roadmap. |
+| [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) | Open-source reinforcement plan. |
 
-## Canonical Docs (Single Source of Truth)
+## Generated docs
 
-### User Guides
+Do not hand-edit generated output:
 
-| Doc | What It Covers | Status |
-|-----|---------------|--------|
-| [ONBOARDING.md](./ONBOARDING.md) | Complete automatic deposit wallet onboarding flow: derive, SIWE/profile/relayer auth, deploy, approve, enable trading, fund, trade. Polymarket login signs with the EOA; the deposit wallet remains the trading wallet. | **Canonical** |
-| [BROWSER-SETUP.md](./BROWSER-SETUP.md) | Manual signing fallback and security guidance when `polygolem credentials login` is blocked. | **Canonical** |
-| [ENABLE-TRADING-HEADLESS.md](./ENABLE-TRADING-HEADLESS.md) | SDK flow for the UI Enable Trading typed-data prompts: ClobAuth API keys and token approvals. | **Canonical** |
-| [COMMANDS.md](./COMMANDS.md) | Auto-generated CLI reference. Every command, flag, and example. | **Auto-generated** |
-| [OPERATOR-ONE-PAGER.md](./OPERATOR-ONE-PAGER.md) | One-page path for no-wallet checks and pre-live stop conditions. | **Canonical** |
-| [SAFE-HAPPY-PATH.md](./SAFE-HAPPY-PATH.md) | Minimal operator path: health, discovery, paper, readiness, tiny capped live order. | **Canonical** |
-| [SAFETY.md](./SAFETY.md) | Read-only default, live-order cap, typed confirm tokens, deposit-wallet safety, credential handling. | **Canonical** |
-| [THREAT-MODEL.md](./THREAT-MODEL.md) | Private key, API key, relayer key, approvals, token ID, and stale-market checklist. | **Canonical** |
+- [COMMANDS.md](./COMMANDS.md) and docs-site CLI reference come from
+  `go run ./cmd/polygolem_docs`.
+- [COMPATIBILITY.md](./COMPATIBILITY.md) and
+  [COMPATIBILITY.json](./COMPATIBILITY.json) come from `pkg/capabilities`.
+- `docs/docs-site/dist/` is build output.
 
-### Technical Reference
+## Historical docs policy
 
-| Doc | What It Covers | Status |
-|-----|---------------|--------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Package boundaries, dependency direction, design decisions. | **Canonical** |
-| [adr/](./adr/) | Architecture decision records, including the non-bot Polymarket API interface boundary. | **Canonical** |
-| [CONTRACTS.md](./CONTRACTS.md) | All smart contract addresses, factory ABI, CREATE2 derivation. | **Canonical** |
-| [POLY_1271-SIGNING.md](./POLY_1271-SIGNING.md) | How POLY_1271 / deposit wallet signing works. | **Canonical** |
-| [POLYMARKET-APIS.md](./POLYMARKET-APIS.md) | Official Polymarket API architecture (Gamma, CLOB, Data API, Relayer, Bridge, WebSocket) with official-doc links and polygolem source citations. | **Canonical** |
-| [POLYMARKET-COVERAGE-MATRIX.md](./POLYMARKET-COVERAGE-MATRIX.md) | Conservative SDK/CLI/docs/test coverage across Polymarket surfaces. | **Canonical** |
-| [COMPATIBILITY.md](./COMPATIBILITY.md) | Generated compatibility contract: per-surface service, auth, wallet mode, and error kinds from the Capability Map (`pkg/capabilities`). Regenerate with `go run ./cmd/polygolem_docs`. | **Auto-generated** |
-| [DEPENDENCIES.md](./DEPENDENCIES.md) | Why the binary has crypto-heavy Go dependencies while keeping no runtime sidecars. | **Canonical** |
-| [UPSTREAM-DRIFT-RUNBOOK.md](./UPSTREAM-DRIFT-RUNBOOK.md) | Live smoke and fixture-first response plan for Gamma/CLOB/Data/Relayer drift. | **Canonical** |
-
-### AI Agent Interface
-
-| Doc | What It Covers | Status |
-|-----|---------------|--------|
-| [SKILL.md](../SKILL.md) | CLI skill manifest for agentic consumers — every command, env var, safety rule, and JSON contract. | **Canonical** |
-| [MCP-OPENAPI.md](./MCP-OPENAPI.md) | Read-only MCP/OpenAPI deployment notes and excluded mutating surfaces. | **Canonical** |
-| [JSON-CONTRACT.md](./JSON-CONTRACT.md) | CLI v1 JSON envelope: success/error shapes, error codes, versioning rules. | **Canonical** |
-
-### Planning
-
-| Doc | What It Covers | Status |
-|-----|---------------|--------|
-| [POLYGOLEM-ROADMAP-MATRIX.md](./POLYGOLEM-ROADMAP-MATRIX.md) | Polygolem disposition for every capability in the open-source feature matrix. | **Planning** |
-| [POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md](./POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md) | Executed reinforcement plan comparing polygolem to open-source Polymarket projects. | **Planning** |
-
-### Research & Findings
-
-| Doc | What It Covers | Status |
-|-----|---------------|--------|
-| [INTEGRATION_PLAN.md](../opensource-projects/INTEGRATION_PLAN.md) | Ecosystem survey, 7 gap implementations, headless onboarding blocker analysis. | **Canonical** |
-| [LIVE-TRADING-BLOCKER-REPORT.md](./LIVE-TRADING-BLOCKER-REPORT.md) | Empirical live trading test results with real funds. | **Canonical** |
-| [LIVE-TRADE-WALKTHROUGH.md](./LIVE-TRADE-WALKTHROUGH.md) | End-to-end 2026-05-08 reference run: every tx hash, gas figure, and pUSD movement from EOA private key to a filled buy + sell. | **Canonical** |
-| [DEPOSIT-WALLET-REDEEM-VALIDATION.md](./DEPOSIT-WALLET-REDEEM-VALIDATION.md) | Scientific validation ladder and resolved live incident report for V2 settlement: official contracts, adapter readiness, redeem runbook, and deprecated fallback inventory. | **Canonical** |
-
-### Sub-Projects & Internal Archaeology
-
-Not part of the operator path. These records stay at `docs/` top level because
-other documents cite them, but nothing here is required reading for running
-polygolem safely.
-
-| Doc | What It Covers | Status |
-|-----|---------------|--------|
-| [PRD.md](./PRD.md) | Original polygolem product requirements. | **Historical** |
-| [PRD_POLYDART.md](./PRD_POLYDART.md) | Polydart sub-project product requirements. | **Planning** |
-| [POLYGOLEM-POLYDART-PARITY.md](./POLYGOLEM-POLYDART-PARITY.md) | Polygolem/Polydart feature parity tracking. | **Planning** |
-| [V2-PARITY.md](./V2-PARITY.md) | V2 feature-parity notes; still cited by the coverage matrix. | **Historical** |
-| [AUDIT-FINDINGS.md](./AUDIT-FINDINGS.md) | Point-in-time audit findings and resolutions. | **Historical** |
-| [DEPOSIT-WALLET-MIGRATION.md](./DEPOSIT-WALLET-MIGRATION.md) | Record of the deposit-wallet migration work. | **Historical** |
-| [RUST-EVALUATION.md](./RUST-EVALUATION.md) | Evaluation of a Rust port; not pursued. | **Historical** |
-| [ARCHITECTURE-TAXONOMY-PLAN.md](./ARCHITECTURE-TAXONOMY-PLAN.md) | Architecture taxonomy planning notes. | **Historical** |
-| [ARTICLE_DRAFT.md](./ARTICLE_DRAFT.md) | Public article draft. | **Draft** |
-| [ARTICLE_DRAFT_OLD.md](./ARTICLE_DRAFT_OLD.md) | Superseded article draft. | **Draft** |
-
-Deeper archaeology (old blockers, phase notes, probes) lives under
-[history/](./history/) and [superpowers/](./superpowers/).
+Top-level docs should be current and operator-usable. Deprecated drafts,
+point-in-time audits, migration plans, and abandoned sub-project PRDs were
+removed; use git history if archaeological detail is needed. Keep long-lived
+historical evidence under [history/](./history/) only when active docs still cite
+it.
 
 ## Update triggers
 
-Refresh this index when:
+Refresh this index when commands, generated docs, public `pkg/` packages,
+safety/onboarding behavior, or JSON-contract behavior changes.
 
-- a top-level command is added/removed in `internal/cli/root.go`;
-- `go run ./cmd/polygolem_docs` changes `docs/COMMANDS.md`;
-- a public SDK package is added, moved, or promoted from `pkg/experimental/`;
-- safety, onboarding, deposit-wallet, or JSON-contract behavior changes.
-
-## Deleted Docs
-
-These docs contained outdated or false claims and have been removed:
-
-| Doc | Why It Was Deleted |
-|-----|-------------------|
-| `BUILDER-AUTO.md` | Superseded by `ONBOARDING.md` and the current EOA-login/deposit-wallet trading model. |
-| `BUILDER-CREDENTIAL-ISSUANCE.md` | Superseded document with conflated credential types. |
-| `DEPOSIT-WALLET-DEPLOYMENT.md` | Claimed "no browser needed" for full onboarding. Missed the deposit-wallet API key blocker. |
-
-## How We Keep Docs Consistent
-
-1. **Empirical testing over claims** — If a doc says something works, it must be backed by a test or live verification.
-2. **One topic, one canonical doc** — Onboarding is only in `ONBOARDING.md`. Browser setup is only in `BROWSER-SETUP.md`.
-3. **Cross-references, not duplication** — Docs link to canonical sources rather than repeating information.
-4. **Deprecation notices** — Outdated docs get a clear banner at the top pointing to the replacement.
-
----
-
-*Last updated: 2026-07-05*
+*Last updated: 2026-07-07*

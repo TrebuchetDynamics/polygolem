@@ -85,7 +85,7 @@ The scientific method loop:
 | 5 | Submit CTF approval to official standard adapter | Executed | Official adapter is allowlisted |
 | 6 | Submit CTF approval to official negative-risk adapter | Executed | Official neg-risk adapter is allowlisted |
 | 7 | Run full 4-call `approve-adapters` | Executed | pUSD + CTF adapter readiness complete |
-| 8 | Run `deposit-wallet redeem --submit` | Executed | Live winners redeemed through adapter path |
+| 8 | Run `wallet redeem --submit` | Executed | Live winners redeemed through adapter path |
 | 9 | Re-run settlement checks | `ready=true`, `redeemableCount=0` | Recovery complete |
 
 The durable lesson: `RELAYER_ALLOWLIST_BLOCKED` does not always mean

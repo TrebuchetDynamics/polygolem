@@ -212,7 +212,7 @@ submission route.
 
 ### 2.6 predictWalletAddress() — View Function
 
-Ungated. Predicts the CREATE2 address without deploying. This is the path polygolem uses in `deposit-wallet derive`.
+Ungated. Predicts the CREATE2 address without deploying. This is the path polygolem uses in `wallet derive`.
 
 ---
 

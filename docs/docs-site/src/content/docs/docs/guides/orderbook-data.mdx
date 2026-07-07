@@ -10,7 +10,7 @@ Every command on this page is **read-only** — no API key, no wallet, no risk.
 
 <Aside type="note">
 You only need a CLOB token ID to use these commands. Find one with
-[`polygolem markets search`](/docs/guides/market-discovery) or `discover enrich`.
+[`polygolem markets search`](/docs/guides/market-discovery) or `markets enrich`.
 </Aside>
 
 ## Get the order book
@@ -113,7 +113,7 @@ polygolem book last-trade --token-id 7132104567925221259462638553270691275033272
 
 ## Live market data
 
-For live bot feeds, use `marketdata live` instead of stitching raw stream
+For live bot feeds, use `prices live` instead of stitching raw stream
 messages yourself. It subscribes to the same public market WebSocket as
 `stream market`, tracks each token's latest book, and emits enriched snapshots
 with `best_bid`, `best_ask`, `spread`, `midpoint`, `tick_size`,

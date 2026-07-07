@@ -81,17 +81,17 @@ The token ID is the integer encoding of the position in the CTF.
 A common bug: passing a `conditionID` (32-byte hex starting with `0x`) where a
 `tokenID` (decimal integer, often 70+ digits) is required. Polygolem rejects
 this at validation time, but you'll save a round-trip if you grab the right
-identifier from `discover enrich` first.
+identifier from `markets enrich` first.
 </Aside>
 
 ## How polygolem maps it
 
 | polygolem command / package | Operates on | Notes |
 |----------------------------|-------------|-------|
-| `discover search` / `discover market` | Gamma — markets, events | Returns Gamma fields. |
-| `discover enrich` | Gamma + CLOB | Joins by `conditionID`. |
-| `orderbook *` / `pkg/orderbook` / `pkg/clob` | CLOB — by `tokenID` or `conditionID` | Read-only L0. |
-| `clob create-order` | CLOB — by `tokenID` | Authenticated L2. |
+| `markets search` / `markets market` | Gamma — markets, events | Returns Gamma fields. |
+| `markets enrich` | Gamma + CLOB | Joins by `conditionID`. |
+| `book *` / `pkg/orderbook` / `pkg/clob` | CLOB — by `tokenID` or `conditionID` | Read-only L0. |
+| `exchange create-order` | CLOB — by `tokenID` | Authenticated L2. |
 | `pkg/marketresolver.ResolveTokenIDs` | Gamma → both `tokenID`s | High-level resolver. |
 
 ## Reference

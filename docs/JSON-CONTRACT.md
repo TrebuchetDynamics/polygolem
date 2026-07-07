@@ -34,7 +34,7 @@ The exit code mirrors the error category for shell-script convenience.
   "version": "1",
   "data": { ... command-specific payload ... },
   "meta": {
-    "command": "deposit-wallet onboard",
+    "command": "wallet onboard",
     "ts": "2026-05-07T12:34:56Z",
     "duration_ms": 2143
   }
@@ -67,7 +67,7 @@ Field semantics:
     "hint": "Create builder creds at polymarket.com/settings?tab=builder",
     "details": { ... optional structured context ... }
   },
-  "meta": { "command": "deposit-wallet onboard", "ts": "2026-05-07T12:34:56Z", "duration_ms": 12 }
+  "meta": { "command": "wallet onboard", "ts": "2026-05-07T12:34:56Z", "duration_ms": 12 }
 }
 ```
 
@@ -134,7 +134,7 @@ codes are open (new codes can be added without a `version` bump).
 | Code | Description |
 |---|---|
 | `GATE_LIVE_DISABLED` | Live mode is required for the command but the binary is running in read-only or paper mode. |
-| `GATE_PREFLIGHT_FAILED` | A `preflight` check (RPC reachability, balance, allowance, or wallet status) failed. |
+| `GATE_PREFLIGHT_FAILED` | A `doctor` check (RPC reachability, balance, allowance, or wallet status) failed. |
 | `GATE_RISK_LIMIT` | A per-trade or daily risk cap was exceeded; the command refused to proceed. |
 | `GATE_FUNDING_INSUFFICIENT` | The deposit wallet or EOA does not hold the funds the command would move. |
 
@@ -212,7 +212,7 @@ envelope remains authoritative; exit codes are a convenience.
     "count": 1
   },
   "meta": {
-    "command": "discover search",
+    "command": "markets search",
     "ts": "2026-05-07T12:34:56Z",
     "duration_ms": 412
   }
@@ -233,7 +233,7 @@ envelope remains authoritative; exit codes are a convenience.
     "details": { "missing_vars": ["POLYMARKET_BUILDER_API_KEY"] }
   },
   "meta": {
-    "command": "deposit-wallet onboard",
+    "command": "wallet onboard",
     "ts": "2026-05-07T12:34:56Z",
     "duration_ms": 12
   }
@@ -255,7 +255,7 @@ Exit code: `3` (`auth`).
     "hint": "Pass --token-id from `polygolem markets market` output"
   },
   "meta": {
-    "command": "orderbook get",
+    "command": "book get",
     "ts": "2026-05-07T12:34:56Z",
     "duration_ms": 3
   }

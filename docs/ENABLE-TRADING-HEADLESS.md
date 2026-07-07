@@ -30,7 +30,7 @@ wallet confirmation is required for Polygolem's headless path.
 
 Polymarket's website may still ask the browser to sign ClobAuth because the
 site keeps browser-local API-key state. That is separate from Polygolem's
-headless readiness. `deposit-wallet status --check-enable-trading` is the
+headless readiness. `wallet status --check-enable-trading` is the
 CLI validation source of truth.
 
 ## Identity Model
@@ -133,8 +133,8 @@ The UI approval batch currently contains two ERC-20 `approve` calls:
 
 This UI enable-trading batch is separate from:
 
-- `deposit-wallet approve` - exchange trading approvals.
-- `deposit-wallet approve-adapters` - split, merge, and redeem adapter approvals.
+- `wallet approve` - exchange trading approvals.
+- `wallet approve-adapters` - split, merge, and redeem adapter approvals.
 
 ## Safety Rules
 
@@ -151,6 +151,6 @@ This UI enable-trading batch is separate from:
 The SDK builds and signs the observed ClobAuth and approval-batch payloads,
 creates or derives CLOB credentials, and submits the approval batch through
 the V2 relayer when not in dry-run mode. The CLI wires those same signs into
-`deposit-wallet onboard`, provides `deposit-wallet enable-trading` for already
+`wallet onboard`, provides `wallet enable-trading` for already
 deployed wallets, and exposes readiness validation with
-`deposit-wallet status --check-enable-trading`.
+`wallet status --check-enable-trading`.
