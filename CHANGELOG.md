@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.1] — 2026-07-06
+
+Support for Polymarket's current wallet-approval flows (Get Paid Instantly
+auto-redemption and the Combos-era Enable Trading batch), plus an RTDS
+real-time price client.
+
+### Added
+
+- **Get Paid Instantly (auto-redeem).** New `deposit-wallet approve-auto-redeem`
+  command submits the 3-call `setApprovalForAll` batch polymarket.com signs
+  for the feature: CTF -> CtfAutoRedeem, CTF -> AutoRedeemer, and
+  PositionManager -> AutoRedeemer. Once mined, winning positions are redeemed
+  automatically after resolution. Dry-run by default; live submission
+  requires `--submit --confirm APPROVE_AUTO_REDEEM` (covered by the
+  fail-closed livegate test). SDK: `relayer.BuildAutoRedeemApprovalCalls`,
+  `contracts.AutoRedeemApprovals`. Calldata is pinned byte-for-byte against
+  a batch captured from the production UI.
+- **Contract registry entries** for the new Polymarket contracts:
+  `CtfAutoRedeem` (Sourcify-verified), `AutoRedeemer`, `PositionManager`
+  (Combos ERC-1155), `CombosExchange`, and `CombosRouter` — verified against
+  Polymarket's official deployment resources and on-chain bytecode.
+- **RTDS WebSocket client** (`pkg/rtds`) for Chainlink crypto prices, with
+  SDK reference docs.
+- Automated Cloudflare Pages deploy for the docs site
+  (`.github/workflows/docs-deploy.yml`).
+
+### Changed
+
+- **Enable Trading "Approve Tokens" batch grew from 2 to 6 calls**, matching
+  the current polymarket.com UI: the original pUSD -> CTF and USDC.e ->
+  CollateralOnramp approvals plus the Combos grants (pUSD approve and
+  PositionManager `setApprovalForAll` for both CombosRouter and
+  CombosExchange). `enabletrading.ValidateEnableTradingApprovalCalls` now
+  validates the 6-call shape and rejects the old 2-call batch; wallets
+  onboarded before this release should re-run `deposit-wallet
+  enable-trading` once to add the Combos grants (idempotent).
+
 ## [v0.4.0] — 2026-07-06
 
 Safety and usability release from a skeptical funds-safety review.
@@ -430,7 +467,10 @@ the May 2026 deposit-wallet migration and the documentation overhaul.
   (headless for existing users), Builder Fee Key (headless via L2 HMAC), Relayer API Key
   (headless via SIWE). See `docs/ONBOARDING.md`.
 
-[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.1...HEAD
+[v0.4.1]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.0...v0.4.1
+[v0.4.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.3.0...v0.4.0
+[v0.3.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.1...v0.3.0
 [v0.2.1]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.2.0
 [v0.1.1]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.1.1
