@@ -35,22 +35,76 @@ _ = client.Connect(ctx)
 _ = client.SubscribeAssets(ctx, []string{"7132104567..."})
 ```
 
+## Raw recorder pattern
+
+For collectors that already keep REST snapshots as the source of truth, start by
+recording the deduplicated WebSocket payloads exactly as received. `OnRawMessage`
+adds an observed timestamp and common index fields while preserving the full
+JSON payload for a `jsonb` column:
+
+```go
+client.OnRawMessage = func(msg sdkstream.RawMessage) {
+    // Insert observed_at, event_type, market, asset_id, payload into storage.
+    // For example: polymarket_clob_ws_events(observed_at, event_type,
+    // market_id, token_id, payload jsonb).
+    _ = msg.Payload
+}
+```
+
+This is the lowest-risk ingestion phase: it captures `book`, `price_change`,
+`last_trade_price`, `tick_size_change`, `best_bid_ask`, `new_market`, and
+`market_resolved` without requiring order-book diff reconciliation up front.
+
+## Top-of-book and freshness receipts
+
+Set `Config.CustomFeatureEnabled = true` when you only need the current best bid,
+best ask, and spread. `OnBestBidAsk` avoids full-depth processing for fast
+signals, while `Stats()` returns `last_message_at`, reconnect counters,
+duplicate/invalid counts, subscribed asset IDs, and per-event `event_counts` for
+coverage/freshness receipts.
+
 ## What's implemented
 
 | Feature | Status |
 |---------|--------|
 | Market channel subscribe (book / price / trade) | Implemented |
+| Raw deduplicated market payload callback | Implemented with `OnRawMessage` |
 | Market channel custom features (`best_bid_ask`, `new_market`, `market_resolved`) | Implemented with `CustomFeatureEnabled` |
 | Tick-size change events | Implemented |
 | Automatic reconnect with backoff | Implemented |
 | Message dedup across reconnects | Implemented |
-| User channel (authenticated) | **Not implemented** |
+| User channel (authenticated) | Implemented in `pkg/stream.UserClient` and `polygolem stream user` |
+
+## Collector integration phases
+
+A low-risk REST-to-WSS migration can keep REST book snapshots unchanged while
+adding live data in phases:
+
+1. **Raw WSS receipt** — subscribe to the current and lookahead CLOB token IDs
+   and append `OnRawMessage` rows to `polymarket_clob_ws_events` (or your
+   equivalent table). This captures data that cannot be recovered later without
+   declaring WSS as the source of truth.
+2. **Trades** — handle `OnLastTrade` immediately. If upstream does not provide a
+   stable trade ID, derive one from `market + asset_id + timestamp + side +
+   price + size + transaction_hash`.
+3. **Book cache** — feed `book` and `price_change` into `pkg/marketdata.Tracker`
+   for the latest in-memory book; keep REST `/books` as a missing/stale-cache
+   fallback until reconciliation is proven.
+4. **Top of book** — enable custom features and consume `OnBestBidAsk` when full
+   depth is unnecessary.
+5. **Subscription refresh** — call `SubscribeAssets` again at crypto window
+   boundaries with the current, +5m, and +10m token IDs; the client updates its
+   reconnect resubscription set.
 
 ## CLI surface
 
 WebSocket subscriptions are surfaced through `polygolem stream market`.
 The CLI emits one JSON object per message on stdout, suitable for piping into
-`jq` or a downstream consumer.
+`jq` or a downstream consumer. `polygolem stream crypto --asset BTC --interval 5m`
+subscribes to the current window plus the next two deterministic windows when
+Gamma exposes them, refreshes that subscription set at interval boundaries for
+long-running streams, then falls back to broad active-market search if no window
+tokens are available.
 
 ```bash
 polygolem stream market --asset-ids <token-id-1>,<token-id-2> \
@@ -78,17 +132,17 @@ CLI adds a marshal/unmarshal hop that costs roughly a millisecond per message.
 When the upstream connection drops, the client:
 
 1. Closes any open goroutines tied to the old connection.
-2. Waits an exponentially increasing backoff (capped, with jitter).
+2. Waits an exponentially increasing backoff (capped).
 3. Re-establishes and re-subscribes to the same set of channels.
 4. Suppresses duplicate events for a short replay window using a content-hash
    set, so consumers don't see the same trade twice.
 
 ## Related
 
-- [Orderbook Data](/guides/orderbook-data) — REST equivalents for one-shot reads
-- [Go SDK Contracts](/reference/sdk) — `pkg/stream` and `pkg/marketdata`
+- [Orderbook Data](/docs/guides/orderbook-data) — REST equivalents for one-shot reads
+- [Go SDK Contracts](/docs/reference/sdk) — `pkg/stream` and `pkg/marketdata`
 - [`docs/ARCHITECTURE.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/ARCHITECTURE.md) — `pkg/stream` package boundary
-- [Polymarket API Overview](/concepts/polymarket-api) — every API in one place
+- [Polymarket API Overview](/docs/concepts/polymarket-api) — every API in one place
 
 <Aside type="note">
 **Source of truth:** the canonical package-level description of `pkg/stream`

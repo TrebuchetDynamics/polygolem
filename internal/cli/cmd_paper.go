@@ -16,6 +16,15 @@ func paperCmd(jsonOut bool) *cobra.Command {
 
 func newPaperCommand(jsonOut bool, pricer paperaccount.Pricer) *cobra.Command {
 	cmd := commandGroup("paper", "Paper trading simulation for crypto markets")
+	cmd.Long = `Simulate crypto up/down trading with no wallet and no risk.
+
+Paper mode holds a local cash/position ledger and prices simulations against live
+public market data. It never loads a private key, signs, or submits anything — a
+safe way to rehearse the flow before trading real funds.
+
+  polygolem paper reset --cash 100
+  polygolem paper trade --asset BTC --interval 5m --side up --size 1
+  polygolem paper positions`
 
 	var paperCash float64
 	var tokenID string

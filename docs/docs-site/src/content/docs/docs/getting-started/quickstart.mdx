@@ -43,11 +43,11 @@ EOA, proxy, and Safe are blocked for new API users by CLOB V2.
 ```bash
 # Get builder credentials (free) at polymarket.com/settings?tab=builder
 # Then deploy, approve, and fund in one command:
-POLYMARKET_PRIVATE_KEY="0x..." \
+SIGNER_PRIVATE_KEY="0x..." \
 POLYMARKET_BUILDER_API_KEY="..." \
 POLYMARKET_BUILDER_SECRET="..." \
 POLYMARKET_BUILDER_PASSPHRASE="..." \
-  polygolem deposit-wallet onboard --fund-amount 14 --json
+  polygolem deposit-wallet onboard --fund-amount 14 --confirm ONBOARD_WALLET --json
 
 # Sync CLOB balance
 polygolem clob update-balance --asset-type collateral
@@ -77,6 +77,6 @@ book, err := reader.OrderBook(ctx, "token-id-here")
 
 ## Next
 
-- [Market Discovery guide](/guides/market-discovery) — Gamma API deep dive
-- [CLI Reference](/reference/cli) — every command
-- [Go SDK Reference](/reference/sdk) — every package
+- [Market Discovery guide](/docs/guides/market-discovery) — Gamma API deep dive
+- [CLI Reference](/docs/reference/cli) — every command
+- [Go SDK Reference](/docs/reference/sdk) — every package

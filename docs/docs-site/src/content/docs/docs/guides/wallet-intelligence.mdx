@@ -1,0 +1,96 @@
+---
+title: Wallet Intelligence
+---
+
+Polygolem wallet intelligence is a **read-only research surface** for public
+wallet and market activity. It produces reproducible statistical candidates,
+not trading advice and not misconduct findings.
+
+## What V1 means
+
+V1 uses `pkg/intel` DTOs and pure scoring helpers with explicit formula
+versions:
+
+| Formula | Use |
+| ------- | --- |
+| `wallet_score_v1` | Wallet dossier score and dossier alerts. |
+| `shrinkage_win_rate_v1` | Conservative win-rate estimate with a neutral prior. |
+
+The neutral prior is 10 wins over 20 bets, representing a 50% baseline when no
+caller-provided baseline exists.
+
+## Safety language
+
+Use candidate language in UIs, reports, and automation:
+
+- say **Wallet Intelligence Signal**;
+- say **candidate**, **potential**, **source-backed**, or **partial**;
+- do not say insider proof, fraud finding, manipulation finding, or trade
+  recommendation.
+
+A high score should expose formula version, source rows, raw metrics, reasons,
+and disclaimers. It should not assert intent.
+
+## CLI commands
+
+```bash
+# Build a public wallet dossier
+polygolem intel wallet 0xwallet --limit 25 --json
+
+# List Data-API-ranked wallet intelligence rows
+polygolem intel leaderboard --limit 20 --json
+
+# Emit user-scoped dossier alerts above a threshold
+polygolem intel alerts --user 0xwallet --min-score 75 --json
+
+# Summarize holder/trade/open-interest flow for a market or token
+polygolem intel market-flow <market-or-token-id> --limit 50 --json
+```
+
+All commands are read-only. They use public Polymarket data adapters and do not
+require `SIGNER_PRIVATE_KEY`.
+
+## Source authority and conflicts
+
+For wallet dossiers, V1 treats Data API closed-position rows as authoritative
+for realized PnL and win/loss counts. If other Polygolem source adapters disagree
+with a derived metric, the dossier must expose a conflict instead of silently
+choosing a blended truth.
+
+| Dossier status | Meaning |
+| -------------- | ------- |
+| `complete` | Source adapters produced a qualified result. |
+| `partial` | Some source rows were unavailable or incomplete. |
+| `conflicted` | Source adapters disagree on a derived wallet metric. |
+
+## What is deliberately out of scope
+
+- No global live trade-tape alerts in V1.
+- No funding-cluster claims until Polygolem owns reproducible Polygon transfer
+  or indexer evidence for them.
+- No misconduct/fraud labels.
+- No automatic trading decisions.
+
+## Go SDK sketch
+
+```go
+score := intel.ScoreWallet(intel.ScoreInput{
+    Wallet:     "0xwallet",
+    Wins:       12,
+    Bets:       20,
+    Volume:     1200,
+    RealizedPnL: 140,
+    SourceRows: 20,
+})
+_ = score.FormulaVersion // wallet_score_v1
+```
+
+Network-backed dossier assembly is under `internal/intel`; stable DTOs and pure
+scoring contracts live under `pkg/intel`.
+
+## Related
+
+- [CLI Commands](/docs/reference/cli)
+- [Go SDK Contracts](/docs/reference/sdk)
+- [MCP and OpenAPI](/docs/reference/mcp-openapi)
+- [Safety Model](/docs/concepts/safety)

@@ -1,0 +1,191 @@
+{
+  "version": "v1",
+  "capabilities": [
+    {
+      "id": "bridge.funding",
+      "service": "Bridge",
+      "mode": "mutating",
+      "auth": [
+        "none"
+      ],
+      "wallet_mode": "deposit_wallet_only",
+      "sdk_packages": [
+        "pkg/bridge"
+      ],
+      "cli": [
+        "bridge assets",
+        "bridge deposit",
+        "bridge status",
+        "bridge quote"
+      ],
+      "summary": "Supported assets, deposit addresses, quotes, and deposit status for pUSD funding."
+    },
+    {
+      "id": "clob.public_data",
+      "service": "CLOB API",
+      "mode": "read-only",
+      "auth": [
+        "none"
+      ],
+      "wallet_mode": "none",
+      "sdk_packages": [
+        "pkg/clob",
+        "pkg/orderbook",
+        "pkg/marketdata"
+      ],
+      "cli": [
+        "orderbook",
+        "clob book",
+        "clob markets",
+        "clob price-history"
+      ],
+      "summary": "Public order books, prices, spreads, tick sizes, and market metadata."
+    },
+    {
+      "id": "clob.trading",
+      "service": "CLOB API",
+      "mode": "mutating",
+      "auth": [
+        "l1",
+        "l2",
+        "private_key"
+      ],
+      "wallet_mode": "deposit_wallet_only",
+      "sdk_packages": [
+        "pkg/clob"
+      ],
+      "cli": [
+        "clob create-order",
+        "clob market-order",
+        "clob cancel"
+      ],
+      "summary": "Deposit-wallet CLOB V2 order signing, placement, cancellation, account reads, and builder attribution."
+    },
+    {
+      "id": "data.positions",
+      "service": "Data API",
+      "mode": "read-only",
+      "auth": [
+        "none"
+      ],
+      "wallet_mode": "none",
+      "sdk_packages": [
+        "pkg/data"
+      ],
+      "cli": [
+        "data positions",
+        "data trades",
+        "data activity"
+      ],
+      "summary": "Public wallet-level positions, activity, trades, value, holders, leaderboard, and open interest."
+    },
+    {
+      "id": "gamma.markets",
+      "service": "Gamma API",
+      "mode": "read-only",
+      "auth": [
+        "none"
+      ],
+      "wallet_mode": "none",
+      "sdk_packages": [
+        "pkg/gamma",
+        "pkg/universal"
+      ],
+      "cli": [
+        "discover search",
+        "discover markets",
+        "discover market"
+      ],
+      "summary": "Public event, market, tag, series, comment, and search discovery."
+    },
+    {
+      "id": "relayer.deposit_wallet",
+      "service": "Relayer V2",
+      "mode": "mutating",
+      "auth": [
+        "siwe",
+        "private_key"
+      ],
+      "wallet_mode": "deposit_wallet_only",
+      "sdk_packages": [
+        "pkg/relayer",
+        "pkg/ctf",
+        "pkg/settlement"
+      ],
+      "cli": [
+        "deposit-wallet",
+        "relayer transaction"
+      ],
+      "summary": "Deposit-wallet deploy, approvals, gasless transactions, CTF redeem, and transaction lookup."
+    },
+    {
+      "id": "websocket.market",
+      "service": "CLOB WebSocket",
+      "mode": "read-only",
+      "auth": [
+        "none"
+      ],
+      "wallet_mode": "none",
+      "sdk_packages": [
+        "pkg/stream",
+        "pkg/marketdata"
+      ],
+      "cli": [
+        "stream market",
+        "stream crypto",
+        "marketdata live"
+      ],
+      "summary": "Public real-time book, price, last-trade, tick-size, best-bid-ask, and lifecycle events."
+    },
+    {
+      "id": "websocket.user",
+      "service": "CLOB WebSocket",
+      "mode": "credentialed-read",
+      "auth": [
+        "l2"
+      ],
+      "wallet_mode": "deposit_wallet_only",
+      "sdk_packages": [
+        "pkg/stream"
+      ],
+      "cli": [
+        "stream user"
+      ],
+      "summary": "Authenticated user order and trade stream for inspection and reconciliation."
+    }
+  ],
+  "error_kinds": [
+    {
+      "kind": "unknown",
+      "meaning": "Unclassified upstream error after redaction."
+    },
+    {
+      "kind": "rate_limited",
+      "meaning": "Upstream rate limit or too-many-requests response."
+    },
+    {
+      "kind": "geoblocked",
+      "meaning": "Upstream geoblock or restricted-jurisdiction response."
+    },
+    {
+      "kind": "auth_rejected",
+      "meaning": "Credential, API key, signature, or authorization rejection."
+    },
+    {
+      "kind": "tick_size_mismatch",
+      "meaning": "Order price does not align with the market tick size."
+    },
+    {
+      "kind": "market_closed",
+      "meaning": "Market is closed, resolved, or unavailable for new action."
+    },
+    {
+      "kind": "insufficient_funds",
+      "meaning": "EOA or deposit wallet balance is insufficient for the requested action."
+    },
+    {
+      "kind": "upstream_unavailable",
+      "meaning": "Upstream Polymarket service returned a 5xx/outage-style response."
+    }
+  ]
+}

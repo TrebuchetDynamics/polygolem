@@ -49,11 +49,13 @@ func buildDiagReport(ctx context.Context, version string, runner *localpreflight
 			"user_stream":   userStreamBaseURL,
 		},
 		Env: map[string]diagEnvValue{
+			"SIGNER_PRIVATE_KEY":      redactedEnv("SIGNER_PRIVATE_KEY"),
 			"POLYMARKET_PRIVATE_KEY":  redactedEnv("POLYMARKET_PRIVATE_KEY"),
 			"POLYMARKET_BUILDER_CODE": redactedEnv("POLYMARKET_BUILDER_CODE"),
 			"POLYMARKET_CLOB_URL":     redactedEnv("POLYMARKET_CLOB_URL"),
 			"CLOB_URL":                redactedEnv("CLOB_URL"),
 		},
+
 		Preflight: runner.Run(ctx),
 	}
 }
@@ -81,7 +83,7 @@ func writeDiagText(w io.Writer, report diagReport) error {
 	if _, err := fmt.Fprintln(w, "env:"); err != nil {
 		return err
 	}
-	for _, key := range []string{"POLYMARKET_PRIVATE_KEY", "POLYMARKET_BUILDER_CODE", "POLYMARKET_CLOB_URL", "CLOB_URL"} {
+	for _, key := range []string{"SIGNER_PRIVATE_KEY", "POLYMARKET_PRIVATE_KEY", "POLYMARKET_BUILDER_CODE", "POLYMARKET_CLOB_URL", "CLOB_URL"} {
 		value := report.Env[key]
 		if !value.Set {
 			if _, err := fmt.Fprintf(w, "- %s: unset\n", key); err != nil {

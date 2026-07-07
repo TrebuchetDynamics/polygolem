@@ -13,12 +13,18 @@ func TestDocumentationSafety(t *testing.T) {
 	requiredDocs := []string{
 		"docs/ARCHITECTURE.md",
 		"docs/COMMANDS.md",
+		"docs/COMPATIBILITY.md",
+		"docs/COMPATIBILITY.json",
 		"docs/SAFETY.md",
 		"docs/MCP-OPENAPI.md",
 		"docs/POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md",
 		"docs/POLYGOLEM-ROADMAP-MATRIX.md",
 		"docs/POLYMARKET-COVERAGE-MATRIX.md",
 		"docs/history/REFERENCE-RUST-CLI.md",
+		"docs/adr/README.md",
+		"docs/adr/0002-polymarket-api-interface-boundary.md",
+		"docs/adr/0003-deposit-wallet-only-trading.md",
+		"docs/adr/0004-public-sdk-boundary.md",
 	}
 	for _, requiredDoc := range requiredDocs {
 		path := filepath.Join(root, filepath.FromSlash(requiredDoc))
@@ -110,7 +116,8 @@ func TestDocumentationSafety(t *testing.T) {
 
 	architecture := readRepositoryFile(t, root, "docs/ARCHITECTURE.md")
 	for _, required := range []string{
-		"Go protocol and automation stack for Polymarket with a\nCobra-based CLI frontend",
+		"Go SDK and CLI interface into Polymarket APIs and contracts",
+		"Polygolem is not a bot or strategy engine",
 		"Command handlers parse flags, call package APIs, and render output via\n`internal/output`",
 		"Cobra command handlers must not contain protocol or trading business logic",
 		"**Read-only** (default): public market data only",
@@ -126,6 +133,11 @@ func TestDocumentationSafety(t *testing.T) {
 	for _, required := range []string{
 		"RFQ | Typed RFQ request/quote/response models",
 		"Public signer adapters",
+		"Polymarket error normalization",
+		"Reconciliation report",
+		"docs/COMPATIBILITY.md",
+		"generated compatibility contract",
+		"upstream docs drift checker",
 		"Agent/OpenAPI surfaces",
 		"CTF split/merge/redeem helpers",
 	} {
@@ -147,11 +159,14 @@ func TestDocumentationSafety(t *testing.T) {
 
 	contextMD := readRepositoryFile(t, root, "CONTEXT.md")
 	for _, required := range []string{
+		"Polymarket API Interface",
 		"EOA-Bound CLOB Auth",
 		"POLY_1271 Order Signing",
 		"ERC-7739 Wrapped Order Signature",
 		"Safety-First Mutating Surface",
 		"Read-Only by Default",
+		"Capability Map",
+		"Reconciliation Report",
 	} {
 		if !strings.Contains(contextMD, required) {
 			t.Fatalf("CONTEXT.md must include core domain term %q", required)
@@ -208,6 +223,8 @@ func TestDocumentationSafety(t *testing.T) {
 		"POLYGOLEM-OPEN-SOURCE-REINFORCEMENT-PLAN.md",
 		"POLYGOLEM-ROADMAP-MATRIX.md",
 		"POLYMARKET-COVERAGE-MATRIX.md",
+		"adr/",
+		"Architecture decision records",
 	} {
 		if !strings.Contains(docsIndex, required) {
 			t.Fatalf("docs/README.md must index reinforcement doc %q", required)
@@ -237,24 +254,28 @@ func TestDocumentationSafety(t *testing.T) {
 	}
 
 	safety := readRepositoryFile(t, root, "docs/SAFETY.md")
-	for _, gate := range []string{
-		"POLYMARKET_LIVE_PROFILE=on",
-		"live_trading_enabled: true",
-		"--confirm-live",
-		"preflight",
-	} {
-		if !strings.Contains(safety, gate) {
-			t.Fatalf("docs/SAFETY.md must document live gate %q", gate)
-		}
-	}
+	// Assert the guards that actually protect funds in the shipped CLI, so this
+	// test regresses if SAFETY.md drifts away from real behavior. (It must not
+	// re-assert the historical "Phase 1 has no dangerous code paths" text, which
+	// was false once live execution shipped.)
 	for _, required := range []string{
-		"Preflight checks config validity, wallet readiness, auth readiness, network consistency, API health, and chain consistency",
+		"POLYGOLEM_MAX_LIVE_ORDER_USD",
+		"APPROVE_ADAPTERS",
+		"REDEEM_WINNERS",
 		"Automation must treat any preflight failure as terminal",
-		"Dangerous operations include real order submission, payload signing, on-chain transactions, token approvals, private-key handling, and authenticated trading mutations",
-		"Phase 1 intentionally contains no code path for those operations",
+		"never persisted or logged",
 	} {
 		if !strings.Contains(safety, required) {
-			t.Fatalf("docs/SAFETY.md must include safety guidance %q", required)
+			t.Fatalf("docs/SAFETY.md must document safety guard %q", required)
+		}
+	}
+	// Guard against regressing to the stale Phase-1 framing that claimed no live
+	// execution existed.
+	for _, forbidden := range []string{
+		"Phase 1 intentionally contains no code path for those operations",
+	} {
+		if strings.Contains(safety, forbidden) {
+			t.Fatalf("docs/SAFETY.md contains stale/false claim %q; describe the real guard set instead", forbidden)
 		}
 	}
 }

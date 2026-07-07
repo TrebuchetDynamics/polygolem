@@ -12,9 +12,9 @@ pUSD on Polygon.
 <Aside type="caution">
 For accounts created **after May 2026**, bridging USDC to your EOA is _not_
 sufficient to enable trading. New API users must complete the
-[deposit wallet onboarding flow](/concepts/deposit-wallets); only pUSD held by
+[deposit wallet onboarding flow](/docs/concepts/deposit-wallets); only pUSD held by
 the deposit wallet counts as CLOB buying power. See
-[`polygolem deposit-wallet onboard`](/concepts/deposit-wallets).
+[`polygolem deposit-wallet onboard`](/docs/concepts/deposit-wallets).
 </Aside>
 
 ## Supported assets
@@ -81,11 +81,11 @@ contracts.
 The deposit wallet flow is required for all trading:
 
 ```bash
-POLYMARKET_PRIVATE_KEY="0x..." \
+SIGNER_PRIVATE_KEY="0x..." \
   polygolem deposit-wallet onboard --fund-amount 0.71
 ```
 
-Read [Deposit Wallets & Signature Types](/concepts/deposit-wallets) for the full
+Read [Deposit Wallets & Signature Types](/docs/concepts/deposit-wallets) for the full
 explanation.
 
 ## Reference
@@ -93,4 +93,4 @@ explanation.
 - `polygolem bridge --help` — every flag
 - [`docs/COMMANDS.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/COMMANDS.md) — canonical command list
 - [Bridge API](/docs/reference/bridge-api) — endpoint mapping
-- [Deposit Wallets & Signature Types](/concepts/deposit-wallets) — required for post-May-2026 accounts
+- [Deposit Wallets & Signature Types](/docs/concepts/deposit-wallets) — required for post-May-2026 accounts

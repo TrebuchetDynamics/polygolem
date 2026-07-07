@@ -28,33 +28,33 @@ refresh the relayer key explicitly.
 openssl rand -hex 32 > key.txt
 
 # Step 2: Sign in to Polymarket and mint relayer credentials
-POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem auth login
 
 # Step 3: Create or derive CLOB L2 credentials
-POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem builder auto
 
 # Step 4: Mint a builder fee key, then export its key as a bytes32 builder code
-POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem clob create-builder-fee-key
 export POLYMARKET_BUILDER_CODE="0x..."
 
 # Step 5: Deploy deposit wallet + approve + enable trading + fund
-POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem deposit-wallet onboard --fund-amount 10 --json
 
 # Step 6: Verify the deposit wallet address and authenticated CLOB path
-DEPOSIT_WALLET=$(POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+DEPOSIT_WALLET=$(SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem --json deposit-wallet derive | jq -r '.data.depositWallet')
-POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem auth status --check-deposit-key
 
 # Step 7: Sync balance and trade
-POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem clob update-balance --asset-type collateral
 
-POLYMARKET_PRIVATE_KEY="0x$(cat key.txt)" \
+SIGNER_PRIVATE_KEY="0x$(cat key.txt)" \
   polygolem clob create-order --token <id> --side buy --price 0.5 --size 10 \
     --builder-code "$POLYMARKET_BUILDER_CODE"
 ```
@@ -147,7 +147,7 @@ await client.orders.buy(tokenId: '...').atPrice(0.5).forSize(10).submit();
 
 ## See Also
 
-- [Deposit Wallet Lifecycle](/guides/deposit-wallet-lifecycle) — full deploy → approve → fund → trade walkthrough
-- [CLOB API](/reference/clob-api) — order creation and signing
-- [Secrets Management](/concepts/secrets-management) — credential handling
-- [Smart Contracts](/concepts/contracts) — factory addresses and relayer endpoints
+- [Deposit Wallet Lifecycle](/docs/guides/deposit-wallet-lifecycle) — full deploy → approve → fund → trade walkthrough
+- [CLOB API](/docs/reference/clob-api) — order creation and signing
+- [Secrets Management](/docs/concepts/secrets-management) — credential handling
+- [Smart Contracts](/docs/concepts/contracts) — factory addresses and relayer endpoints

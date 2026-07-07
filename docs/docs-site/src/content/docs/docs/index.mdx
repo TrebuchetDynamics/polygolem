@@ -5,15 +5,64 @@ description: Safe Polymarket SDK and CLI for Go — deposit wallet (POLY_1271) o
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
-Polygolem is **production-safe Polymarket infrastructure for Go developers**.
+Polygolem is a **Go CLI and SDK for safe Polymarket V2 deposit-wallet trading**.
 A single binary + Go SDK for trading on Polymarket V2 through deposit wallets.
 No Python. No npm. No opaque wrappers.
 
+New to Polymarket? It is a prediction-market exchange: users trade YES/NO
+shares on real-world outcomes, and prices roughly express market-implied
+probabilities. Polygolem wraps the public data APIs, CLOB trading API,
+WebSocket streams, Polygon contracts, and deposit-wallet relayer.
+
 **Read-only by default.** No credentials needed to start.
+
+## Why Polygolem instead of official SDKs?
+
+Use Polymarket's official Python/TypeScript SDKs when those ecosystems fit your
+stack. Use Polygolem when you need Go: one compiled binary, no Python/npm runtime
+in the signing path, read-only defaults, fixture-tested V2 deposit-wallet
+signing, and operator-friendly CLI workflows.
+
+## Start with the safest path
+
+The documentation is organized by job-to-be-done, not by package name. Use the
+[Docs Map](/docs/getting-started/docs-map) if you need a full route through the
+site.
+
+<CardGrid>
+  <Card title="Polymarket API map" href="/docs/concepts/polymarket-api">
+    Learn what Gamma, CLOB, Data API, Stream, Relayer, and contracts each do.
+  </Card>
+  <Card title="Docs Map" href="/docs/getting-started/docs-map">
+    Pick a route by audience: operator, bot developer, protocol auditor, or tool builder.
+  </Card>
+  <Card title="No-wallet market data" href="/docs/getting-started/quickstart">
+    Health checks, market search, crypto-window discovery, order books, and streams.
+  </Card>
+  <Card title="Paper trading" href="/docs/guides/paper-trading">
+    Simulate orders against live CLOB prices before connecting a wallet.
+  </Card>
+  <Card title="Deposit-wallet trading" href="/docs/guides/deposit-wallet-lifecycle">
+    The POLY_1271-only path: derive, deploy, approve, fund, then trade.
+  </Card>
+  <Card title="Wallet intelligence" href="/docs/guides/wallet-intelligence">
+    Read-only wallet dossiers, formula-versioned scores, and candidate alerts.
+  </Card>
+  <Card title="Agent/API surfaces" href="/docs/reference/mcp-openapi">
+    MCP/OpenAPI, Go SDK embedding, protocol fixtures, and read-only integration points.
+  </Card>
+</CardGrid>
+
+## Known limitations
+
+- Live trading can lose funds; use paper mode and preflight checks first.
+- New-user deposit-wallet setup can require one-time browser login.
+- Only deposit-wallet / POLY_1271 trading is supported for new production accounts.
+- `pkg/experimental/` APIs can change before promotion.
 
 **Trading requires a deposit wallet (type 3 / POLY_1271).** EOA, proxy, and Safe
 are blocked for new API users by Polymarket's CLOB V2. Polygolem handles the
-full deposit wallet lifecycle: derive, deploy via relayer, fund, approve, trade.
+full deposit wallet lifecycle: derive, deploy via relayer, fund, approve, and submit user-directed order transactions.
 
 ```bash
 polygolem discover crypto --asset BTC --interval 5m --enrich
@@ -21,12 +70,12 @@ polygolem discover crypto --asset BTC --interval 5m --enrich
 
 ## Who This Is For
 
-- **Bot developers** building automated trading strategies in Go
+- **Bot or strategy developers** who need a Go interface into Polymarket APIs, not embedded strategy decisions
 - **Quant developers** who want deterministic, compiled infrastructure with type safety
-- **Operators** running headless trading systems that need auditability and local signing
-- **Engineers** embedding Polymarket data and execution into larger Go services
+- **Operators** running user-directed headless transaction flows that need auditability and local signing
+- **Engineers** embedding Polymarket data, wallet setup, and order transactions into larger Go services
 
-If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with no runtime dependencies, polygolem is the only production-ready option.
+If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB clients](https://github.com/Polymarket/py-clob-client) are the right choice. If you are building in Go, or you want a single static binary with fixture-tested V2 deposit-wallet signing, polygolem focuses on that path with documented tests, fixtures, and live validation evidence.
 
 ## What can you do?
 
@@ -37,7 +86,7 @@ If you are writing a Polymarket bot in Python or TypeScript, the [official CLOB 
 - **Check market readiness** — tick sizes, fee rates, neg risk status
 - **Bridge assets** — check supported chains, create deposit addresses, use the SDK for quotes/status
 - **Paper trade** — simulate orders against live market data
-- **Build bots** — use the Go SDK to create automated strategies
+- **Build integrations** — use the Go SDK as the API/contract interface for external applications
 
 ## No credentials needed
 
@@ -69,10 +118,16 @@ polygolem discover enrich --id "0x..."
 ## Ready to go deeper?
 
 <CardGrid>
-  <Card title="Installation" href="/getting-started/installation" />
-  <Card title="Quick Start" href="/getting-started/quickstart" />
-  <Card title="Deposit Wallet Lifecycle" href="/guides/deposit-wallet-lifecycle" />
-  <Card title="Headless Enable Trading" href="/guides/enable-trading-headless" />
-  <Card title="Redeem Winners" href="/guides/redeem-winners" />
-  <Card title="Signature Types" href="/concepts/deposit-wallets" />
+  <Card title="Docs Map" href="/docs/getting-started/docs-map" />
+  <Card title="Installation" href="/docs/getting-started/installation" />
+  <Card title="Quick Start" href="/docs/getting-started/quickstart" />
+  <Card title="Polymarket API Overview" href="/docs/concepts/polymarket-api" />
+  <Card title="Market Discovery" href="/docs/guides/market-discovery" />
+  <Card title="Orderbook Data" href="/docs/guides/orderbook-data" />
+  <Card title="Wallet Intelligence" href="/docs/guides/wallet-intelligence" />
+  <Card title="Deposit Wallet Lifecycle" href="/docs/guides/deposit-wallet-lifecycle" />
+  <Card title="Headless Enable Trading" href="/docs/guides/enable-trading-headless" />
+  <Card title="Redeem Winners" href="/docs/guides/redeem-winners" />
+  <Card title="Safety Model" href="/docs/concepts/safety" />
+  <Card title="Signature Types" href="/docs/concepts/deposit-wallets" />
 </CardGrid>

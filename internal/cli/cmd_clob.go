@@ -3,10 +3,11 @@ package cli
 import (
 	"context"
 	"fmt"
-	"os"
+	"math/big"
 	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/clob"
+	"github.com/TrebuchetDynamics/polygolem/internal/livegate"
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobaccountreads"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/clobbalances"
@@ -252,15 +253,28 @@ func addCLOBAuthenticatedReadCommands(cmd *cobra.Command, balances clobBalanceCo
 func clobCmd(jsonOut bool) *cobra.Command {
 	w := newWire(jsonOut)
 	cmd := commandGroup("clob", "CLOB market data and authenticated account commands")
+	cmd.Long = `Central Limit Order Book (CLOB) market data and trading.
+
+Read-only (no credentials): book, markets, market, market-by-token, price-history,
+tick-size.
+
+Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
+account/key commands.
+
+Live-money (signs and submits): create-order, market-order, batch-orders, and the
+cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
+(default $1) before signing.`
+	cmd.Example = `  # Read-only
+  polygolem clob book <token-id>
+  polygolem clob price-history <token-id> --interval 1h
+
+  # Live, capped (needs a funded deposit wallet)
+  POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem clob create-order --token <id> --side buy --price 0.40 --size 2`
 
 	addOutput := addCLOBOutputFlag
 	checkOutput := checkCLOBOutput
 	privateKey := func() (string, error) {
-		key := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-		if key == "" {
-			return "", fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
-		}
-		return key, nil
+		return privateKeyFromEnv()
 	}
 	marketData := clobmarketdata.New(w.clob)
 	accountReads := clobaccountreads.New(clobaccountreads.Config{Reader: w.clob, PrivateKey: privateKey})
@@ -480,6 +494,9 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 				return err
 			}
 			w.clob.SetBuilderCode(builderCode)
+			if err := enforceLimitOrderCap(createOrderPrice, createOrderSize); err != nil {
+				return err
+			}
 			key, err := privateKey()
 			if err != nil {
 				return err
@@ -536,6 +553,9 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 			if err != nil {
 				return err
 			}
+			if err := enforceBatchOrderCap(orders); err != nil {
+				return err
+			}
 			w.clob.SetBuilderCode(builderCode)
 			key, err := privateKey()
 			if err != nil {
@@ -566,6 +586,9 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 				return err
 			}
 			w.clob.SetBuilderCode(builderCode)
+			if err := enforceMarketOrderCap(marketOrderAmount); err != nil {
+				return err
+			}
 			key, err := privateKey()
 			if err != nil {
 				return err
@@ -618,4 +641,62 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 	cmd.AddCommand(heartbeatCmd)
 
 	return cmd
+}
+
+func enforceLimitOrderCap(price, size string) error {
+	p, err := decimalRat("--price", price)
+	if err != nil {
+		return err
+	}
+	s, err := decimalRat("--size", size)
+	if err != nil {
+		return err
+	}
+	return livegate.EnforceNotionalCap(new(big.Rat).Mul(p, s))
+}
+
+// enforceBatchOrderCap applies the live-order cap to each order in a batch and
+// to the batch's summed notional, so a batch cannot exceed the per-order limit
+// individually or in aggregate.
+func enforceBatchOrderCap(orders []clob.CreateOrderParams) error {
+	total := new(big.Rat)
+	for i, o := range orders {
+		p, err := decimalRat(fmt.Sprintf("order[%d].price", i), o.Price)
+		if err != nil {
+			return err
+		}
+		s, err := decimalRat(fmt.Sprintf("order[%d].size", i), o.Size)
+		if err != nil {
+			return err
+		}
+		notional := new(big.Rat).Mul(p, s)
+		if err := livegate.EnforceNotionalCap(notional); err != nil {
+			return err
+		}
+		total.Add(total, notional)
+	}
+	return livegate.EnforceNotionalCap(total)
+}
+
+func enforceMarketOrderCap(amount string) error {
+	a, err := decimalRat("--amount", amount)
+	if err != nil {
+		return err
+	}
+	return livegate.EnforceNotionalCap(a)
+}
+
+func decimalRat(name, value string) (*big.Rat, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, fmt.Errorf("%s is required", name)
+	}
+	if strings.Contains(value, "/") {
+		return nil, fmt.Errorf("%s must be a decimal", name)
+	}
+	r, ok := new(big.Rat).SetString(value)
+	if !ok || r.Sign() <= 0 {
+		return nil, fmt.Errorf("%s must be a positive decimal", name)
+	}
+	return r, nil
 }

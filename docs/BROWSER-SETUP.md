@@ -24,7 +24,7 @@ If `polygolem auth login` succeeds, you do not need this page.
 
 ## Security Warning
 
-`POLYMARKET_PRIVATE_KEY` controls real funds. Importing it into a browser
+`SIGNER_PRIVATE_KEY` controls real funds. Importing it into a browser
 wallet exposes it to browser extensions, phishing, clipboard capture, and the
 wallet extension's own storage model.
 
@@ -47,7 +47,7 @@ Prefer these options:
 
 2. Open `https://polymarket.com`.
 
-3. Connect the wallet that controls the EOA from `POLYMARKET_PRIVATE_KEY`.
+3. Connect the wallet that controls the EOA from `SIGNER_PRIVATE_KEY`.
    This is the address shown in the SIWE prompt.
 
 4. Sign the message. The text should match the Polymarket SIWE shape:
@@ -81,11 +81,16 @@ Prefer these options:
 If an agent generated the key and you must import it manually:
 
 ```bash
-polygolem auth export-key --confirm
+# First get the EOA address without exposing the key.
+polygolem auth status
+
+# Then type the explicit token and the EOA's last 6 hex characters.
+polygolem auth export-key --confirm EXPORT_PRIVATE_KEY --confirm-address-suffix <last6>
 ```
 
-Do this only in a private terminal. Clear shell history afterwards and remove
-the browser wallet account after the fallback is complete.
+Do this only in a private terminal. The command prints the private key. Clear
+shell history afterwards and remove the browser wallet account after the
+fallback is complete.
 
 ## What This Does Not Change
 

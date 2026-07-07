@@ -20,6 +20,13 @@ func dataCmd(jsonOut bool) *cobra.Command {
 
 func newDataCommand(reads dataReadRunner) *cobra.Command {
 	cmd := commandGroup("data", "Polymarket Data API analytics")
+	cmd.Long = `Wallet- and market-level analytics from Polymarket's Data API. Read-only; keyed by
+wallet address, no credentials required.
+
+Query any wallet's positions, closed positions, trades, activity, and portfolio
+value, plus market-level holders, open interest, live volume, and leaderboards.`
+	cmd.Example = `  polygolem data positions --user <wallet-address> --json
+  polygolem data leaderboard --json`
 
 	var user string
 	var tokenID string

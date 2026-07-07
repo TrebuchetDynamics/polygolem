@@ -1,9 +1,32 @@
 package bridge
 
 import (
+	"context"
 	"encoding/json"
+	goerrors "errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
 )
+
+func TestClientReturnsNormalizedBridgeErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write([]byte(`rate limit exceeded`))
+	}))
+	defer server.Close()
+
+	_, err := NewClient(server.URL, nil).GetSupportedAssets(context.Background())
+	var normalized polyerrors.Error
+	if !goerrors.As(err, &normalized) {
+		t.Fatalf("expected polyerrors.Error, got %T %v", err, err)
+	}
+	if normalized.Kind != polyerrors.RateLimited {
+		t.Fatalf("normalized=%#v", normalized)
+	}
+}
 
 func TestSupportedAssetDecodesStringNumericFields(t *testing.T) {
 	var asset SupportedAsset

@@ -1,8 +1,8 @@
 ---
 import "../styles/landing.css";
 
-const title = "polygolem — Production-safe Polymarket infrastructure";
-const description = "A single Go binary and SDK for Polymarket V2 trading, built for the deposit-wallet era. Validated against live Polygon mainnet flows.";
+const title = "polygolem — Learn Polymarket APIs, then use them from Go";
+const description = "Beginner-friendly Polymarket API guide plus a safe Go CLI and SDK for read-only data, paper trading, wallet analytics, and V2 deposit-wallet trading.";
 ---
 
 <!doctype html>
@@ -30,161 +30,99 @@ const description = "A single Go binary and SDK for Polymarket V2 trading, built
     </header>
 
     <main>
-      <section class="hero">
-        <p class="eyebrow">Polymarket V2 · Deposit-wallet era</p>
-        <h1>Production-safe Polymarket infrastructure.</h1>
+      <section class="hero compact-hero">
+        <p class="eyebrow">Learn Polymarket · Use it from Go</p>
+        <h1>Understand Polymarket first. Trade later.</h1>
         <p class="lede">
-          A single Go binary and SDK for Polymarket V2 trading. Built specifically for
-          Polymarket&apos;s current production deposit-wallet model. No external SDKs.
-          No Python runtime. No opaque signing wrappers.
-        </p>
-        <p class="proof">
-          Validated against live Polygon mainnet flows — not mocks, not paper
-          environments.
+          Polygolem explains Polymarket's APIs in plain English, then gives you a Go
+          CLI and SDK for market data, order books, wallet analytics, paper trading,
+          and V2 deposit-wallet trading.
         </p>
         <div class="cta">
-          <a class="btn primary" href="/docs/getting-started/quickstart">Read the quickstart</a>
-          <a class="btn ghost" href="https://github.com/TrebuchetDynamics/polygolem">View on GitHub →</a>
+          <a class="btn primary" href="/docs/concepts/polymarket-api">Learn Polymarket</a>
+          <a class="btn ghost" href="/docs/getting-started/quickstart">Try no-wallet reads</a>
+          <a class="btn ghost" href="https://github.com/TrebuchetDynamics/polygolem">GitHub →</a>
         </div>
       </section>
 
-      <section class="proof-block">
-        <p class="section-label">Live, no credentials</p>
-        <pre><code>$ polygolem health
-{`{"clob":"ok","gamma":"ok"}`}
-
-$ polygolem orderbook price --token-id 1391568931...637394586
-{`{"price":"0.012","token_id":"1391568931...637394586"}`}
-
-$ polygolem orderbook spread --token-id 1391568931...637394586
-{`{"spread":"0.002","token_id":"1391568931...637394586"}`}</code></pre>
-        <p class="caption">
-          That&apos;s polygolem talking to live Polymarket. No key, no sign-up. Read-only is
-          the default for everything until you set <code>POLYMARKET_PRIVATE_KEY</code>.
+      <section class="primer compact-section">
+        <p class="section-label">Plain English</p>
+        <h2>Polymarket is a prediction-market exchange.</h2>
+        <p>
+          People trade YES/NO shares on real-world outcomes. The price acts like a
+          market-implied probability. Polygolem wraps the public data APIs, live order
+          books, WebSocket streams, wallet analytics, and safe Go trading primitives.
         </p>
       </section>
 
-      <section class="why">
-        <h2>Why polygolem exists</h2>
+      <section class="why-polygolem compact-section">
+        <p class="section-label">Why not official SDKs?</p>
+        <h2>Use the official SDKs when they fit. Use Polygolem when you need Go.</h2>
         <p>
-          In April 2026 Polymarket migrated to V2: a new exchange, a new stablecoin
-          (pUSD), and a new requirement that orders be placed by
-          <strong>deposit wallets</strong> — ERC-1967 proxies that validate signatures
-          via ERC-1271 — instead of EOAs.
-        </p>
-        <p>
-          Most existing Polymarket bots, wrappers, and unofficial SDKs still assume
-          EOA signing. Many of them silently broke; the rest produce
-          <em>ghost fills</em> that appear in the book and never settle.
-        </p>
-        <p>
-          polygolem only knows the production-safe path: deposit-wallet only, local
-          signing, spec-implemented protocol, no shimmed Python or JS in the trust
-          path.
+          Polymarket's official Python/TypeScript clients are the best default for
+          those ecosystems. Polygolem exists for Go teams who want one compiled
+          binary, no Python/npm runtime in the signing path, read-only defaults,
+          fixture-tested V2 deposit-wallet signing, and operator-friendly CLI docs.
         </p>
       </section>
 
-      <section class="trust">
-        <h2>Trust model</h2>
+      <section class="paths compact-section">
+        <p class="section-label">Pick one path</p>
         <div class="trust-grid">
-          <div class="trust-card">
-            <h3>Read-only by default</h3>
-            <p>Authenticated operations require an explicit private key in env. Nothing trades unless you ask it to.</p>
-          </div>
-          <div class="trust-card">
-            <h3>Deposit-wallet only</h3>
-            <p>Cannot accidentally sign as an EOA, proxy, or Safe. The mode that broke in April 2026 is not reachable from this binary.</p>
-          </div>
-          <div class="trust-card">
-            <h3>Local signing</h3>
-            <p>The process holds the key; no signing service in the trust path. No remote enclave that could be replaced.</p>
-          </div>
-          <div class="trust-card">
-            <h3>No external SDKs</h3>
-            <p>All wallet derivation, EIP-712 payloads, ERC-7739 envelopes, and relayer calls are in this repo, in Go, from spec.</p>
-          </div>
-          <div class="trust-card">
-            <h3>Risk controls</h3>
-            <p>Per-trade caps, daily loss limits, and a circuit breaker live in <code>internal/risk</code> and are on by default.</p>
-          </div>
-          <div class="trust-card">
-            <h3>Secret redaction</h3>
-            <p>API keys and signatures are redacted in logs by the transport layer. No accidental leakage in CI output.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="diagram">
-        <h2>The on-chain identity model</h2>
-        <pre><code>{`  EOA  ──signs──▶  Order
-   │              (signatureType=3, maker=DepositWallet, signer=DepositWallet)
-   │
-   ▼ derives (CREATE2)              ▼ submitted by
- Deposit Wallet  ◀──holds pUSD──    Polymarket matching engine
- (ERC-1967 proxy,                   (gas-sponsored fillOrders settlement)
-  validates signatures              ──┐
-  via ERC-1271)                       │
-                                      ▼
- V2 Relayer  ──sponsors──▶  WALLET-CREATE + approval batch
- (relayer-v2.polymarket.com)`}</code></pre>
-        <p class="caption">
-          The EOA signs; the deposit wallet holds funds and is the on-order maker;
-          Polymarket-run services pay every gas fee except your single ERC-20 funding
-          transfer. <a href="/docs/concepts/deposit-wallets">Read the full identity model →</a>
-        </p>
-      </section>
-
-      <section class="trade">
-        <h2>Trade in four commands</h2>
-        <pre><code>{`export POLYMARKET_PRIVATE_KEY="0x..."
-
-polygolem auth login                                # SIWE login + V2 relayer key (gasless)
-polygolem deposit-wallet onboard --fund-amount 0.71 # deploy + approve + fund
-polygolem clob update-balance --asset-type collateral
-polygolem clob market-order --token <ID> --side buy --amount 1 --price 0.012 --order-type FOK
-# {
-#   "success": true,
-#   "orderID": "0x43083109...c423d793d",
-#   "status": "matched",
-#   "makingAmount": "1",
-#   "takingAmount": "86.606666",
-#   "transactionsHashes": ["0x74ad015d...4f7adc"]
-# }`}</code></pre>
-        <p>
-          After onboarding, every trade is fully headless. Total user-paid cost on the
-          reference run was <strong>~$0.01 in POL gas</strong> for the single ERC-20
-          transfer that funds the deposit wallet — every other tx (WALLET-CREATE,
-          approvals, fillOrders settlements) is sponsored by Polymarket-run services.
-        </p>
-        <div class="callout">
-          <p>
-            <strong>Polymarket login signs with the EOA.</strong> That is the address
-            shown in the website SIWE prompt. The deposit wallet remains the trading
-            wallet for pUSD, POLY_1271 orders, CTF positions, approvals, and settlement.
-            <code>polygolem auth login</code> performs the SIWE/profile/relayer step headlessly.
-            <a href="/docs/guides/deposit-wallet-lifecycle">See the full onboarding →</a>
-          </p>
-        </div>
-      </section>
-
-      <section class="footer-cta">
-        <h2>Where to next</h2>
-        <div class="next-grid">
-          <a class="next-card" href="/docs/getting-started/quickstart">
-            <h3>Quickstart</h3>
-            <p>Install, configure, and run your first read-only command in 60 seconds.</p>
+          <a class="trust-card path-card" href="/docs/concepts/polymarket-api">
+            <h3>Learn Polymarket</h3>
+            <p>Prediction markets, YES/NO shares, and which API does what.</p>
           </a>
-          <a class="next-card" href="/docs/concepts/deposit-wallets">
-            <h3>Deposit wallets</h3>
-            <p>The full POLY_1271 / ERC-1271 identity model, with on-chain examples.</p>
+          <a class="trust-card path-card" href="/docs/getting-started/quickstart">
+            <h3>Browse markets</h3>
+            <p>No wallet. No key. Search markets, read books, stream prices.</p>
+          </a>
+          <a class="trust-card path-card" href="/docs/guides/paper-trading">
+            <h3>Paper trade</h3>
+            <p>Test a strategy against live CLOB prices with local-only state.</p>
+          </a>
+          <a class="trust-card path-card" href="/docs/guides/wallet-intelligence">
+            <h3>Study wallets</h3>
+            <p>Read-only dossiers and candidate signals from public activity.</p>
+          </a>
+          <a class="trust-card path-card" href="/docs/guides/deposit-wallet-lifecycle">
+            <h3>Trade live</h3>
+            <p>Explicit credentials only. Deposit-wallet / POLY_1271 path.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="proof-block compact-section">
+        <p class="section-label">Try it</p>
+        <pre><code>$ polygolem health --json
+{`{"ok":true,"data":{"clob":"ok","gamma":"ok"}}`}
+
+$ polygolem discover crypto-5m --enrich --json
+# current BTC/ETH/SOL/XRP/BNB/DOGE/HYPE 5-minute markets</code></pre>
+        <p class="caption">
+          Read-only commands need no credentials. Live mutations require explicit wallet
+          configuration and confirmations.
+        </p>
+      </section>
+
+      <section class="footer-cta compact-section">
+        <h2>Go deeper</h2>
+        <div class="next-grid">
+          <a class="next-card" href="/docs/getting-started/docs-map">
+            <h3>Docs map</h3>
+            <p>Choose docs by job: beginner, operator, bot developer, auditor.</p>
+          </a>
+          <a class="next-card" href="/docs/concepts/polymarket-api">
+            <h3>API overview</h3>
+            <p>Gamma, CLOB, Data API, WebSocket, Relayer, contracts.</p>
           </a>
           <a class="next-card" href="/docs/concepts/safety">
             <h3>Safety model</h3>
-            <p>Read-only defaults, deposit-wallet-only enforcement, and circuit breakers.</p>
+            <p>Read-only defaults, deposit-wallet enforcement, risk controls.</p>
           </a>
-          <a class="next-card" href="https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/LIVE-TRADE-WALKTHROUGH.md">
-            <h3>Live trade walkthrough</h3>
-            <p>The 2026-05-08 reference run with every tx hash and gas figure.</p>
+          <a class="next-card" href="/docs/reference/mcp-openapi">
+            <h3>MCP/OpenAPI</h3>
+            <p>Read-only tool manifests and local integration points.</p>
           </a>
         </div>
       </section>

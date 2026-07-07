@@ -2,11 +2,17 @@
 package cryptomarkets
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 )
+
+// Searcher searches Gamma markets and events.
+type Searcher interface {
+	Search(ctx context.Context, params *polytypes.SearchParams) (*polytypes.SearchResponse, error)
+}
 
 // Filter contains crypto market search filters shared by workflow modules.
 type Filter struct {
@@ -21,21 +27,83 @@ type Candidate struct {
 	TokenIDs []string
 }
 
+// Discover searches Gamma once and returns active crypto market candidates.
+func Discover(ctx context.Context, searcher Searcher, filter Filter, limit int) (string, []Candidate, error) {
+	query := Query(filter)
+	if limit <= 0 {
+		limit = 50
+	}
+	resp, err := searcher.Search(ctx, &polytypes.SearchParams{Q: query, LimitPerType: &limit})
+	if err != nil {
+		return query, nil, err
+	}
+	return query, Select(resp, filter), nil
+}
+
+// DiscoverPaged searches Gamma pages until limit candidates are collected or no page remains.
+func DiscoverPaged(ctx context.Context, searcher Searcher, filter Filter, limit int) (string, []Candidate, error) {
+	query := Query(filter)
+	if limit <= 0 {
+		limit = 20
+	}
+	var out []Candidate
+	for page := 1; len(out) < limit; page++ {
+		perPage := limit - len(out)
+		if perPage > 50 {
+			perPage = 50
+		}
+		resp, err := searcher.Search(ctx, &polytypes.SearchParams{Q: query, LimitPerType: &perPage, Page: &page, EventsStatus: "active"})
+		if err != nil {
+			return query, nil, err
+		}
+		batch := Select(resp, filter)
+		out = append(out, batch...)
+		if resp == nil || !resp.Pagination.HasMore || len(batch) == 0 {
+			break
+		}
+	}
+	return query, out, nil
+}
+
+// TokenIDs flattens candidate CLOB token IDs in market order.
+func TokenIDs(candidates []Candidate) []string {
+	var out []string
+	for _, candidate := range candidates {
+		out = append(out, candidate.TokenIDs...)
+	}
+	return out
+}
+
 // Query builds the Gamma search query for a crypto market filter.
 func Query(filter Filter) string {
 	asset := strings.TrimSpace(filter.Asset)
 	interval := strings.TrimSpace(filter.Interval)
 	query := asset
 	if interval != "" {
+		if name := cryptoSearchName(asset); name != "" {
+			query = name
+		}
 		if query != "" {
 			query += " "
 		}
-		query += interval
+		query += interval + " updown"
 	}
 	if query == "" {
 		query = "crypto"
 	}
 	return query
+}
+
+func cryptoSearchName(asset string) string {
+	return map[string]string{
+		"BTC":  "bitcoin",
+		"ETH":  "ethereum",
+		"SOL":  "solana",
+		"XRP":  "xrp",
+		"DOGE": "doge",
+		"BNB":  "bnb",
+		"HYPE": "hyperliquid",
+	}[strings.ToUpper(asset)]
 }
 
 // Select returns active, non-closed event markets matching the filter.
@@ -79,8 +147,12 @@ func matchesAsset(event polytypes.Event, market polytypes.Market, asset string) 
 	if asset == "" {
 		return true
 	}
-	asset = strings.ToUpper(asset)
-	return strings.Contains(strings.ToUpper(market.Question), asset) || strings.Contains(strings.ToUpper(event.Title), asset)
+	text := strings.ToLower(event.Title + " " + event.Slug + " " + market.Question + " " + market.Slug)
+	if strings.Contains(text, strings.ToLower(asset)) {
+		return true
+	}
+	name := cryptoSearchName(asset)
+	return name != "" && strings.Contains(text, name)
 }
 
 func matchesInterval(event polytypes.Event, market polytypes.Market, interval string) bool {
@@ -89,5 +161,6 @@ func matchesInterval(event polytypes.Event, market polytypes.Market, interval st
 		return true
 	}
 	interval = strings.ToLower(interval)
-	return strings.Contains(strings.ToLower(event.Title), interval) || strings.Contains(strings.ToLower(market.Question), interval)
+	text := strings.ToLower(event.Title + " " + event.Slug + " " + market.Question + " " + market.Slug)
+	return strings.Contains(text, interval)
 }

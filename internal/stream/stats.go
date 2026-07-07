@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"maps"
 	"sync"
 	"time"
 )
@@ -8,33 +9,35 @@ import (
 // StreamStatsSnapshot is the JSON-friendly stream health snapshot emitted by
 // CLI workflows and exposed by SDK clients.
 type StreamStatsSnapshot struct {
-	Type              string   `json:"type"`
-	Stream            string   `json:"stream"`
-	State             string   `json:"state"`
-	AssetIDs          []string `json:"asset_ids,omitempty"`
-	Markets           []string `json:"markets,omitempty"`
-	MessagesReceived  int64    `json:"messages_received"`
-	DuplicateMessages int64    `json:"duplicate_messages"`
-	InvalidMessages   int64    `json:"invalid_messages"`
-	Reconnects        int64    `json:"reconnects"`
-	ConnectedAt       string   `json:"connected_at,omitempty"`
-	DisconnectedAt    string   `json:"disconnected_at,omitempty"`
-	LastReconnectAt   string   `json:"last_reconnect_at,omitempty"`
-	LastMessageAt     string   `json:"last_message_at,omitempty"`
+	Type              string           `json:"type"`
+	Stream            string           `json:"stream"`
+	State             string           `json:"state"`
+	AssetIDs          []string         `json:"asset_ids,omitempty"`
+	Markets           []string         `json:"markets,omitempty"`
+	MessagesReceived  int64            `json:"messages_received"`
+	DuplicateMessages int64            `json:"duplicate_messages"`
+	InvalidMessages   int64            `json:"invalid_messages"`
+	Reconnects        int64            `json:"reconnects"`
+	ConnectedAt       string           `json:"connected_at,omitempty"`
+	DisconnectedAt    string           `json:"disconnected_at,omitempty"`
+	LastReconnectAt   string           `json:"last_reconnect_at,omitempty"`
+	LastMessageAt     string           `json:"last_message_at,omitempty"`
+	EventCounts       map[string]int64 `json:"event_counts,omitempty"`
 }
 
 // StreamStats records lifecycle and message counters for a WebSocket stream.
 type StreamStats struct {
 	mu sync.Mutex
 
-	stream     string
-	state      string
-	assetIDs   []string
-	markets    []string
-	messages   int64
-	duplicates int64
-	invalid    int64
-	reconnects int64
+	stream      string
+	state       string
+	assetIDs    []string
+	markets     []string
+	messages    int64
+	duplicates  int64
+	invalid     int64
+	reconnects  int64
+	eventCounts map[string]int64
 
 	connectedAt     time.Time
 	disconnectedAt  time.Time
@@ -44,7 +47,7 @@ type StreamStats struct {
 
 // NewStreamStats creates stats for a stream kind such as market or user.
 func NewStreamStats(stream string) *StreamStats {
-	return &StreamStats{stream: stream, state: "idle"}
+	return &StreamStats{stream: stream, state: "idle", eventCounts: make(map[string]int64)}
 }
 
 func (s *StreamStats) SetSubscriptions(assetIDs, markets []string) {
@@ -70,9 +73,16 @@ func (s *StreamStats) MarkDisconnected(at time.Time) {
 }
 
 func (s *StreamStats) RecordMessage(at time.Time) {
+	s.RecordEvent("", at)
+}
+
+func (s *StreamStats) RecordEvent(eventType string, at time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.messages++
+	if eventType != "" {
+		s.eventCounts[eventType]++
+	}
 	s.lastMessageAt = at.UTC()
 }
 
@@ -112,6 +122,7 @@ func (s *StreamStats) Snapshot() StreamStatsSnapshot {
 		DisconnectedAt:    formatStatsTime(s.disconnectedAt),
 		LastReconnectAt:   formatStatsTime(s.lastReconnectAt),
 		LastMessageAt:     formatStatsTime(s.lastMessageAt),
+		EventCounts:       maps.Clone(s.eventCounts),
 	}
 }
 

@@ -28,20 +28,38 @@ replace github.com/TrebuchetDynamics/polygolem => `+repoRoot+`
 
 import (
 	"context"
+	"math/big"
 	"testing"
+	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/pkg/bridge"
+	"github.com/TrebuchetDynamics/polygolem/pkg/builder"
+	"github.com/TrebuchetDynamics/polygolem/pkg/capabilities"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
+	"github.com/TrebuchetDynamics/polygolem/pkg/compat"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
+	"github.com/TrebuchetDynamics/polygolem/pkg/cryptoprice"
 	"github.com/TrebuchetDynamics/polygolem/pkg/ctf"
 	"github.com/TrebuchetDynamics/polygolem/pkg/data"
+	"github.com/TrebuchetDynamics/polygolem/pkg/enabletrading"
+	"github.com/TrebuchetDynamics/polygolem/pkg/funding"
 	"github.com/TrebuchetDynamics/polygolem/pkg/gamma"
+	"github.com/TrebuchetDynamics/polygolem/pkg/geoblock"
+	"github.com/TrebuchetDynamics/polygolem/pkg/intel"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketdata"
+	"github.com/TrebuchetDynamics/polygolem/pkg/marketresolver"
+	"github.com/TrebuchetDynamics/polygolem/pkg/mcp"
 	"github.com/TrebuchetDynamics/polygolem/pkg/openapi"
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderbook"
+	"github.com/TrebuchetDynamics/polygolem/pkg/orderfills"
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderresults"
+	"github.com/TrebuchetDynamics/polygolem/pkg/pagination"
+	"github.com/TrebuchetDynamics/polygolem/pkg/plugins"
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
+	"github.com/TrebuchetDynamics/polygolem/pkg/reconciliation"
 	"github.com/TrebuchetDynamics/polygolem/pkg/relayer"
 	"github.com/TrebuchetDynamics/polygolem/pkg/rfq"
+	"github.com/TrebuchetDynamics/polygolem/pkg/rtds"
 	"github.com/TrebuchetDynamics/polygolem/pkg/settlement"
 	"github.com/TrebuchetDynamics/polygolem/pkg/signers"
 	httpsigner "github.com/TrebuchetDynamics/polygolem/pkg/signers/http"
@@ -50,6 +68,7 @@ import (
 	sdkstream "github.com/TrebuchetDynamics/polygolem/pkg/stream"
 	"github.com/TrebuchetDynamics/polygolem/pkg/types"
 	"github.com/TrebuchetDynamics/polygolem/pkg/universal"
+	"github.com/TrebuchetDynamics/polygolem/pkg/upstreamdrift"
 	"github.com/TrebuchetDynamics/polygolem/pkg/wallet"
 	"github.com/TrebuchetDynamics/polygolem/pkg/experimental/orders"
 	"github.com/TrebuchetDynamics/polygolem/pkg/experimental/auth"
@@ -61,6 +80,12 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var bridgeWithdrawDryRun *bridge.WithdrawDryRun
 	var bridgeBuildWithdrawDryRun func(bridge.WithdrawRequest) (*bridge.WithdrawDryRun, error) = bridge.BuildWithdrawDryRun
 	var bridgeWithdraw func(*bridge.Client, context.Context, bridge.WithdrawRequest) (*bridge.WithdrawResponse, error) = (*bridge.Client).Withdraw
+	var builderSigner builder.Signer
+	var builderConfig builder.LocalSignerConfig
+	var builderNewLocal func(builder.LocalSignerConfig) (*builder.LocalSigner, error) = builder.NewLocalSigner
+	var capabilityList []capabilities.Capability = capabilities.All()
+	var readOnlyCapabilities []string = capabilities.ReadOnlyIDs()
+	var compatibilityContract compat.CompatibilityContract = compat.Contract()
 	var clobClient *sdkclob.Client = sdkclob.NewClient(sdkclob.Config{})
 	var clobConfig sdkclob.Config = sdkclob.Config{BuilderCode: "0x1111111111111111111111111111111111111111111111111111111111111111"}
 	var clobMarkets func(*sdkclob.Client, context.Context, string) (*types.CLOBPaginatedMarkets, error) = (*sdkclob.Client).Markets
@@ -98,18 +123,66 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var streamNewMarket sdkstream.NewMarketMessage
 	var streamMarketResolved sdkstream.MarketResolvedMessage
 	var streamDeduplicator *sdkstream.Deduplicator = sdkstream.NewDeduplicator(100, 0)
+	var rtdsClient *rtds.Client = rtds.NewClient(rtds.Config{}, []string{"btc/usd"})
+	var rtdsConfig rtds.Config = rtds.DefaultConfig("")
+	var rtdsPrice rtds.ChainlinkPriceEvent
 	var marketDataTracker *marketdata.Tracker = marketdata.NewTracker()
 	var marketDataSnapshot marketdata.Snapshot
 	var marketDataBestBidAsk func(*marketdata.Tracker, sdkstream.BestBidAskMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyBestBidAsk
 	var marketDataTickSize func(*marketdata.Tracker, sdkstream.TickSizeChangeMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyTickSizeChange
+	var marketResolver *marketresolver.Resolver = marketresolver.NewResolver("")
+	var marketResolverResult marketresolver.ResolveResult
+	var cryptoPriceClient *cryptoprice.Client = cryptoprice.NewClient(cryptoprice.Config{})
+	var cryptoPrice cryptoprice.CryptoPrice
+	var enableTradingParams enabletrading.EnableTradingParams
+	var enableTradingBuildCalls func() []enabletrading.DepositWalletCall = enabletrading.BuildEnableTradingApprovalCalls
+	var fundingTransfer func(context.Context, string, string, *big.Int, string) (string, error) = funding.TransferPUSD
+	var intelScore intel.WalletScore = intel.ScoreWallet(intel.ScoreInput{Wallet: "0xabc"})
+	var contractsMaxUint *big.Int = contracts.MaxUint256()
+	var contractsApprove func(string, *big.Int) ([]byte, error) = contracts.ERC20ApproveCalldata
+	var contractsTransfer func(string, *big.Int) ([]byte, error) = contracts.ERC20TransferCalldata
+	var contractsAllowance func(string, string) ([]byte, error) = contracts.ERC20AllowanceCalldata
+	var contractsBalanceOf func(string) ([]byte, error) = contracts.ERC20BalanceOfCalldata
+	var contractsSetApprovalForAll func(string, bool) ([]byte, error) = contracts.ERC1155SetApprovalForAllCalldata
+	var contractsIsApprovedForAll func(string, string) ([]byte, error) = contracts.ERC1155IsApprovedForAllCalldata
+	var contractsRampWrap func(string, string, *big.Int) ([]byte, error) = contracts.RampWrapCalldata
+	var contractsRampUnwrap func(string, string, *big.Int) ([]byte, error) = contracts.RampUnwrapCalldata
+	var contractsDecodeUint func([]byte) (*big.Int, error) = contracts.DecodeUint256Result
+	var contractsDecodeBool func([]byte) (bool, error) = contracts.DecodeBoolResult
+	_, _, _, _, _, _, _, _, _, _, _ = contractsMaxUint, contractsApprove, contractsTransfer, contractsAllowance, contractsBalanceOf, contractsSetApprovalForAll, contractsIsApprovedForAll, contractsRampWrap, contractsRampUnwrap, contractsDecodeUint, contractsDecodeBool
+	var geoblockClient *geoblock.Client = geoblock.New("", nil)
+	var geoblockCheck func(*geoblock.Client, context.Context) (geoblock.Result, error) = (*geoblock.Client).Check
+	var bookBestBid func(types.CLOBOrderBook) (float64, bool) = types.CLOBOrderBook.BestBid
+	var bookBestAsk func(types.CLOBOrderBook) (float64, bool) = types.CLOBOrderBook.BestAsk
+	var bookAskDepth func(types.CLOBOrderBook, float64) float64 = types.CLOBOrderBook.AvailableAskSize
+	var tickSizeValue func(types.CLOBTickSize) (float64, error) = types.CLOBTickSize.Value
+	var outcomeForToken func(string, string, string) string = marketresolver.OutcomeForToken
+	var normalizeOutcome func(string) string = marketresolver.NormalizeOutcome
+	var upDownTokenIDs func([]string, []string) (string, string) = marketresolver.UpDownTokenIDs
+	var inferTimeframe func(...string) string = marketresolver.InferTimeframe
+	var inferTimeframeFromWindow func(time.Time, time.Time) string = marketresolver.InferTimeframeFromWindow
+	var windowFromSlug func(string, string) (time.Time, time.Time, bool) = marketresolver.WindowFromSlug
+	var assetSearchQueries func(string) []string = marketresolver.AssetSearchQueries
+	var assetMentioned func(string, string) bool = marketresolver.AssetMentioned
+	var parseJSONStringList func(string) ([]string, error) = marketresolver.ParseJSONStringList
+	_, _, _, _, _, _, _ = upDownTokenIDs, inferTimeframe, inferTimeframeFromWindow, windowFromSlug, assetSearchQueries, assetMentioned, parseJSONStringList
+	var marketOutcomeForToken func(marketresolver.CryptoMarket, string) string = marketresolver.CryptoMarket.OutcomeForToken
+	_, _, _, _, _, _, _, _, _ = geoblockClient, geoblockCheck, bookBestBid, bookBestAsk, bookAskDepth, tickSizeValue, outcomeForToken, normalizeOutcome, marketOutcomeForToken
+	var mcpTools []mcp.Tool = mcp.SafeTools()
+	var mcpServer *mcp.Server = mcp.NewServer()
 	var openAPISpec map[string]any = openapi.Spec()
 	var orderbookReader orderbook.Reader = orderbook.NewReader("")
 	var orderbookSnapshot orderbook.OrderBook
 	var orderbookLevel orderbook.Level
+	var orderFillsReader orderfills.Reader
+	var orderFillsQuery orderfills.Query
+	var orderFillsValidate func(orderfills.Query) error = orderfills.ValidateQuery
 	var orderResultsSource orderresults.Source
 	var orderResultsReport *orderresults.Report
 	var orderResultsOptions orderresults.Options
 	var orderResultsBuild func(context.Context, orderresults.DataReader, string, orderresults.Options) (*orderresults.Report, error) = orderresults.BuildReport
+	var paginationCollect func(context.Context, pagination.Page[int]) ([]int, error) = pagination.CollectAll[int]
+	var pluginsOrder plugins.Order
 	var ctfOperationRequest ctf.OperationRequest
 	var ctfOperationDryRun *ctf.OperationDryRun
 	var ctfReadinessGate ctf.ReadinessGate
@@ -123,6 +196,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var contractDeployed func(context.Context, string, string) (contracts.DeploymentStatus, error) = contracts.ContractDeployed
 	var depositWalletDeployed func(context.Context, string, string) (contracts.DeploymentStatus, error) = contracts.DepositWalletDeployed
 	var redeemAdapterFor func(bool) string = contracts.RedeemAdapterFor
+	var reconciliationReport reconciliation.Report = reconciliation.BuildReport(reconciliation.Input{Order: &reconciliation.OrderEvidence{ID: "order-1"}})
 	var rfqClient *rfq.Client = rfq.NewClient()
 	var rfqRequest rfq.Request
 	var rfqQuote rfq.Quote
@@ -166,6 +240,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var universalSearch func(*universal.Client, context.Context, *types.SearchParams) (*types.SearchResponse, error) = (*universal.Client).Search
 	var universalComments func(*universal.Client, context.Context, *types.CommentQuery) ([]types.Comment, error) = (*universal.Client).Comments
 	var universalConfig universal.Config = universal.Config{BuilderCode: "0x1111111111111111111111111111111111111111111111111111111111111111"}
+	var driftReport upstreamdrift.Report = upstreamdrift.CheckLLMS("https://docs.polymarket.com/trading/overview")
 	var universalCLOBMarkets func(*universal.Client, context.Context, string) (*types.CLOBPaginatedMarkets, error) = (*universal.Client).CLOBMarkets
 	var universalCLOBMarket func(*universal.Client, context.Context, string) (*types.CLOBMarket, error) = (*universal.Client).CLOBMarket
 	var universalCLOBMarketByToken func(*universal.Client, context.Context, string) (*types.CLOBMarketByTokenResponse, error) = (*universal.Client).CLOBMarketByToken
@@ -186,17 +261,22 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var universalStreamWithConfig func(*universal.Client, sdkstream.Config) *sdkstream.MarketClient = (*universal.Client).StreamClientWithConfig
 
 	_, _, _, _, _ = bridgeClient, bridgeWithdrawRequest, bridgeWithdrawDryRun, bridgeBuildWithdrawDryRun, bridgeWithdraw
+	_, _, _ = builderSigner, builderConfig, builderNewLocal
+	_, _, _ = capabilityList, readOnlyCapabilities, compatibilityContract
 	_, _, _, _, _, _, _, _, _ = clobClient, clobConfig, clobMarkets, clobMarket, clobMarketByToken, clobOrderBook, clobOrderBooks, clobTickSize, clobPriceHistory
 	_, _, _, _, _, _, _, _, _, _ = clobAPIKey, clobDeriveAPIKey, clobBalanceParams, clobBalance, clobOrders, clobOrder, clobTrades, clobCancel, clobCancelMarketParams, clobCancelMarket
 	_, _, _, _ = clobCreateParams, clobCreate, clobMarketOrderParams, clobMarketOrder
 	_, _, _, _, _, _, _, _, _, _ = streamClient, streamConfig, streamConnect, streamSubscribe, streamClose, streamConnected, streamBook, streamPriceChange, streamLastTrade, streamTickSize
-	_, _, _, _, _, _ = streamBestBidAsk, streamNewMarket, streamMarketResolved, streamDeduplicator, marketDataTracker, marketDataSnapshot
+	_, _, _, _, _, _, _, _, _ = streamBestBidAsk, streamNewMarket, streamMarketResolved, streamDeduplicator, rtdsClient, rtdsConfig, rtdsPrice, marketDataTracker, marketDataSnapshot
 	_, _ = marketDataBestBidAsk, marketDataTickSize
-	_ = openAPISpec
-	_, _, _, _, _, _, _ = orderbookReader, orderbookSnapshot, orderbookLevel, orderResultsSource, orderResultsReport, orderResultsOptions, orderResultsBuild
+	_, _, _, _ = marketResolver, marketResolverResult, enableTradingParams, enableTradingBuildCalls
+	_, _, _, _, _, _, _ = cryptoPriceClient, cryptoPrice, fundingTransfer, intelScore, mcpTools, mcpServer, openAPISpec
+	var normalizedError polyerrors.Error = polyerrors.Normalize(polyerrors.Input{HTTPStatus: 429})
+	_ = normalizedError
+	_, _, _, _, _, _, _, _, _, _, _, _ = orderbookReader, orderbookSnapshot, orderbookLevel, orderFillsReader, orderFillsQuery, orderFillsValidate, orderResultsSource, orderResultsReport, orderResultsOptions, orderResultsBuild, paginationCollect, pluginsOrder
 	_, _, _, _, _, _, _, _ = ctfOperationRequest, ctfOperationDryRun, ctfReadinessGate, ctfSubmitPlan, ctfBuildDryRun, ctfBuildSubmitPlan, ctfBuildSplit, ctfBuildMerge
 	_, _, _, _, _ = contractsRegistry, contractStatus, contractDeployed, depositWalletDeployed, redeemAdapterFor
-	_, _, _, _, _ = rfqClient, rfqRequest, rfqQuote, rfqValidate, rfqSubmit
+	_, _, _, _, _, _ = reconciliationReport, rfqClient, rfqRequest, rfqQuote, rfqValidate, rfqSubmit
 	_, _, _, _, _, _, _, _, _ = settlementPosition, settlementResult, settlementReadiness, settlementReadinessOptions, settlementAdapterApproval, settlementFind, settlementBuild, settlementSubmit, settlementCheck
 	_, _, _, _, _, _, _ = localSigner, signerInterface, newLocalSigner, redactSecret, httpSigner, httpSignerConfig, newHTTPSigner
 	_, _, _ = kmsSigner, kmsSignerConfig, newKMSSigner
@@ -204,6 +284,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	_, _, _, _, _ = relayerClient, relayerV2Key, relayerOnboardOptions, relayerOnboard, relayerNewV2
 	_, _, _, _ = dataPositions, universalPositions, dataLeaderboard, universalLiveVolume
 	_, _, _, _, _, _, _ = gammaMarkets, gammaSearch, gammaComments, universalMarkets, universalSearch, universalComments, universalConfig
+	_ = driftReport
 	_, _, _, _, _, _, _ = universalCLOBMarkets, universalCLOBMarket, universalCLOBMarketByToken, universalOrderBook, universalOrderBooks, universalTickSize, universalPriceHistory
 	_, _, _, _, _, _, _, _, _ = universalDeriveAPIKey, universalBalance, universalOrders, universalOrder, universalTrades, universalCancel, universalCancelMarket, universalCreate, universalMarketOrder
 	_, _ = universalStream, universalStreamWithConfig

@@ -10,7 +10,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/internal/jsonx"
 )
 
-// PrivateKeyLoader loads POLYMARKET_PRIVATE_KEY from the caller's environment.
+// PrivateKeyLoader loads the signer key from the caller's environment.
 type PrivateKeyLoader func() (string, error)
 
 // L2CredentialsProvider returns configured CLOB L2 credentials, when present.

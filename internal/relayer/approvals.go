@@ -4,25 +4,11 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
-	pusdAddress  = "0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB"
-	ctfAddress   = "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045"
-	usdceAddress = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
-
-	ctfExchangeV2     = "0xE111180000d2663C0091e4f400237545B87B996B"
-	negRiskExchangeV2 = "0xe2222d279d744050d28e00520010520000310F59"
-	negRiskAdapterV2  = "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296"
-	collateralOnramp  = "0x93070a847efEf7F70739046A929D47a521F5B8ee"
-
-	// V2 collateral adapters — split/merge/redeem from a deposit wallet
-	// route through these. Required spenders for the post-trading
-	// readiness batch built by BuildAdapterApprovalCalls.
-	ctfCollateralAdapter        = "0xAdA100Db00Ca00073811820692005400218FcE1f"
-	negRiskCtfCollateralAdapter = "0xadA2005600Dec949baf300f4C6120000bDB6eAab"
-
 	erc20ApproveSelector        = "095ea7b3"
 	erc1155SetApprovalForAllSel = "a22cb465"
 	maxUint256                  = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -50,12 +36,13 @@ func buildApproveCall(tokenAddress, spenderAddress string) DepositWalletCall {
 	}
 }
 
-func buildCTFApprovalCall(operatorAddress string) DepositWalletCall {
+func buildSetApprovalForAllCall(tokenAddress, operatorAddress string) DepositWalletCall {
+	token := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(tokenAddress), "0x"))
 	operator := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(operatorAddress), "0x"))
 	data := "0x" + erc1155SetApprovalForAllSel + pad32Bytes(operator) +
 		"0000000000000000000000000000000000000000000000000000000000000001"
 	return DepositWalletCall{
-		Target: common.HexToAddress(ctfAddress).Hex(),
+		Target: common.HexToAddress(token).Hex(),
 		Value:  "0",
 		Data:   data,
 	}
@@ -77,14 +64,7 @@ func buildTransferCall(tokenAddress, toAddress, amountHex string) DepositWalletC
 // all V2 exchange spenders. These must be submitted via WALLET batch from
 // the deposit wallet.
 func BuildApprovalCalls() []DepositWalletCall {
-	calls := make([]DepositWalletCall, 0, 6)
-	for _, spender := range []string{ctfExchangeV2, negRiskExchangeV2, negRiskAdapterV2} {
-		calls = append(calls,
-			buildApproveCall(pusdAddress, spender),
-			buildCTFApprovalCall(spender),
-		)
-	}
-	return calls
+	return buildApprovalCalls(contracts.TradingApprovals())
 }
 
 // BuildApprovalCallsJSON returns the approval calls as a JSON-marshalable
@@ -108,14 +88,7 @@ func BuildApprovalCallsJSON() (string, error) {
 // safeBatchTransferFrom(msg.sender, address(this), ...) on the CTF.
 // Without setApprovalForAll the redeem path reverts.
 func BuildAdapterApprovalCalls() []DepositWalletCall {
-	calls := make([]DepositWalletCall, 0, 4)
-	for _, spender := range []string{ctfCollateralAdapter, negRiskCtfCollateralAdapter} {
-		calls = append(calls,
-			buildApproveCall(pusdAddress, spender),
-			buildCTFApprovalCall(spender),
-		)
-	}
-	return calls
+	return buildApprovalCalls(contracts.SettlementApprovals())
 }
 
 // BuildAdapterApprovalCallsJSON mirrors BuildApprovalCallsJSON for the
@@ -129,16 +102,49 @@ func BuildAdapterApprovalCallsJSON() (string, error) {
 	return string(raw), nil
 }
 
-// BuildEnableTradingApprovalCalls returns the two ERC-20 approvals observed
-// in polymarket.com's "Enable Trading" UI after deposit-wallet deployment:
-// pUSD -> CTF and USDC.e -> CollateralOnramp, both max uint256. This batch is
-// distinct from the six-call exchange trading approval set and the four-call
-// V2 collateral-adapter approval set.
+// BuildEnableTradingApprovalCalls returns the six calls observed in
+// polymarket.com's "Enable Trading" / "Approve Tokens" UI after
+// deposit-wallet deployment: the original pUSD -> CTF and USDC.e ->
+// CollateralOnramp max-uint approvals, plus the Combos grants (pUSD
+// approve and PositionManager setApprovalForAll for both CombosRouter
+// and CombosExchange). This batch is distinct from the six-call exchange
+// trading approval set and the four-call V2 collateral-adapter approval
+// set.
 func BuildEnableTradingApprovalCalls() []DepositWalletCall {
-	return []DepositWalletCall{
-		buildApproveCall(pusdAddress, ctfAddress),
-		buildApproveCall(usdceAddress, collateralOnramp),
+	return buildApprovalCalls(contracts.EnableTradingApprovals())
+}
+
+// BuildAutoRedeemApprovalCalls returns the 3 setApprovalForAll calls that
+// enable Polymarket's "Get Paid Instantly" auto-redemption for a deposit
+// wallet: CTF -> CtfAutoRedeem, CTF -> AutoRedeemer, and PositionManager ->
+// AutoRedeemer. Matches the batch polymarket.com signs for the feature.
+// Idempotent, and permanent until the wallet revokes the operators.
+func BuildAutoRedeemApprovalCalls() []DepositWalletCall {
+	return buildApprovalCalls(contracts.AutoRedeemApprovals())
+}
+
+// BuildAutoRedeemApprovalCallsJSON mirrors BuildApprovalCallsJSON for the
+// auto-redeem approval set so a CLI dry-run path can print the calldata
+// without signing.
+func BuildAutoRedeemApprovalCallsJSON() (string, error) {
+	raw, err := marshalCalls(BuildAutoRedeemApprovalCalls())
+	if err != nil {
+		return "", err
 	}
+	return string(raw), nil
+}
+
+func buildApprovalCalls(approvals []contracts.Approval) []DepositWalletCall {
+	calls := make([]DepositWalletCall, 0, len(approvals))
+	for _, approval := range approvals {
+		switch approval.Kind {
+		case contracts.ApprovalERC20Approve:
+			calls = append(calls, buildApproveCall(approval.Token, approval.Spender))
+		case contracts.ApprovalERC1155ForAll:
+			calls = append(calls, buildSetApprovalForAllCall(approval.Token, approval.Spender))
+		}
+	}
+	return calls
 }
 
 // BuildEnableTradingApprovalCallsJSON mirrors BuildApprovalCallsJSON for the

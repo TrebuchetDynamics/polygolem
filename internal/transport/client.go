@@ -12,6 +12,7 @@ import (
 
 	"github.com/TrebuchetDynamics/polygolem/internal/errors"
 	"github.com/TrebuchetDynamics/polygolem/internal/telemetry"
+	"github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
 )
 
 // Config holds transport configuration.
@@ -92,7 +93,7 @@ func (c *Client) GetRawWithHeaders(ctx context.Context, path string, headers map
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("HTTP %d %s: %s", resp.StatusCode, url, string(raw))
+		return nil, normalizeHTTPError(url, resp.StatusCode, raw)
 	}
 	return raw, nil
 }
@@ -123,7 +124,7 @@ func (c *Client) GetRawWithHeadersStatus(ctx context.Context, path string, heade
 		return nil, resp.StatusCode, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, resp.StatusCode, fmt.Errorf("HTTP %d %s: %s", resp.StatusCode, url, string(raw))
+		return nil, resp.StatusCode, normalizeHTTPError(url, resp.StatusCode, raw)
 	}
 	return raw, resp.StatusCode, nil
 }
@@ -223,24 +224,23 @@ func (c *Client) doWithHeaders(ctx context.Context, method, path string, body in
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests {
-			// Drain and close so the connection can be reused before retrying.
-			_, _ = io.Copy(io.Discard, resp.Body)
+			respBody, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
-			lastErr = errors.WithHTTP(errors.CodeRateLimited, "rate limited", resp.StatusCode)
+			lastErr = normalizeHTTPError(url, resp.StatusCode, respBody)
 			continue
 		}
 
 		if resp.StatusCode >= 500 {
 			respBody, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
-			lastErr = errors.WithHTTP(errors.CodeConnectionFailed, fmt.Sprintf("server error: %s", string(respBody)), resp.StatusCode)
+			lastErr = normalizeHTTPError(url, resp.StatusCode, respBody)
 			continue
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
 			respBody, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
-			return fmt.Errorf("HTTP %d %s: %s", resp.StatusCode, url, string(respBody))
+			return normalizeHTTPError(url, resp.StatusCode, respBody)
 		}
 
 		if result != nil {
@@ -260,6 +260,18 @@ func (c *Client) doWithHeaders(ctx context.Context, method, path string, body in
 		c.config.Telemetry.Request(ctx, method, path, 0, time.Since(start), lastErr)
 	}
 	return lastErr
+}
+
+func normalizeHTTPError(url string, status int, body []byte) error {
+	message := strings.TrimSpace(string(body))
+	if message == "" {
+		message = http.StatusText(status)
+	}
+	return polyerrors.Normalize(polyerrors.Input{
+		Source:     url,
+		HTTPStatus: status,
+		Message:    message,
+	})
 }
 
 func (c *Client) retryMax(method string) int {

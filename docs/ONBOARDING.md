@@ -21,10 +21,10 @@ expected. Polygolem derives the corresponding deposit wallet separately.
 ## Standard Headless Flow
 
 ```bash
-export POLYMARKET_PRIVATE_KEY="0x..."
+export SIGNER_PRIVATE_KEY="0x..."
 
 # 1. Deposit wallet deploy + relayer auth + approvals + UI Enable Trading signs + funding.
-polygolem deposit-wallet onboard --fund-amount 0.71
+polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
 
 # 2. Sync CLOB cache and verify readiness.
 polygolem clob update-balance --asset-type collateral
@@ -103,7 +103,7 @@ data, approval calls, and live-submission safety rules.
 
 1. Fetches a SIWE nonce from Gamma.
 2. Builds the same message polymarket.com displays.
-3. Signs it locally with the EOA from `POLYMARKET_PRIVATE_KEY`.
+3. Signs it locally with the EOA from `SIGNER_PRIVATE_KEY`.
 4. Exchanges the signature for a Polymarket session cookie.
 5. Registers the EOA + maker profile for signature type 3 by default.
 6. Mints V2 relayer credentials and writes them to a 0600 env file.
@@ -130,7 +130,8 @@ the SIWE message. That distinction is intentional.
 
 ## Prerequisites
 
-- `POLYMARKET_PRIVATE_KEY` - Polygon EOA private key, 0x-prefixed.
+- `SIGNER_PRIVATE_KEY` - Polygon EOA private key, 0x-prefixed. Legacy
+  `POLYMARKET_PRIVATE_KEY` is still accepted as a fallback.
 - pUSD in the EOA if you plan to fund the deposit wallet.
 - A little POL for the one ERC-20 funding transfer.
 - Relayer credentials are optional for live wallet commands. If
@@ -138,9 +139,9 @@ the SIWE message. That distinction is intentional.
   in a Polygolem env file, `deposit-wallet onboard`, `deploy`, `approve`,
   `approve-adapters`, `nonce`, `status`, `enable-trading`, and live `redeem`
   mint and persist V2 relayer credentials automatically from
-  `POLYMARKET_PRIVATE_KEY`.
+  `SIGNER_PRIVATE_KEY`.
 - CLOB L2 credentials are optional for the normal trading path. Polygolem can
-  derive or create the EOA-bound CLOB key from `POLYMARKET_PRIVATE_KEY` when
+  derive or create the EOA-bound CLOB key from `SIGNER_PRIVATE_KEY` when
   needed. Use `builder auto`, `clob create-api-key`, or env when you want
   pre-provisioned credentials for probes and automation.
 

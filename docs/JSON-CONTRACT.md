@@ -115,7 +115,7 @@ codes are open (new codes can be added without a `version` bump).
 
 | Code | Description |
 |---|---|
-| `AUTH_PRIVATE_KEY_MISSING` | `POLYMARKET_PRIVATE_KEY` is required by the command but not set or empty. |
+| `AUTH_PRIVATE_KEY_MISSING` | `SIGNER_PRIVATE_KEY` is required by the command but not set or empty. |
 | `AUTH_BUILDER_MISSING` | One or more of `POLYMARKET_BUILDER_API_KEY` / `_SECRET` / `_PASSPHRASE` is required but not set. |
 | `AUTH_SIG_INVALID` | A signature (EIP-712, POLY_1271, or ERC-7739) failed local validation before submission. |
 | `AUTH_API_KEY_REJECTED` | The CLOB API rejected an L2 API key (expired, revoked, or wrong account). |

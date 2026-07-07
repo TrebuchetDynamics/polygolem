@@ -187,13 +187,44 @@ func classifyCommandError(err error) output.Error {
 	}
 
 	msg := err.Error()
+	if isNetworkCommandError(msg) {
+		return output.Error{
+			Code:     "NETWORK_UPSTREAM_UNREACHABLE",
+			Category: "network",
+			Message:  msg,
+			Hint:     "Retry after checking network connectivity and configured Polymarket endpoints.",
+			Details:  map[string]string{"source": "transport"},
+		}
+	}
+	if isChainCommandError(msg) {
+		return output.Error{
+			Code:     "CHAIN_RPC_ERROR",
+			Category: "chain",
+			Message:  msg,
+			Hint:     "Check Polygon RPC status, wallet balances, allowances, nonce, and transaction preconditions.",
+			Details:  map[string]string{"source": "polygon_rpc"},
+		}
+	}
+	if httpStatus, ok := extractHTTPStatus(msg); ok {
+		return output.Error{
+			Code:     "PROTOCOL_UPSTREAM_HTTP_ERROR",
+			Category: "protocol",
+			Message:  msg,
+			Hint:     "Inspect error.details.upstream_status and verify the upstream CLOB/relayer/API preconditions.",
+			Details: map[string]string{
+				"source":          upstreamSourceFromMessage(msg),
+				"upstream_status": httpStatus,
+			},
+		}
+	}
+
 	switch {
-	case strings.Contains(msg, "POLYMARKET_PRIVATE_KEY is required"):
+	case strings.Contains(msg, "SIGNER_PRIVATE_KEY is required") || strings.Contains(msg, "POLYMARKET_PRIVATE_KEY is required"):
 		return output.Error{
 			Code:     "AUTH_PRIVATE_KEY_MISSING",
 			Category: "auth",
-			Message:  "POLYMARKET_PRIVATE_KEY is required.",
-			Hint:     "Set POLYMARKET_PRIVATE_KEY in the environment before running authenticated commands.",
+			Message:  "SIGNER_PRIVATE_KEY is required.",
+			Hint:     "Set SIGNER_PRIVATE_KEY in the environment before running authenticated commands.",
 		}
 	case strings.Contains(msg, "builder credentials not configured"):
 		return output.Error{
@@ -232,6 +263,82 @@ func classifyCommandError(err error) output.Error {
 			Category: "internal",
 			Message:  msg,
 		}
+	}
+}
+
+func isNetworkCommandError(msg string) bool {
+	lower := strings.ToLower(msg)
+	for _, needle := range []string{
+		"context deadline exceeded",
+		"client.timeout",
+		"connection refused",
+		"no such host",
+		"network is unreachable",
+		"tls handshake timeout",
+		"i/o timeout",
+	} {
+		if strings.Contains(lower, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func isChainCommandError(msg string) bool {
+	lower := strings.ToLower(msg)
+	for _, needle := range []string{
+		"execution reverted",
+		"insufficient funds",
+		"nonce too low",
+		"replacement transaction underpriced",
+		"transaction underpriced",
+		"eth_call",
+		"eth_sendrawtransaction",
+		"erc20 allowance",
+	} {
+		if strings.Contains(lower, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func extractHTTPStatus(msg string) (string, bool) {
+	fields := strings.FieldsFunc(msg, func(r rune) bool {
+		return r == ' ' || r == ':' || r == '(' || r == ')' || r == ',' || r == ';'
+	})
+	for i, field := range fields {
+		if strings.EqualFold(field, "HTTP") && i+1 < len(fields) {
+			status := strings.TrimSpace(fields[i+1])
+			if len(status) == 3 {
+				if _, err := strconv.Atoi(status); err == nil {
+					return status, true
+				}
+			}
+		}
+		if strings.HasPrefix(strings.ToLower(field), "http") && len(field) >= 7 {
+			status := field[len(field)-3:]
+			if _, err := strconv.Atoi(status); err == nil {
+				return status, true
+			}
+		}
+	}
+	return "", false
+}
+
+func upstreamSourceFromMessage(msg string) string {
+	lower := strings.ToLower(msg)
+	switch {
+	case strings.Contains(lower, "relayer"):
+		return "relayer"
+	case strings.Contains(lower, "clob"):
+		return "clob"
+	case strings.Contains(lower, "gamma"):
+		return "gamma"
+	case strings.Contains(lower, "data"):
+		return "data_api"
+	default:
+		return "upstream_http"
 	}
 }
 

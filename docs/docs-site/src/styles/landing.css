@@ -58,6 +58,8 @@ section { padding: 5rem 0 4rem; border-bottom: 1px solid var(--border); }
 section:last-of-type { border-bottom: none; }
 
 .hero { padding-top: 7rem; }
+.compact-hero { padding-top: 5rem; padding-bottom: 3rem; }
+.compact-section { padding: 3rem 0 2.5rem; }
 .eyebrow { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 1rem; }
 .lede { font-size: 1.15rem; color: var(--fg-muted); max-width: 720px; }
 .proof { font-size: 0.95rem; color: var(--fg-dim); font-style: italic; max-width: 720px; margin-bottom: 2rem; }
@@ -85,6 +87,8 @@ section:last-of-type { border-bottom: none; }
 .trust-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
 .trust-card h3 { color: var(--fg); }
 .trust-card p { color: var(--fg-muted); font-size: 0.92rem; margin: 0; }
+.path-card { display: block; color: var(--fg); transition: border-color 0.15s, transform 0.15s; }
+.path-card:hover { border-color: var(--accent); text-decoration: none; transform: translateY(-1px); }
 
 .callout {
   background: var(--bg-elev);

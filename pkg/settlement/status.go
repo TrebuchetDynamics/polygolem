@@ -58,7 +58,7 @@ type Readiness struct {
 // approve before split/merge/redeem can work in both binary and neg-risk
 // markets.
 func RequiredAdapters() []string {
-	return []string{contracts.CtfCollateralAdapter, contracts.NegRiskCtfCollateralAdapter}
+	return contracts.SettlementAdapters()
 }
 
 // CheckReadiness performs the settlement readiness gate without signing or

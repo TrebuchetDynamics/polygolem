@@ -1,6 +1,7 @@
 package cryptomarkets
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -13,10 +14,10 @@ func TestQueryBuildsAssetIntervalAndDefaultsToCrypto(t *testing.T) {
 		filter Filter
 		want   string
 	}{
-		{name: "asset interval", filter: Filter{Asset: "BTC", Interval: "5m"}, want: "BTC 5m"},
-		{name: "trimmed asset interval", filter: Filter{Asset: " ETH ", Interval: " 15m "}, want: "ETH 15m"},
+		{name: "asset interval", filter: Filter{Asset: "BTC", Interval: "5m"}, want: "bitcoin 5m updown"},
+		{name: "trimmed asset interval", filter: Filter{Asset: " ETH ", Interval: " 15m "}, want: "ethereum 15m updown"},
 		{name: "asset only", filter: Filter{Asset: "SOL"}, want: "SOL"},
-		{name: "interval only", filter: Filter{Interval: "daily"}, want: "daily"},
+		{name: "interval only", filter: Filter{Interval: "daily"}, want: "daily updown"},
 		{name: "empty", filter: Filter{}, want: "crypto"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -24,6 +25,35 @@ func TestQueryBuildsAssetIntervalAndDefaultsToCrypto(t *testing.T) {
 				t.Fatalf("Query(%+v)=%q, want %q", tc.filter, got, tc.want)
 			}
 		})
+	}
+}
+
+type fakeSearcher struct {
+	params *polytypes.SearchParams
+	resp   *polytypes.SearchResponse
+}
+
+func (f *fakeSearcher) Search(ctx context.Context, params *polytypes.SearchParams) (*polytypes.SearchResponse, error) {
+	f.params = params
+	return f.resp, nil
+}
+
+func TestDiscoverSearchesSelectsAndFlattensTokens(t *testing.T) {
+	searcher := &fakeSearcher{resp: &polytypes.SearchResponse{Events: []polytypes.Event{{
+		Title:   "BTC 5m event",
+		Active:  true,
+		Markets: []polytypes.Market{{Question: "BTC up in 5m?", Active: true, ClobTokenIDs: `["up","down"]`}},
+	}}}}
+
+	query, candidates, err := Discover(context.Background(), searcher, Filter{Asset: "BTC", Interval: "5m"}, 7)
+	if err != nil {
+		t.Fatalf("Discover returned error: %v", err)
+	}
+	if query != "bitcoin 5m updown" || searcher.params == nil || *searcher.params.LimitPerType != 7 {
+		t.Fatalf("unexpected query/search params: query=%q params=%+v", query, searcher.params)
+	}
+	if want := []string{"up", "down"}; !reflect.DeepEqual(TokenIDs(candidates), want) {
+		t.Fatalf("TokenIDs=%v, want %v", TokenIDs(candidates), want)
 	}
 }
 
@@ -106,6 +136,27 @@ func TestSelectFiltersActiveMarketsByAssetAndIntervalAndParsesTokens(t *testing.
 	}
 	if want := []string{"btc-raw-token"}; !reflect.DeepEqual(got[1].TokenIDs, want) {
 		t.Fatalf("second tokens=%v, want %v", got[1].TokenIDs, want)
+	}
+}
+
+func TestSelectMatchesIntervalInSlug(t *testing.T) {
+	resp := &polytypes.SearchResponse{Events: []polytypes.Event{{
+		ID:     "event-btc",
+		Title:  "Bitcoin Up or Down - June 27, 11:50PM-11:55PM ET",
+		Slug:   "btc-updown-5m-1782618600",
+		Active: true,
+		Markets: []polytypes.Market{{
+			ID:           "market-btc",
+			Slug:         "btc-updown-5m-1782618600",
+			Question:     "Bitcoin Up or Down - June 27, 11:50PM-11:55PM ET",
+			Active:       true,
+			ClobTokenIDs: `["up","down"]`,
+		}},
+	}}}
+
+	got := Select(resp, Filter{Asset: "BTC", Interval: "5m"})
+	if len(got) != 1 {
+		t.Fatalf("Select returned %d candidates, want 1", len(got))
 	}
 }
 

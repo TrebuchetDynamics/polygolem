@@ -75,13 +75,13 @@ func TestRunnerBuildsQueryAndFiltersActiveCryptoMarkets(t *testing.T) {
 	if searcher.params == nil {
 		t.Fatal("Search was not called")
 	}
-	if searcher.params.Q != "btc 5m" {
-		t.Fatalf("query=%q, want btc 5m", searcher.params.Q)
+	if searcher.params.Q != "bitcoin 5m updown" {
+		t.Fatalf("query=%q, want bitcoin 5m updown", searcher.params.Q)
 	}
 	if searcher.params.LimitPerType == nil || *searcher.params.LimitPerType != 10 {
 		t.Fatalf("LimitPerType=%v, want 10", searcher.params.LimitPerType)
 	}
-	if got.Query != "btc 5m" || got.Count != 1 {
+	if got.Query != "bitcoin 5m updown" || got.Count != 1 {
 		t.Fatalf("unexpected response summary: %+v", got)
 	}
 	if len(got.Markets) != 1 {

@@ -8,10 +8,10 @@ description: Generated polygolem command tree for Gamma discovery, CLOB trading,
 ## Command Tree
 
 ```text
-polygolem - Safe Polymarket SDK and CLI for Go
+polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
   auth - Inspect authentication readiness
     clob-probe - Probe configured CLOB L2 credentials with read-only calls
-    export-key - Display private key for wallet import (use with care)
+    export-key - HIGH RISK: display private key for wallet import
     headless-onboard - Run SIWE login + mint V2 Relayer API Key
     login - Sign in to Polymarket headlessly and mint V2 relayer credentials
     status - Check authentication readiness and API key status
@@ -64,6 +64,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
   deposit-wallet - Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
     approve - Build and optionally submit approval calls for the deposit wallet
     approve-adapters - Approve V2 collateral adapters for redeem (one-shot per wallet)
+    approve-auto-redeem - Enable Get Paid Instantly auto-redemption (one-shot per wallet)
     batch - Sign and submit a deposit wallet WALLET batch
     deploy - Deploy the deposit wallet via relayer WALLET-CREATE
     derive - Derive the deterministic deposit wallet address
@@ -80,7 +81,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
   discover - Market discovery via Polymarket Gamma API
     comments - List or fetch public Gamma comments
     crypto - Discover active crypto prediction markets
-    crypto-5m - List all 7 active 5-minute crypto markets
+    crypto-5m - List active 5-minute crypto markets
     crypto-window - Resolve the current crypto prediction window deterministically
     enrich - Enrich market with CLOB data
     market - Get market details
@@ -89,6 +90,8 @@ polygolem - Safe Polymarket SDK and CLI for Go
     search - Search markets and events
     series - List or fetch Gamma series
     tags - List or fetch Gamma tags/categories
+  drift - Check read-only upstream Polymarket drift
+    llms - Check a saved docs.polymarket.com llms.txt index
   events - List Polymarket events
     list - List events
   health - Check Gamma and CLOB API reachability
@@ -98,7 +101,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
     market-flow - Summarize read-only market holder, trade, and open-interest flow
     wallet - Build a read-only wallet intelligence dossier
   live - Inspect live gate status
-    status
+    status - Inspect live gate status
   marketdata - Live CLOB orderbook and share-price snapshots
     crypto - Get live marketdata snapshots for crypto markets
     live - Stream enriched CLOB market-data snapshots
@@ -139,6 +142,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
 | `polygolem deposit-wallet` | Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status) |
 | `polygolem diag` | Print redacted local diagnostics |
 | `polygolem discover` | Market discovery via Polymarket Gamma API |
+| `polygolem drift` | Check read-only upstream Polymarket drift |
 | `polygolem events` | List Polymarket events |
 | `polygolem health` | Check Gamma and CLOB API reachability |
 | `polygolem intel` | Read-only wallet intelligence |

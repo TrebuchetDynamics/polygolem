@@ -48,6 +48,10 @@ _Avoid_: Co-positioning signal, inferred cluster, visual guess
 
 ### CLOB Auth & Orders
 
+**Polymarket API Interface**:
+Polygolem is an interface into Polymarket APIs and contracts. It has first-class support for wallet setup, approvals, signing primitives, and user-directed order transactions. It does not choose markets, sides, prices, sizes, timing, or whether to trade.
+_Avoid_: Bot, strategy engine, autonomous trader, decision maker, trading decisions
+
 **EOA-Bound CLOB Auth**:
 Polygolem's validated CLOB L1/L2 authentication path: `POLY_ADDRESS` is the EOA and `POLY_SIGNATURE` is a standard 65-byte EOA ECDSA signature. The deposit wallet identity is carried by the order payload (`maker`, `signer`, `signatureType=3`), not by ClobAuth headers.
 _Avoid_: Deposit-wallet-owned API key, deposit-wallet-bound ClobAuth, ERC-7739 wrapped auth
@@ -65,8 +69,16 @@ Any operation that could move funds or mutate protocol state must ship through a
 _Avoid_: Ungated mutating endpoints, live-first implementation
 
 **Read-Only by Default**:
-Polygolem requires no credentials for market data, discovery, streaming, orderbook reads, data analytics, health checks, and diagnostics. All authenticated paths are opt-in through `POLYMARKET_PRIVATE_KEY`.
-_Avoid_: Authenticated-default mode, credential-required discovery
+Polygolem requires no credentials for market data, discovery, streaming, orderbook reads, data analytics, health checks, and diagnostics. All authenticated paths are opt-in through `SIGNER_PRIVATE_KEY` (legacy `POLYMARKET_PRIVATE_KEY` is accepted as a fallback).
+_Avoid_: Authenticated-default mode, credential-required discovery, POLYMARKET_PRIVATE_KEY as the primary credential name
+
+**Capability Map**:
+The typed `pkg/capabilities` metadata describing each Polymarket surface Polygolem exposes: service, auth requirement, wallet mode, and read-only/mutating classification. It is the single source of truth for surface/auth/wallet-mode/version claims; `docs/COMPATIBILITY.md` is generated from it rather than hand-written.
+_Avoid_: Feature flags, compatibility table (for the package itself), hand-maintained surface list, capability meaning CLI permissions
+
+**Reconciliation Report**:
+A read-only operator artifact that compares evidence from CLOB order records, Data API positions/trades, relayer transaction state, and optional on-chain `OrderFilled` rows. It labels observed status and source disagreement; it does not declare economic truth unless a source authority is named.
+_Avoid_: Truth report, settlement proof, guaranteed PnL, hidden source merge
 
 ## Example dialogue — Wallet Intelligence
 

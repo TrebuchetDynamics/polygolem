@@ -20,6 +20,13 @@ func newOrderbookCommand(runner orderbookRunner) *cobra.Command {
 	var tokenID string
 
 	cmd := commandGroup("orderbook", "Read CLOB order book data")
+	cmd.Long = `Read the live CLOB order book for a token. Read-only; no credentials.
+
+Fetch bids/asks, best bid/ask, midpoint, and spread for a token id (get one from
+'polygolem discover'). For a continuously updated view, see 'polygolem marketdata
+live'; for the raw event stream, see 'polygolem stream'.`
+	cmd.Example = `  polygolem discover search --query "Will BTC" --limit 1   # find a token id
+  polygolem orderbook get --token-id <id> --json`
 
 	for _, spec := range []struct {
 		use, short string

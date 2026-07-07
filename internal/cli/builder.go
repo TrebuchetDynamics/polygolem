@@ -75,7 +75,7 @@ func newBuilderAutoCommand(jsonOut bool) *cobra.Command {
 		Use:   "auto",
 		Short: "Mint CLOB L2 creds via ClobAuth signature",
 		Long: `Signs the canonical ClobAuth EIP-712 message with the EOA loaded from
-POLYMARKET_PRIVATE_KEY, posts it to /auth/api-key, and persists the
+SIGNER_PRIVATE_KEY, posts it to /auth/api-key, and persists the
 returned {apiKey, secret, passphrase} to a 0600 env file.
 
 These are CLOB L2 trading creds — they authenticate book/balance reads,
@@ -90,9 +90,9 @@ The endpoint is idempotent per EOA. Use 'builder onboard' for the
 manual browser-capture flow.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			privateKey := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-			if privateKey == "" {
-				return errors.New("POLYMARKET_PRIVATE_KEY is required")
+			privateKey, err := privateKeyFromEnv()
+			if err != nil {
+				return err
 			}
 			target := envFile
 			if target == "" {
@@ -193,7 +193,7 @@ skip the network step (offline use only).`,
 			fmt.Fprintf(stderr, "Builder credentials are required for the deposit-wallet flow.\n")
 			fmt.Fprintf(stderr, "Create them once at:\n  %s\n\n", builderURLPath)
 			fmt.Fprintf(stderr, "Steps:\n")
-			fmt.Fprintf(stderr, "  1. Connect your Polymarket wallet (use the EOA tied to POLYMARKET_PRIVATE_KEY).\n")
+			fmt.Fprintf(stderr, "  1. Connect your Polymarket wallet (use the EOA tied to SIGNER_PRIVATE_KEY).\n")
 			fmt.Fprintf(stderr, "  2. Click \"Create Builder API Key\".\n")
 			fmt.Fprintf(stderr, "  3. Copy the three values shown — the secret won't be displayed again.\n\n")
 

@@ -36,7 +36,7 @@ func TestRunnerUsesConfiguredCredentialsForReadOnlyProbe(t *testing.T) {
 	if !strings.EqualFold(result.EOAAddress, "0x2c7536E3605D9C16a7a3D7b1898e529396a65c23") {
 		t.Fatalf("eoaAddress=%q", result.EOAAddress)
 	}
-	if !strings.EqualFold(result.DepositWallet, "0xfd5041047be8c192c725a66228f141196fa3cf9c") {
+	if !strings.EqualFold(result.DepositWallet, "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1") {
 		t.Fatalf("depositWallet=%q", result.DepositWallet)
 	}
 	if client.setKey.Key != "configured-key" {

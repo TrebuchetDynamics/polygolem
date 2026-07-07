@@ -13,11 +13,13 @@ import (
 	"time"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/auth"
-	"github.com/TrebuchetDynamics/polygolem/internal/gamma"
+	"github.com/TrebuchetDynamics/polygolem/internal/livegate"
 	"github.com/TrebuchetDynamics/polygolem/internal/relayer"
 	"github.com/TrebuchetDynamics/polygolem/internal/rpc"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletfunding"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletreads"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletsettlement"
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/relayerauth"
 	sdkclob "github.com/TrebuchetDynamics/polygolem/pkg/clob"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 	"github.com/TrebuchetDynamics/polygolem/pkg/data"
@@ -56,6 +58,20 @@ const defaultRelayerURL = "https://relayer-v2.polymarket.com"
 
 func depositWalletCmd(jsonOut bool) *cobra.Command {
 	cmd := commandGroup("deposit-wallet", "Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)")
+	cmd.Long = `Deposit-wallet lifecycle for Polymarket V2 (POLY_1271) trading.
+
+Polymarket V2 requires a deposit wallet as the order maker/signer; your EOA is the
+signing key. The lifecycle is: derive -> deploy -> approve -> fund -> trade -> redeem.
+
+Read-only: derive, status, nonce, redeemable, settlement-status.
+
+Live-money (signs and submits real transactions): deploy, approve, approve-adapters,
+batch, fund, onboard, redeem. Each of these requires a typed --confirm token so a
+live submission cannot fire from a single mistyped flag — see docs/SAFETY.md for the
+token per command.
+
+Quickest path (deploy + approve + enable trading + fund):
+  polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET`
 
 	cmd.AddCommand(depositWalletDeriveCmd(jsonOut))
 	cmd.AddCommand(depositWalletDeployCmd(jsonOut))
@@ -64,6 +80,7 @@ func depositWalletCmd(jsonOut bool) *cobra.Command {
 	cmd.AddCommand(depositWalletBatchCmd(jsonOut))
 	cmd.AddCommand(depositWalletApproveCmd(jsonOut))
 	cmd.AddCommand(depositWalletApproveAdaptersCmd(jsonOut))
+	cmd.AddCommand(depositWalletApproveAutoRedeemCmd(jsonOut))
 	cmd.AddCommand(depositWalletEnableTradingCmd(jsonOut))
 	cmd.AddCommand(depositWalletSettlementStatusCmd(jsonOut))
 	cmd.AddCommand(depositWalletRedeemableCmd(jsonOut))
@@ -246,6 +263,7 @@ func depositWalletBatchCmd(jsonOut bool) *cobra.Command {
 	var walletAddress string
 	var nonce string
 	var deadline int64
+	var confirm string
 	cmd := &cobra.Command{
 		Use:   "batch",
 		Short: "Sign and submit a deposit wallet WALLET batch",
@@ -254,10 +272,13 @@ func depositWalletBatchCmd(jsonOut bool) *cobra.Command {
 The --calls-json must be a JSON array of DepositWalletCall objects:
   [{"target":"0x...","value":"0","data":"0x..."}, ...]
 
-Use --auto-approve to build and submit the standard 6-call approval batch
-(pUSD + CTF for all 3 V2 exchange spenders).`,
+This command submits real transactions from the deposit wallet: it requires
+--confirm SUBMIT_BATCH to authorize the live-money WALLET batch.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := livegate.RequireConfirm(confirm, "SUBMIT_BATCH"); err != nil {
+				return err
+			}
 			key, err := requirePrivateKey()
 			if err != nil {
 				return err
@@ -323,18 +344,21 @@ Use --auto-approve to build and submit the standard 6-call approval batch
 	cmd.Flags().StringVar(&walletAddress, "wallet", "", "deposit wallet address (default: derived from EOA)")
 	cmd.Flags().StringVar(&nonce, "nonce", "", "WALLET nonce (default: fetched from relayer)")
 	cmd.Flags().Int64Var(&deadline, "deadline", relayer.MinWalletBatchDeadlineSeconds, "deadline seconds from now")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'SUBMIT_BATCH'")
 	return cmd
 }
 
 func depositWalletApproveCmd(jsonOut bool) *cobra.Command {
 	var autoApprove bool
+	var confirm string
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "Build and optionally submit approval calls for the deposit wallet",
 		Long: `Build the standard 6-call approval batch (pUSD + CTF for all 3 V2 exchange spenders).
 
 Without --submit, prints the calldata JSON for review.
-With --submit, signs and submits the WALLET batch via the relayer.`,
+With --submit, the operator must also pass --confirm APPROVE_TRADING to
+authorize the live-money WALLET batch.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			callsJSON, err := relayer.BuildApprovalCallsJSON()
@@ -345,8 +369,11 @@ With --submit, signs and submits the WALLET batch via the relayer.`,
 				raw := json.RawMessage(callsJSON)
 				return printJSON(cmd, map[string]interface{}{
 					"calls": raw,
-					"note":  "review calldata, then run with --submit to sign and send",
+					"note":  "review calldata, then run with --submit --confirm APPROVE_TRADING to sign and send",
 				})
+			}
+			if err := livegate.RequireConfirm(confirm, "APPROVE_TRADING"); err != nil {
+				return err
 			}
 			key, err := requirePrivateKey()
 			if err != nil {
@@ -390,7 +417,8 @@ With --submit, signs and submits the WALLET batch via the relayer.`,
 			})
 		},
 	}
-	cmd.Flags().BoolVar(&autoApprove, "submit", false, "sign and submit the approval batch")
+	cmd.Flags().BoolVar(&autoApprove, "submit", false, "sign and submit the approval batch (requires --confirm APPROVE_TRADING)")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'APPROVE_TRADING' when --submit is set")
 	return cmd
 }
 
@@ -440,8 +468,8 @@ V2 deposit-wallet redeem must route through the collateral adapters.`,
 					"note":     "review calldata, then run with --submit --confirm APPROVE_ADAPTERS to sign and send",
 				})
 			}
-			if confirm != "APPROVE_ADAPTERS" {
-				return fmt.Errorf("--submit requires --confirm APPROVE_ADAPTERS (got %q)", confirm)
+			if err := livegate.RequireConfirm(confirm, "APPROVE_ADAPTERS"); err != nil {
+				return err
 			}
 			key, err := requirePrivateKey()
 			if err != nil {
@@ -496,6 +524,103 @@ V2 deposit-wallet redeem must route through the collateral adapters.`,
 	return cmd
 }
 
+// depositWalletApproveAutoRedeemCmd enables Polymarket's "Get Paid
+// Instantly" auto-redemption for the deposit wallet. It submits the 3-call
+// setApprovalForAll batch polymarket.com signs for the feature: CTF ->
+// CtfAutoRedeem, CTF -> AutoRedeemer, PositionManager -> AutoRedeemer.
+//
+// Live-money safety: dry-run by default (prints calldata only). To submit,
+// the operator must pass BOTH --submit AND --confirm APPROVE_AUTO_REDEEM.
+func depositWalletApproveAutoRedeemCmd(jsonOut bool) *cobra.Command {
+	var submit bool
+	var confirm string
+	cmd := &cobra.Command{
+		Use:   "approve-auto-redeem",
+		Short: "Enable Get Paid Instantly auto-redemption (one-shot per wallet)",
+		Long: `Submits the 3-call auto-redeem approval batch (CTF setApprovalForAll for
+CtfAutoRedeem and AutoRedeemer, plus PositionManager setApprovalForAll for
+AutoRedeemer). This is Polymarket's "Get Paid Instantly" one-time approval:
+once mined, winning positions are redeemed automatically after resolution
+and the payout lands in the wallet balance with no manual redeem step.
+
+Auto-redemption starts after the wallet's next trade; positions that
+already resolved before enabling must be redeemed manually one last time
+(see deposit-wallet redeem). The grant stays on permanently until the
+wallet revokes the operators. Idempotent.
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm APPROVE_AUTO_REDEEM to
+authorize the live-money WALLET batch.`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			callsJSON, err := relayer.BuildAutoRedeemApprovalCallsJSON()
+			if err != nil {
+				return fmt.Errorf("build auto-redeem approval calls: %w", err)
+			}
+			if !submit {
+				raw := json.RawMessage(callsJSON)
+				return printJSON(cmd, map[string]interface{}{
+					"calls":     raw,
+					"operators": []string{contracts.CtfAutoRedeem, contracts.AutoRedeemer},
+					"note":      "review calldata, then run with --submit --confirm APPROVE_AUTO_REDEEM to sign and send",
+				})
+			}
+			if err := livegate.RequireConfirm(confirm, "APPROVE_AUTO_REDEEM"); err != nil {
+				return err
+			}
+			key, err := requirePrivateKey()
+			if err != nil {
+				return err
+			}
+			signer, err := auth.NewPrivateKeySigner(key, 137)
+			if err != nil {
+				return fmt.Errorf("init signer: %w", err)
+			}
+			owner := signer.Address()
+			walletAddress, err := auth.MakerAddressForSignatureType(owner, 137, 3)
+			if err != nil {
+				return fmt.Errorf("derive deposit wallet: %w", err)
+			}
+			var calls []relayer.DepositWalletCall
+			if err := json.Unmarshal([]byte(callsJSON), &calls); err != nil {
+				return fmt.Errorf("parse auto-redeem approval calls: %w", err)
+			}
+
+			rc, _, err := relayerClientForAutomation(cmd.Context(), cmd.ErrOrStderr(), key)
+			if err != nil {
+				return fmt.Errorf("init relayer client: %w", err)
+			}
+			nonce, err := rc.GetNonce(cmd.Context(), owner)
+			if err != nil {
+				return fmt.Errorf("fetch nonce: %w", err)
+			}
+			dl := relayer.BuildDeadline(240)
+			sig, err := relayer.SignWalletBatch(signer, walletAddress, nonce, dl, calls)
+			if err != nil {
+				return fmt.Errorf("sign batch: %w", err)
+			}
+			tx, err := rc.SubmitWalletBatch(cmd.Context(), owner, walletAddress, nonce, sig, dl, calls)
+			if err != nil {
+				if errors.Is(err, relayer.ErrRelayerAllowlistBlocked) {
+					return printJSON(cmd, upstreamRelayerBlockJSON(walletAddress, "approve-auto-redeem", err))
+				}
+				return fmt.Errorf("submit auto-redeem approval batch: %w", err)
+			}
+			return printJSON(cmd, map[string]interface{}{
+				"transactionID": tx.TransactionID,
+				"state":         tx.State,
+				"wallet":        walletAddress,
+				"approvals":     len(calls),
+				"operators":     []string{contracts.CtfAutoRedeem, contracts.AutoRedeemer},
+				"path":          "relayer",
+			})
+		},
+	}
+	cmd.Flags().BoolVar(&submit, "submit", false, "sign and submit the auto-redeem approval batch (requires --confirm APPROVE_AUTO_REDEEM)")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'APPROVE_AUTO_REDEEM' when --submit is set")
+	return cmd
+}
+
 func depositWalletEnableTradingCmd(jsonOut bool) *cobra.Command {
 	var dryRun bool
 	cmd := &cobra.Command{
@@ -504,8 +629,10 @@ func depositWalletEnableTradingCmd(jsonOut bool) *cobra.Command {
 		Long: `Signs the same two prompts polymarket.com shows after deposit-wallet deploy:
 
 1. ClobAuth — EOA-signed message to create or derive CLOB API keys.
-2. Approve Tokens — DepositWallet.Batch signing for the 2-call UI token
-   approval batch: pUSD -> CTF and USDC.e -> CollateralOnramp.
+2. Approve Tokens — DepositWallet.Batch signing for the 6-call UI token
+   approval batch: pUSD -> CTF, USDC.e -> CollateralOnramp, and the Combos
+   grants (pUSD approve + PositionManager setApprovalForAll for both the
+   Combos Router and Combos Exchange).
 
 Use this when the wallet is already deployed but the UI still shows
 "Enable Trading" or "Approve Tokens". If relayer credentials are missing,
@@ -572,39 +699,16 @@ func depositWalletFundCmd(jsonOut bool) *cobra.Command {
 Requires POL for gas on Polygon.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
+			result, err := depositwalletfunding.Fund(cmd.Context(), depositwalletfunding.FundConfig{
+				PrivateKey: requirePrivateKey,
+			}, depositwalletfunding.FundRequest{
+				AmountPUSD: amountPUSD,
+				RPCURL:     rpcURL,
+			})
 			if err != nil {
 				return err
 			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			owner := signer.Address()
-			wallet, err := auth.MakerAddressForSignatureType(owner, 137, 3)
-			if err != nil {
-				return fmt.Errorf("derive deposit wallet: %w", err)
-			}
-			if strings.TrimSpace(amountPUSD) == "" {
-				return fmt.Errorf("--amount is required (pUSD to transfer, e.g. 0.71)")
-			}
-			amountFloat, err := parsePUSDAmount(amountPUSD)
-			if err != nil {
-				return fmt.Errorf("invalid amount: %w", err)
-			}
-			if amountFloat.Sign() <= 0 {
-				return fmt.Errorf("amount must be positive")
-			}
-			txHash, err := rpc.TransferPUSD(cmd.Context(), key, wallet, amountFloat, rpcURL)
-			if err != nil {
-				return fmt.Errorf("transfer pUSD: %w", err)
-			}
-			return printJSON(cmd, map[string]string{
-				"txHash": txHash,
-				"from":   owner,
-				"to":     wallet,
-				"amount": amountPUSD,
-			})
+			return printJSON(cmd, result)
 		},
 	}
 	cmd.Flags().StringVar(&amountPUSD, "amount", "", "pUSD amount to transfer (e.g. 0.71)")
@@ -634,44 +738,17 @@ afterwards to move pUSD into the deposit wallet.
 --max-pol-in caps the POL the router may consume (e.g. "10" for 10 POL).`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			key, err := requirePrivateKey()
+			result, err := depositwalletfunding.Swap(cmd.Context(), depositwalletfunding.SwapConfig{
+				PrivateKey: requirePrivateKey,
+			}, depositwalletfunding.SwapRequest{
+				AmountPUSDOut: amountPUSDOut,
+				MaxPOLIn:      maxPOLIn,
+				RPCURL:        rpcURL,
+			})
 			if err != nil {
 				return err
 			}
-			signer, err := auth.NewPrivateKeySigner(key, 137)
-			if err != nil {
-				return fmt.Errorf("init signer: %w", err)
-			}
-			if strings.TrimSpace(amountPUSDOut) == "" {
-				return fmt.Errorf("--out-pusd is required (pUSD to receive, e.g. 0.72)")
-			}
-			if strings.TrimSpace(maxPOLIn) == "" {
-				return fmt.Errorf("--max-pol-in is required (max POL to spend, e.g. 10)")
-			}
-			outPUSD, err := parsePUSDAmount(amountPUSDOut)
-			if err != nil {
-				return fmt.Errorf("invalid --out-pusd: %w", err)
-			}
-			if outPUSD.Sign() <= 0 {
-				return fmt.Errorf("--out-pusd must be positive")
-			}
-			maxPOLWei, err := parsePOLAmount(maxPOLIn)
-			if err != nil {
-				return fmt.Errorf("invalid --max-pol-in: %w", err)
-			}
-			if maxPOLWei.Sign() <= 0 {
-				return fmt.Errorf("--max-pol-in must be positive")
-			}
-			txHash, err := rpc.SwapPOLForExactPUSD(cmd.Context(), key, outPUSD, maxPOLWei, rpcURL)
-			if err != nil {
-				return fmt.Errorf("swap POL→pUSD: %w", err)
-			}
-			return printJSON(cmd, map[string]string{
-				"txHash":        txHash,
-				"recipient":     signer.Address(),
-				"amountPUSDOut": amountPUSDOut,
-				"maxPOLIn":      maxPOLIn,
-			})
+			return printJSON(cmd, result)
 		},
 	}
 	cmd.Flags().StringVar(&amountPUSDOut, "out-pusd", "", "exact pUSD amount to receive (e.g. 0.72)")
@@ -680,46 +757,12 @@ afterwards to move pUSD into the deposit wallet.
 	return cmd
 }
 
-// parsePOLAmount converts a human POL string (e.g. "10", "0.5") to wei
-// (18-decimal *big.Int).
-func parsePOLAmount(s string) (*big.Int, error) {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil, fmt.Errorf("empty amount")
-	}
-	parts := strings.Split(s, ".")
-	if len(parts) > 2 {
-		return nil, fmt.Errorf("invalid POL amount %q", s)
-	}
-	whole, ok := new(big.Int).SetString(parts[0], 10)
-	if !ok {
-		return nil, fmt.Errorf("invalid integer part: %s", parts[0])
-	}
-	weiPerPOL := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
-	result := new(big.Int).Mul(whole, weiPerPOL)
-	if len(parts) == 2 {
-		frac := parts[1]
-		if len(frac) > 18 {
-			frac = frac[:18]
-		}
-		// pad to 18 digits
-		for len(frac) < 18 {
-			frac += "0"
-		}
-		fracInt, ok := new(big.Int).SetString(frac, 10)
-		if !ok {
-			return nil, fmt.Errorf("invalid fractional part: %s", parts[1])
-		}
-		result.Add(result, fracInt)
-	}
-	return result, nil
-}
-
 func depositWalletOnboardCmd(jsonOut bool) *cobra.Command {
 	var skipDeploy bool
 	var skipApprove bool
 	var skipEnableTrading bool
 	var fundAmount string
+	var confirm string
 	cmd := &cobra.Command{
 		Use:   "onboard",
 		Short: "Full deposit wallet onboarding: deploy + approve + enable trading + fund",
@@ -738,9 +781,15 @@ After onboarding, sync CLOB:
 
 If relayer credentials are missing, Polygolem signs SIWE locally, registers
 the profile if needed, mints and persists the V2 relayer key, then continues
-automatically.`,
+automatically.
+
+This command deploys, approves, and (with --fund-amount) moves real funds, so
+it requires --confirm ONBOARD_WALLET to authorize the live-money sequence.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := livegate.RequireConfirm(confirm, "ONBOARD_WALLET"); err != nil {
+				return err
+			}
 			key, err := requirePrivateKey()
 			if err != nil {
 				return err
@@ -819,20 +868,13 @@ automatically.`,
 			}
 
 			if strings.TrimSpace(fundAmount) != "" {
-				amountFloat, err := parsePUSDAmount(fundAmount)
-				if err != nil {
-					return fmt.Errorf("invalid --fund-amount: %w", err)
-				}
-				txHash, err := rpc.TransferPUSD(cmd.Context(), key, wallet, amountFloat, "")
+				fundResult, err := depositwalletfunding.Fund(cmd.Context(), depositwalletfunding.FundConfig{
+					PrivateKey: func() (string, error) { return key, nil },
+				}, depositwalletfunding.FundRequest{AmountPUSD: fundAmount})
 				if err != nil {
 					return fmt.Errorf("fund transfer: %w", err)
 				}
-				result["fund"] = map[string]string{
-					"txHash": txHash,
-					"from":   owner,
-					"to":     wallet,
-					"amount": fundAmount,
-				}
+				result["fund"] = fundResult
 			}
 
 			result["nextSteps"] = []string{
@@ -849,6 +891,7 @@ automatically.`,
 	cmd.Flags().BoolVar(&skipApprove, "skip-approve", false, "skip approval batch")
 	cmd.Flags().BoolVar(&skipEnableTrading, "skip-enable-trading", false, "skip ClobAuth and UI Enable Trading token approval signs")
 	cmd.Flags().StringVar(&fundAmount, "fund-amount", "", "pUSD amount to transfer from EOA to deposit wallet (e.g. 0.71)")
+	cmd.Flags().StringVar(&confirm, "confirm", "", "live-money confirmation token; must be 'ONBOARD_WALLET'")
 	return cmd
 }
 
@@ -1087,68 +1130,6 @@ func depositWalletDeployed(ctx context.Context, rc *relayer.Client, owner string
 	return status.Deployed, nil
 }
 
-func parsePUSDAmount(s string) (*big.Int, error) {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil, fmt.Errorf("empty amount")
-	}
-	if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "+") {
-		return nil, fmt.Errorf("amount must be unsigned decimal")
-	}
-	parts := strings.Split(s, ".")
-	if len(parts) > 2 {
-		return nil, fmt.Errorf("invalid amount %q", s)
-	}
-	wholePart := parts[0]
-	if wholePart == "" {
-		wholePart = "0"
-	}
-	if !decimalDigitsOnly(wholePart) {
-		return nil, fmt.Errorf("invalid integer part: %s", parts[0])
-	}
-	fracPart := ""
-	if len(parts) == 2 {
-		fracPart = parts[1]
-		if !decimalDigitsOnly(fracPart) {
-			return nil, fmt.Errorf("invalid fractional part: %s", fracPart)
-		}
-		for len(fracPart) > 6 && strings.HasSuffix(fracPart, "0") {
-			fracPart = strings.TrimSuffix(fracPart, "0")
-		}
-		if len(fracPart) > 6 {
-			return nil, fmt.Errorf("pUSD supports at most 6 decimals")
-		}
-	}
-	for len(fracPart) < 6 {
-		fracPart += "0"
-	}
-	whole, ok := new(big.Int).SetString(wholePart, 10)
-	if !ok {
-		return nil, fmt.Errorf("invalid integer part: %s", wholePart)
-	}
-	result := new(big.Int).Mul(whole, big.NewInt(1000000))
-	if fracPart != "" {
-		frac, ok := new(big.Int).SetString(fracPart, 10)
-		if !ok {
-			return nil, fmt.Errorf("invalid fractional part: %s", fracPart)
-		}
-		result.Add(result, frac)
-	}
-	return result, nil
-}
-
-func decimalDigitsOnly(s string) bool {
-	if s == "" {
-		return true
-	}
-	for _, r := range s {
-		if r < '0' || r > '9' {
-			return false
-		}
-	}
-	return true
-}
-
 func builderConfigFromEnv() (auth.BuilderConfig, error) {
 	bc := auth.BuilderConfig{
 		Key:        firstEnv("POLYMARKET_BUILDER_API_KEY", "BUILDER_API_KEY"),
@@ -1178,14 +1159,14 @@ func relayerClientFromEnv() (*relayer.Client, error) {
 		relayerURL = defaultRelayerURL
 	}
 
-	if key, _, ok := relayerV2KeyFromProcessEnv(); ok {
+	if key, _, ok := relayerauth.V2KeyFromProcessEnv(); ok {
 		return relayer.NewV2(relayerURL, key, 137)
 	}
 
 	if bc, err := builderConfigFromEnv(); err == nil {
 		return relayer.New(relayerURL, bc, 137)
 	}
-	if key, _, ok := relayerV2KeyFromFiles(); ok {
+	if key, _, ok := relayerauth.V2KeyFromFiles(relayerEnvFileCandidates()); ok {
 		return relayer.NewV2(relayerURL, key, 137)
 	}
 	return nil, fmt.Errorf("builder credentials not configured: set POLYMARKET_BUILDER_API_KEY, POLYMARKET_BUILDER_SECRET, and POLYMARKET_BUILDER_PASSPHRASE (or BUILDER_API_KEY / BUILDER_SECRET / BUILDER_PASS_PHRASE)")
@@ -1196,7 +1177,7 @@ func relayerClientForAutomation(ctx context.Context, stderr io.Writer, privateKe
 	if relayerURL == "" {
 		relayerURL = defaultRelayerURL
 	}
-	if key, source, ok := relayerV2KeyFromProcessEnv(); ok {
+	if key, source, ok := relayerauth.V2KeyFromProcessEnv(); ok {
 		client, err := relayer.NewV2(relayerURL, key, 137)
 		return client, relayerClientAuthResult{Source: source}, err
 	}
@@ -1204,7 +1185,7 @@ func relayerClientForAutomation(ctx context.Context, stderr io.Writer, privateKe
 		client, err := relayer.New(relayerURL, bc, 137)
 		return client, relayerClientAuthResult{Source: "legacy-builder-env"}, err
 	}
-	if key, source, ok := relayerV2KeyFromFiles(); ok {
+	if key, source, ok := relayerauth.V2KeyFromFiles(relayerEnvFileCandidates()); ok {
 		client, err := relayer.NewV2(relayerURL, key, 137)
 		return client, relayerClientAuthResult{Source: source}, err
 	}
@@ -1222,10 +1203,6 @@ func relayerClientForAutomation(ctx context.Context, stderr io.Writer, privateKe
 }
 
 func mintRelayerV2KeyForAutomation(ctx context.Context, stderr io.Writer, privateKey string) (relayer.V2APIKey, string, error) {
-	signer, err := auth.NewPrivateKeySigner(privateKey, 137)
-	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("init signer: %w", err)
-	}
 	gammaURL := firstNonEmptyCLI(os.Getenv("POLYMARKET_GAMMA_URL"), defaultGammaBaseURL)
 	relayerURL := firstNonEmptyCLI(os.Getenv("POLYMARKET_RELAYER_URL"), defaultRelayerV2BaseURL)
 	if stderr != nil {
@@ -1234,29 +1211,13 @@ func mintRelayerV2KeyForAutomation(ctx context.Context, stderr io.Writer, privat
 	loginCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	session, err := auth.NewSIWESession(signer, gammaURL)
+	key, err := relayerauth.MintV2Key(loginCtx, relayerauth.MintV2KeyRequest{
+		PrivateKey: privateKey,
+		GammaURL:   gammaURL,
+		RelayerURL: relayerURL,
+	})
 	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("new siwe session: %w", err)
-	}
-	if err := session.Login(loginCtx); err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("siwe login: %w", err)
-	}
-	maker, err := auth.MakerAddressForSignatureType(signer.Address(), 137, 3)
-	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("derive deposit wallet maker: %w", err)
-	}
-	body := gamma.NewCreateProfileRequest(
-		signer.Address(),
-		maker,
-		"metamask",
-		time.Now().UnixMilli(),
-	)
-	if _, err := gamma.CreateProfile(loginCtx, session.HTTPClient(), gammaURL, body); err != nil && !strings.Contains(err.Error(), "HTTP 409") {
-		return relayer.V2APIKey{}, "", fmt.Errorf("create profile: %w", err)
-	}
-	key, err := relayer.MintV2APIKey(loginCtx, session.HTTPClient(), relayerURL)
-	if err != nil {
-		return relayer.V2APIKey{}, "", fmt.Errorf("mint v2 relayer key: %w", err)
+		return relayer.V2APIKey{}, "", err
 	}
 	target := relayerEnvFileCandidates()[0]
 	abs, err := filepath.Abs(target)
@@ -1274,76 +1235,12 @@ func mintRelayerV2KeyForAutomation(ctx context.Context, stderr io.Writer, privat
 	return key, abs, nil
 }
 
-func relayerV2KeyFromProcessEnv() (relayer.V2APIKey, string, bool) {
-	v2Key := strings.TrimSpace(os.Getenv("RELAYER_API_KEY"))
-	v2Addr := strings.TrimSpace(os.Getenv("RELAYER_API_KEY_ADDRESS"))
-	if v2Key != "" && v2Addr != "" {
-		return relayer.V2APIKey{Key: v2Key, Address: v2Addr}, "env", true
-	}
-	return relayer.V2APIKey{}, "", false
-}
-
-func relayerV2KeyFromFiles() (relayer.V2APIKey, string, bool) {
-	for _, path := range relayerEnvFileCandidates() {
-		values, ok := readSimpleEnvFile(path)
-		if !ok {
-			continue
-		}
-		v2Key := strings.TrimSpace(values["RELAYER_API_KEY"])
-		v2Addr := strings.TrimSpace(values["RELAYER_API_KEY_ADDRESS"])
-		if v2Key != "" && v2Addr != "" {
-			return relayer.V2APIKey{Key: v2Key, Address: v2Addr}, path, true
-		}
-	}
-	return relayer.V2APIKey{}, "", false
-}
-
 func relayerEnvFileCandidates() []string {
-	if override := strings.TrimSpace(os.Getenv("POLYGOLEM_RELAYER_ENV_FILE")); override != "" {
-		return []string{override}
-	}
-	return []string{
-		defaultRelayerEnvFile,
-		"../.env.relayer-v2",
-		".env.relayer-v2",
-		"../go-bot/.env",
-		"../.env",
-		".env",
-	}
-}
-
-func readSimpleEnvFile(path string) (map[string]string, bool) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, false
-	}
-	out := make(map[string]string)
-	for _, line := range strings.Split(string(raw), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		line = strings.TrimPrefix(line, "export ")
-		key, value, ok := strings.Cut(line, "=")
-		if !ok {
-			continue
-		}
-		key = strings.TrimSpace(key)
-		value = strings.TrimSpace(value)
-		value = strings.Trim(value, `"'`)
-		if key != "" {
-			out[key] = value
-		}
-	}
-	return out, true
+	return relayerauth.EnvFileCandidates(os.Getenv("POLYGOLEM_RELAYER_ENV_FILE"), defaultRelayerEnvFile)
 }
 
 func requirePrivateKey() (string, error) {
-	key := strings.TrimSpace(os.Getenv("POLYMARKET_PRIVATE_KEY"))
-	if key == "" {
-		return "", fmt.Errorf("POLYMARKET_PRIVATE_KEY is required")
-	}
-	return key, nil
+	return privateKeyFromEnv()
 }
 
 func firstEnv(names ...string) string {
@@ -1405,7 +1302,7 @@ submission path, no raw ConditionalTokens path, and no SAFE/PROXY shortcut.`,
 }
 
 // depositWalletRedeemableCmd lists redeemable positions for the deposit
-// wallet derived from POLYMARKET_PRIVATE_KEY. Read-only — no signing.
+// wallet derived from SIGNER_PRIVATE_KEY. Read-only — no signing.
 // Positions live in the deposit wallet, not the EOA, so the Data API
 // `user` parameter must be the deposit wallet address.
 func depositWalletRedeemableCmd(jsonOut bool) *cobra.Command {
@@ -1514,8 +1411,8 @@ positions.`,
 					"note":          "review calldata, then run with --submit --confirm REDEEM_WINNERS to sign and send",
 				})
 			}
-			if confirm != "REDEEM_WINNERS" {
-				return fmt.Errorf("--submit requires --confirm REDEEM_WINNERS (got %q)", confirm)
+			if err := livegate.RequireConfirm(confirm, "REDEEM_WINNERS"); err != nil {
+				return err
 			}
 
 			// Adapter approval pre-check (fail-closed).

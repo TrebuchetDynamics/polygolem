@@ -1,6 +1,6 @@
 ---
 title: Safety Model
-description: Read-only by default, paper-mode locality, live gates, credential redaction — the four-layer safety guarantee in polygolem.
+description: Read-only by default, paper-mode locality, a live-order cap, typed confirmation tokens, and credential redaction — the guards polygolem actually enforces.
 ---
 
 import { Aside } from "@astrojs/starlight/components";
@@ -8,15 +8,13 @@ import { Aside } from "@astrojs/starlight/components";
 Polygolem is **read-only by default**. Every market-data and discovery command
 runs without credentials and cannot make a state-changing request. Paper mode
 is **local-only**: simulated orders are stored on disk and never reach an
-authenticated endpoint. Live commands require **all four gates** to pass —
-`POLYMARKET_LIVE_PROFILE=on`, `live_trading_enabled: true`, `--confirm-live`,
-and a successful `polygolem preflight`. Credentials are loaded only at the
-moment they are needed and are **redacted** in every log, error, and JSON
-output.
+authenticated endpoint. The private key is read from the environment only, is
+never persisted or logged, and every command that moves funds gates on an
+explicit cap and a typed `--confirm` token before signing.
 
-If any gate fails, the command aborts with a structured error and a non-zero
-exit code. Polygolem will never silently downgrade a live command to paper mode
-or read-only — that would hide operator intent and break automation.
+If a guard fails, the command aborts with a structured error and a non-zero exit
+code. Polygolem will never silently downgrade a live command to paper mode or
+read-only — that would hide operator intent and break automation.
 
 <Aside type="note">
 **Source of truth:** the canonical safety policy lives in
@@ -25,15 +23,35 @@ This page is a summary; if anything here disagrees with the canonical doc,
 the canonical doc wins.
 </Aside>
 
-## The four gates, in order
+## The live-money guards
 
-1. **`POLYMARKET_LIVE_PROFILE=on`** — environment opt-in.
-2. **`live_trading_enabled: true`** — config-file opt-in.
-3. **`--confirm-live`** — per-invocation flag.
-4. **`polygolem preflight` passes** — wallet readiness, auth readiness, network
-   consistency, API health.
+Two guards fire before any order or wallet transaction is signed:
 
-All four. No partial credit.
+1. **Live-order cap.** Every order-placing command
+   (`clob create-order`, `market-order`, `batch-orders`) enforces
+   `POLYGOLEM_MAX_LIVE_ORDER_USD` (default **$1**) — per order and on the summed
+   batch notional — before the private key is loaded. There is no flag that
+   bypasses it; raise the cap deliberately with the environment variable.
+2. **Typed confirmation tokens.** Deposit-wallet commands that submit real
+   transactions require an exact `--confirm` token, so a live submission cannot
+   fire from a single mistyped flag:
+
+   | Command | Required token |
+   |---|---|
+   | `deposit-wallet approve-adapters` (with `--submit`) | `--confirm APPROVE_ADAPTERS` |
+   | `deposit-wallet redeem` (with `--submit`) | `--confirm REDEEM_WINNERS` |
+   | `deposit-wallet approve` (with `--submit`) | `--confirm APPROVE_TRADING` |
+   | `deposit-wallet batch` | `--confirm SUBMIT_BATCH` |
+   | `deposit-wallet onboard` | `--confirm ONBOARD_WALLET` |
+
+<Aside type="note">
+`polygolem live status` reports the advisory posture gates
+(`POLYMARKET_LIVE_PROFILE`, `--confirm-live`, preflight) — useful for confirming
+intent, but **advisory**. The enforced money guards are the cap and the
+confirmation tokens above. The circuit breaker (`internal/risk.Breaker`) is
+available to SDK consumers via `pkg/clob`'s `TradeGate`; the CLI attaches none
+by default.
+</Aside>
 
 ## Deposit Wallet Safety (V2)
 
@@ -71,10 +89,11 @@ When `signature_type = 3` (deposit), the CLOB balance endpoint returns the
 
 ### Decision-Window Safety
 
-Automated trading must bind each strategy decision to the exact market window
-it intends to trade. A 5m signal for `2026-05-09T08:20:00Z` must not buy a
-market that starts at `2026-05-09T12:20:00Z`, even if the asset and timeframe
-match.
+External applications that automate trading decisions must bind each decision
+to the exact market window they intend to trade. A 5m signal for
+`2026-05-09T08:20:00Z` must not buy a market that starts at
+`2026-05-09T12:20:00Z`, even if the asset and timeframe match. Polygolem
+provides the strict resolver; it does not create the trading signal.
 
 The safe resolver behavior is fail-closed:
 
@@ -143,7 +162,7 @@ shortcut for deposit-wallet positions.
 ## Related
 
 - [`docs/SAFETY.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/SAFETY.md) — canonical policy
-- [Deposit Wallets & Signature Types](/concepts/deposit-wallets) — required for new accounts
-- [Smart Contracts](/concepts/contracts) — factory addresses and permission model
-- [Paper Trading](/guides/paper-trading) — the local-only execution surface
-- [Architecture](/concepts/architecture) — where the gates live in code
+- [Deposit Wallets & Signature Types](/docs/concepts/deposit-wallets) — required for new accounts
+- [Smart Contracts](/docs/concepts/contracts) — factory addresses and permission model
+- [Paper Trading](/docs/guides/paper-trading) — the local-only execution surface
+- [Architecture](/docs/concepts/architecture) — where the gates live in code

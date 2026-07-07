@@ -58,8 +58,12 @@ func TestMarketClientSubscribeAndDispatchesPublicDTOs(t *testing.T) {
 	})
 
 	gotPriceChange := make(chan PriceChangeMessage, 1)
+	gotRaw := make(chan RawMessage, 1)
 	client.OnPriceChange = func(msg PriceChangeMessage) {
 		gotPriceChange <- msg
+	}
+	client.OnRawMessage = func(msg RawMessage) {
+		gotRaw <- msg
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -86,6 +90,15 @@ func TestMarketClientSubscribeAndDispatchesPublicDTOs(t *testing.T) {
 	}
 
 	select {
+	case raw := <-gotRaw:
+		if raw.EventType != "price_change" || raw.Market != "condition-1" || len(raw.Payload) == 0 {
+			t.Fatalf("unexpected raw message: %+v", raw)
+		}
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for raw message")
+	}
+
+	select {
 	case msg := <-gotPriceChange:
 		if msg.Market != "condition-1" || len(msg.PriceChanges) != 1 {
 			t.Fatalf("unexpected price change: %+v", msg)
@@ -97,7 +110,7 @@ func TestMarketClientSubscribeAndDispatchesPublicDTOs(t *testing.T) {
 		t.Fatal("timed out waiting for price change")
 	}
 	stats := client.Stats()
-	if stats.Stream != "market" || stats.MessagesReceived == 0 || len(stats.AssetIDs) != 1 || stats.AssetIDs[0] != "token-1" {
+	if stats.Stream != "market" || stats.MessagesReceived == 0 || stats.EventCounts["price_change"] != 1 || len(stats.AssetIDs) != 1 || stats.AssetIDs[0] != "token-1" {
 		t.Fatalf("unexpected stats: %+v", stats)
 	}
 }

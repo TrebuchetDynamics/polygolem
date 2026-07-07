@@ -123,11 +123,25 @@ const (
 	depositWalletFactoryAddress = "0x00000000000Fb5C9ADea0298D729A0CB3823Cc07"
 	depositWalletImplAddress    = "0x58CA52ebe0DadfdF531Cde7062e76746de4Db1eB"
 
+	// The factory deploys ERC-1967 BEACON proxies whose EIP-1967 beacon
+	// slot holds this address (read on-chain from a 2026-07-05 production
+	// wallet; pinned pair + tx evidence in signer_test.go).
+	depositWalletBeaconAddress = "0x7a18EDfE055488A3128f01F563E5B479D92FFc3A"
+
 	// ERC-1967 proxy init code constants — verified against
 	// Polymarket/py-builder-relayer-client builder/derive.py.
 	erc1967Prefix = 0x61003D3D8160233D3973
 	erc1967Const1 = "0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3"
 	erc1967Const2 = "0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076"
+
+	// ERC-1967 BEACON proxy init code constants — same derive.py, beacon
+	// variant. The deployed runtime is init[0x23:]: it SLOADs the beacon
+	// slot and staticcalls implementation() on the beacon, so the beacon —
+	// not an implementation — is embedded at construction time.
+	erc1967BeaconPrefix = "0x6100523D8160233D3973"
+	erc1967BeaconConst3 = "0x60195155f3363d3d373d3d363d602036600436635c60da"
+	erc1967BeaconConst2 = "0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c"
+	erc1967BeaconConst1 = "0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3"
 )
 
 // MakerAddressForSignatureType returns the CLOB maker/funder address for the
@@ -200,10 +214,13 @@ func PrivateKeyToAddress(privateKeyHex string) (string, error) {
 }
 
 // deriveDepositWalletAddress computes the deterministic CREATE2 deposit wallet
-// address for the given EOA owner.
+// address for the given EOA owner. The production factory deploys ERC-1967
+// BEACON proxies (since at least 2026-07; previously UUPS with an embedded
+// implementation — wallets derived by the old template exist at different,
+// codeless addresses the registry does not recognize).
 func deriveDepositWalletAddress(owner common.Address) string {
 	factory := common.HexToAddress(depositWalletFactoryAddress)
-	impl := common.HexToAddress(depositWalletImplAddress)
+	beacon := common.HexToAddress(depositWalletBeaconAddress)
 	walletID := common.LeftPadBytes(owner.Bytes(), 32)
 
 	addressType, _ := abi.NewType("address", "", nil)
@@ -215,10 +232,32 @@ func deriveDepositWalletAddress(owner common.Address) string {
 	args, _ := argsType.Pack(factory, common.BytesToHash(walletID))
 	salt := ethcrypto.Keccak256Hash(args)
 
-	initCode := depositWalletInitCode(impl, args)
+	initCode := depositWalletBeaconInitCode(beacon, args)
 	bytecodeHash := ethcrypto.Keccak256Hash(initCode)
 
 	return ethcrypto.CreateAddress2(factory, salt, bytecodeHash.Bytes()).Hex()
+}
+
+// depositWalletBeaconInitCode builds the ERC-1967 beacon proxy init bytecode
+// (derive.py beacon variant): 10-byte length-adjusted prefix, 20-byte beacon,
+// the three runtime constants, then the constructor args.
+func depositWalletBeaconInitCode(beacon common.Address, args []byte) []byte {
+	prefix := new(big.Int).SetBytes(hexDecode(erc1967BeaconPrefix))
+	argsLen := new(big.Int).Lsh(new(big.Int).SetInt64(int64(len(args))), 56)
+	combined := new(big.Int).Add(prefix, argsLen)
+
+	c3 := hexDecode(erc1967BeaconConst3)
+	c2 := hexDecode(erc1967BeaconConst2)
+	c1 := hexDecode(erc1967BeaconConst1)
+	code := make([]byte, 10+20+len(c3)+len(c2)+len(c1)+len(args))
+	combined.FillBytes(code[:10])
+	pos := 10
+	pos += copy(code[pos:], beacon.Bytes())
+	pos += copy(code[pos:], c3)
+	pos += copy(code[pos:], c2)
+	pos += copy(code[pos:], c1)
+	copy(code[pos:], args)
+	return code
 }
 
 // depositWalletInitCode builds the ERC-1967 proxy init bytecode.

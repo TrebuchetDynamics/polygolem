@@ -308,19 +308,7 @@ func firstNonEmpty(values ...string) string {
 }
 
 func findUpDownTokenIDs(outcomes []string, tokenIDs []string) (string, string) {
-	if len(outcomes) != len(tokenIDs) {
-		return "", ""
-	}
-	var up, down string
-	for i, o := range outcomes {
-		switch strings.ToLower(o) {
-		case "up", "yes":
-			up = tokenIDs[i]
-		case "down", "no":
-			down = tokenIDs[i]
-		}
-	}
-	return up, down
+	return UpDownTokenIDs(outcomes, tokenIDs)
 }
 
 func extractTokenIDs(raw string) []string {

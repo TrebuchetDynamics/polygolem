@@ -42,7 +42,14 @@ No credentials are required for the rest of this demo.
 ## 2. List every active 5-minute crypto market
 
 ```bash
-polygolem discover crypto-5m --enrich --json
+# Current window only
+polygolem discover crypto-5m --json
+
+# Current + next hour, with local display fields
+polygolem discover crypto-5m --hours-ahead 1 --timezone America/Denver --json
+
+# Optional: focus on the liquid majors
+polygolem discover crypto-5m --asset BTC --asset ETH --asset SOL --hours-ahead 1 --enrich --json
 ```
 
 What to look for in the JSON response:
@@ -50,11 +57,15 @@ What to look for in the JSON response:
 - `data.interval`: should be `5m`.
 - `data.window_start`: the UTC start of the current 5-minute window.
 - `data.markets[].asset`: one of BTC, ETH, SOL, XRP, BNB, DOGE, HYPE.
-- `data.markets[].status`: `active` means Polygolem found the current market.
+- `data.markets[].status`: `active` means Polygolem found an open accepting market.
+- `data.markets[].window_start_local`: local time when `--timezone` is set.
 - `data.markets[].token_ids`: CLOB token IDs for the UP/DOWN outcomes.
-- `data.markets[].price` and `spread`: included when `--enrich` succeeds.
+- `data.markets[].liquidity_clob`, `best_bid`, `best_ask`, and `book_spread`: Gamma book/liquidity snapshot fields.
+- `data.markets[].price` and `spread`: live CLOB fields included when `--enrich` succeeds.
 
 If a market returns `not_found` or `no_active_market`, wait for the next 5-minute UTC boundary and run the command again. These markets are short-lived and can appear slightly after the boundary.
+
+For a simple 5m-only strategy scan, start with BTC/ETH/SOL rows where `book_spread <= 0.01`, `liquidity_clob >= 2000`, and the target window is current or next. Use limit orders; market buys can cross thin books.
 
 ## 3. Inspect one market window
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/TrebuchetDynamics/polygolem/internal/workflows/depositwalletfunding"
 	"github.com/TrebuchetDynamics/polygolem/pkg/contracts"
 )
 
@@ -120,18 +121,18 @@ func TestParsePUSDAmountUsesExactSixDecimalBaseUnits(t *testing.T) {
 		"42":        "42000000",
 	}
 	for input, want := range tests {
-		got, err := parsePUSDAmount(input)
+		got, err := depositwalletfunding.ParsePUSDAmount(input)
 		if err != nil {
-			t.Fatalf("parsePUSDAmount(%q): %v", input, err)
+			t.Fatalf("ParsePUSDAmount(%q): %v", input, err)
 		}
 		if got.String() != want {
-			t.Fatalf("parsePUSDAmount(%q)=%s, want %s", input, got, want)
+			t.Fatalf("ParsePUSDAmount(%q)=%s, want %s", input, got, want)
 		}
 	}
 }
 
 func TestParsePUSDAmountRejectsTooManyNonZeroDecimals(t *testing.T) {
-	if _, err := parsePUSDAmount("0.0000001"); err == nil {
+	if _, err := depositwalletfunding.ParsePUSDAmount("0.0000001"); err == nil {
 		t.Fatal("expected error for sub-micro pUSD amount")
 	}
 }
@@ -326,6 +327,50 @@ func TestDepositWalletApproveAdaptersRequiresConfirm(t *testing.T) {
 	}
 }
 
+func TestDepositWalletBatchRequiresConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "batch", "--calls-json", `[{"target":"0x0000000000000000000000000000000000000001","value":"0","data":"0x"}]`)
+	if err == nil {
+		t.Fatalf("expected error when batch runs without --confirm; stderr=%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "SUBMIT_BATCH") {
+		t.Fatalf("error must mention SUBMIT_BATCH confirm token: %v", err)
+	}
+}
+
+func TestDepositWalletApproveSubmitRequiresConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve", "--submit")
+	if err == nil {
+		t.Fatalf("expected error when --submit is set without --confirm; stderr=%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "APPROVE_TRADING") {
+		t.Fatalf("error must mention APPROVE_TRADING confirm token: %v", err)
+	}
+}
+
+func TestDepositWalletOnboardRequiresConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	_, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy")
+	if err == nil {
+		t.Fatalf("expected error when onboard runs without --confirm; stderr=%s", stderr)
+	}
+	if !strings.Contains(err.Error(), "ONBOARD_WALLET") {
+		t.Fatalf("error must mention ONBOARD_WALLET confirm token: %v", err)
+	}
+}
+
+func TestDepositWalletApproveDryRunNeedsNoConfirm(t *testing.T) {
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318")
+	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "approve")
+	if err != nil {
+		t.Fatalf("dry-run approve should not error: %v\nstderr=%s", err, stderr)
+	}
+	if !strings.Contains(stdout, "APPROVE_TRADING") {
+		t.Fatalf("dry-run note should mention APPROVE_TRADING: %s", stdout)
+	}
+}
+
 func TestDepositWalletApproveAdaptersSubmitsBatch(t *testing.T) {
 	const privateKey = "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
 	var submitCalls int
@@ -416,8 +461,8 @@ func TestDepositWalletOnboardIncludesEnableTradingSigns(t *testing.T) {
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"transactionID": "tx-standard-approve", "state": "STATE_NEW"})
 			case 2:
-				if len(body.DepositWalletParams.Calls) != 2 {
-					t.Errorf("second batch call count=%d want 2", len(body.DepositWalletParams.Calls))
+				if len(body.DepositWalletParams.Calls) != 6 {
+					t.Errorf("second batch call count=%d want 6", len(body.DepositWalletParams.Calls))
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"transactionID": "tx-enable-trading", "state": "STATE_NEW"})
 			default:
@@ -450,7 +495,7 @@ func TestDepositWalletOnboardIncludesEnableTradingSigns(t *testing.T) {
 	t.Setenv("RELAYER_API_KEY", "v2-uuid")
 	t.Setenv("RELAYER_API_KEY_ADDRESS", "0xabc")
 
-	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy")
+	stdout, stderr, err := executeRootForTest("--json", "deposit-wallet", "onboard", "--skip-deploy", "--confirm", "ONBOARD_WALLET")
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -469,11 +514,11 @@ func TestDepositWalletOnboardIncludesEnableTradingSigns(t *testing.T) {
 	if enableTrading["clobAuthSigned"] != true || enableTrading["apiKeysCreatedOrDerived"] != true || enableTrading["tokenApprovalsSigned"] != true || enableTrading["tokenApprovalsSubmitted"] != true {
 		t.Fatalf("enableTrading flags unexpected: %v", enableTrading)
 	}
-	if enableTrading["callCount"] != float64(2) {
-		t.Fatalf("enableTrading callCount=%v want 2", enableTrading["callCount"])
+	if enableTrading["callCount"] != float64(6) {
+		t.Fatalf("enableTrading callCount=%v want 6", enableTrading["callCount"])
 	}
-	if len(submitCallCounts) != 2 || submitCallCounts[0] != 10 || submitCallCounts[1] != 2 {
-		t.Fatalf("submit call counts=%v want [10 2]", submitCallCounts)
+	if len(submitCallCounts) != 2 || submitCallCounts[0] != 10 || submitCallCounts[1] != 6 {
+		t.Fatalf("submit call counts=%v want [10 6]", submitCallCounts)
 	}
 }
 
@@ -496,8 +541,8 @@ func TestDepositWalletEnableTradingSubmitsSigns(t *testing.T) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			if len(body.DepositWalletParams.Calls) != 2 {
-				t.Errorf("enable-trading call count=%d want 2", len(body.DepositWalletParams.Calls))
+			if len(body.DepositWalletParams.Calls) != 6 {
+				t.Errorf("enable-trading call count=%d want 6", len(body.DepositWalletParams.Calls))
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{"transactionID": "tx-enable-trading", "state": "STATE_NEW"})
 		default:
@@ -541,8 +586,8 @@ func TestDepositWalletEnableTradingSubmitsSigns(t *testing.T) {
 	if data["clobAuthSigned"] != true || data["apiKeysCreatedOrDerived"] != true || data["tokenApprovalsSubmitted"] != true {
 		t.Fatalf("enable-trading flags unexpected: %v", data)
 	}
-	if data["callCount"] != float64(2) {
-		t.Fatalf("callCount=%v want 2", data["callCount"])
+	if data["callCount"] != float64(6) {
+		t.Fatalf("callCount=%v want 6", data["callCount"])
 	}
 	if submitCalls != 1 {
 		t.Fatalf("submitCalls=%d want 1", submitCalls)

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -29,6 +30,46 @@ func TestAstroCLIReferenceMatchesGeneratedOutput(t *testing.T) {
 
 	if got != want {
 		t.Fatalf("docs/docs-site CLI reference is stale; run go run ./cmd/polygolem_docs\n%s", firstDiffForTest(want, got))
+	}
+}
+
+func TestCompatibilityReferenceMatchesGeneratedOutput(t *testing.T) {
+	want := readRepoFileForTest(t, "docs/COMPATIBILITY.md")
+	got := GenerateCompatibilityMarkdown()
+
+	if got != want {
+		t.Fatalf("docs/COMPATIBILITY.md is stale; run go run ./cmd/polygolem_docs\n%s", firstDiffForTest(want, got))
+	}
+}
+
+func TestCompatibilityJSONMatchesGeneratedOutput(t *testing.T) {
+	want := readRepoFileForTest(t, "docs/COMPATIBILITY.json")
+	got := GenerateCompatibilityJSON()
+
+	if got != want {
+		t.Fatalf("docs/COMPATIBILITY.json is stale; run go run ./cmd/polygolem_docs\n%s", firstDiffForTest(want, got))
+	}
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(got), &parsed); err != nil {
+		t.Fatalf("generated compatibility json is invalid: %v", err)
+	}
+}
+
+func TestGeneratedCompatibilityReferenceIncludesSafetyContracts(t *testing.T) {
+	got := GenerateCompatibilityMarkdown()
+	for _, want := range []string{
+		"`clob.trading`",
+		"mutating",
+		"`private_key`",
+		"`deposit_wallet_only`",
+		"credentialed-read",
+		"`rate_limited`",
+		"`geoblocked`",
+		"`tick_size_mismatch`",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("compatibility reference missing %q", want)
+		}
 	}
 }
 

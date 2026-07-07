@@ -10,12 +10,18 @@ import (
 
 type fakeSearcher struct {
 	params *polytypes.SearchParams
+	calls  int
+	resps  []*polytypes.SearchResponse
 	resp   *polytypes.SearchResponse
 	err    error
 }
 
 func (f *fakeSearcher) Search(ctx context.Context, params *polytypes.SearchParams) (*polytypes.SearchResponse, error) {
 	f.params = params
+	f.calls++
+	if len(f.resps) >= f.calls {
+		return f.resps[f.calls-1], f.err
+	}
 	return f.resp, f.err
 }
 
@@ -98,13 +104,16 @@ func TestRunnerSearchesFiltersAndEnrichesCryptoMarkets(t *testing.T) {
 	if searcher.params == nil {
 		t.Fatal("Search was not called")
 	}
-	if searcher.params.Q != "BTC 5m" {
-		t.Fatalf("query=%q, want BTC 5m", searcher.params.Q)
+	if searcher.params.Q != "bitcoin 5m updown" {
+		t.Fatalf("query=%q, want bitcoin 5m updown", searcher.params.Q)
 	}
 	if searcher.params.LimitPerType == nil || *searcher.params.LimitPerType != 7 {
 		t.Fatalf("LimitPerType=%v, want 7", searcher.params.LimitPerType)
 	}
-	if got.Query != "BTC 5m" || got.Asset != "BTC" || got.Interval != "5m" || got.Count != 1 {
+	if searcher.params.EventsStatus != "active" {
+		t.Fatalf("EventsStatus=%q, want active", searcher.params.EventsStatus)
+	}
+	if got.Query != "bitcoin 5m updown" || got.Asset != "BTC" || got.Interval != "5m" || got.Count != 1 {
 		t.Fatalf("unexpected summary: %+v", got)
 	}
 	if len(got.Markets) != 1 {
@@ -122,6 +131,20 @@ func TestRunnerSearchesFiltersAndEnrichesCryptoMarkets(t *testing.T) {
 	}
 	if pricer.priceToken != "btc-up" || pricer.priceSide != "BUY" || pricer.spreadToken != "btc-up" {
 		t.Fatalf("unexpected price calls: %+v", pricer)
+	}
+}
+
+func TestRunnerPaginatesUntilLimit(t *testing.T) {
+	searcher := &fakeSearcher{resps: []*polytypes.SearchResponse{
+		{Pagination: polytypes.Pagination{HasMore: true}, Events: []polytypes.Event{{ID: "e1", Title: "Bitcoin Up or Down", Slug: "btc-updown-5m-1", Active: true, Markets: []polytypes.Market{{ID: "m1", Slug: "btc-updown-5m-1", Question: "Bitcoin Up or Down", Active: true}}}}},
+		{Events: []polytypes.Event{{ID: "e2", Title: "Bitcoin Up or Down", Slug: "btc-updown-5m-2", Active: true, Markets: []polytypes.Market{{ID: "m2", Slug: "btc-updown-5m-2", Question: "Bitcoin Up or Down", Active: true}}}}},
+	}}
+	got, err := New(searcher, nil).Run(context.Background(), Request{Asset: "BTC", Interval: "5m", Limit: 2})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if searcher.calls != 2 || got.Count != 2 {
+		t.Fatalf("calls=%d count=%d, want 2/2", searcher.calls, got.Count)
 	}
 }
 

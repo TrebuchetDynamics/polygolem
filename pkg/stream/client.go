@@ -1,9 +1,9 @@
 // Package stream exposes Polymarket CLOB WebSocket SDK clients.
 //
 // Use MarketClient when you need public market-channel updates for CLOB token
-// IDs: order-book snapshots, price changes, and last-trade events. Use
-// UserClient with CLOB L2 credentials for authenticated user order/trade
-// events.
+// IDs: raw payloads, order-book snapshots, price changes, top-of-book, and
+// last-trade events. Use UserClient with CLOB L2 credentials for authenticated
+// user order/trade events.
 package stream
 
 import (
@@ -49,6 +49,7 @@ type MarketClient struct {
 	OnBestBidAsk     func(BestBidAskMessage)
 	OnNewMarket      func(NewMarketMessage)
 	OnMarketResolved func(MarketResolvedMessage)
+	OnRawMessage     func(RawMessage)
 	OnError          func(error)
 }
 
@@ -95,6 +96,11 @@ func NewMarketClient(cfg Config) *MarketClient {
 			client.OnMarketResolved(marketResolvedFromInternal(msg))
 		}
 	}
+	inner.OnRawMessage = func(msg internalstream.RawMessage) {
+		if client.OnRawMessage != nil {
+			client.OnRawMessage(msg)
+		}
+	}
 	inner.OnError = func(err error) {
 		if client.OnError != nil {
 			client.OnError(err)
@@ -126,6 +132,10 @@ func (c *MarketClient) IsConnected() bool {
 
 // StreamStatsSnapshot reports stream lifecycle and message counters.
 type StreamStatsSnapshot = internalstream.StreamStatsSnapshot
+
+// RawMessage is a deduplicated market-channel payload plus commonly indexed
+// fields for append-only recorders.
+type RawMessage = internalstream.RawMessage
 
 // Stats returns lifecycle and message counters for this stream client.
 func (c *MarketClient) Stats() StreamStatsSnapshot {

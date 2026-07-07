@@ -35,6 +35,28 @@ const (
 	CollateralOfframp = "0x2957922Eb93258b93368531d39fAcCA3B4dC5854"
 	PermissionedRamp  = "0xebC2459Ec962869ca4c0bd1E06368272732BCb08"
 
+	// Auto-redeem ("Get Paid Instantly") operators. Once a wallet grants
+	// these setApprovalForAll on its position tokens, Polymarket redeems
+	// winning positions automatically after resolution and the payout
+	// lands in the wallet balance without a manual redeem step.
+	// AutoRedeemer is the V2 operator proxy from the official deployment
+	// resources; CtfAutoRedeem is the companion operator observed in the
+	// polymarket.com enablement batch (Sourcify-verified CtfAutoRedeem).
+	CtfAutoRedeem = "0xF3cFb6a6eBFeB51876289Eb235719EB1C65252B0"
+	AutoRedeemer  = "0xa1200000d0002264C9a1698e001292D00E1b00af"
+	// PositionManager is the Combos ERC-1155 position token (proxy). The
+	// auto-redeem enablement batch approves AutoRedeemer on it alongside
+	// the legacy CTF.
+	PositionManager = "0x006F54F7f9A22e0000CC2AB60031000000ae9fEF"
+
+	// Combos exchange contracts. The polymarket.com "Approve Tokens"
+	// enable-trading batch grants pUSD approve + PositionManager
+	// setApprovalForAll to both. CombosExchange is "Exchange (proxy)" in
+	// the official deployment resources; CombosRouter is its Router proxy
+	// (Sourcify-verified Router implementation), not yet listed there.
+	CombosExchange = "0xe3333700cA9d93003F00f0F71f8515005F6c00Aa"
+	CombosRouter   = "0x12121212006e4CD160D18e3f00711DA5c3372600"
+
 	PUSD = "0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB"
 	CTF  = "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045"
 	// USDC.e on Polygon. Polymarket's UI Enable Trading approval batch
@@ -57,6 +79,11 @@ type Registry struct {
 	CollateralOnramp            string `json:"collateralOnramp"`
 	CollateralOfframp           string `json:"collateralOfframp"`
 	PermissionedRamp            string `json:"permissionedRamp"`
+	CtfAutoRedeem               string `json:"ctfAutoRedeem"`
+	AutoRedeemer                string `json:"autoRedeemer"`
+	PositionManager             string `json:"positionManager"`
+	CombosExchange              string `json:"combosExchange"`
+	CombosRouter                string `json:"combosRouter"`
 	PUSD                        string `json:"pusd"`
 	CTF                         string `json:"ctf"`
 	USDCE                       string `json:"usdce"`
@@ -77,10 +104,92 @@ func PolygonMainnet() Registry {
 		CollateralOnramp:            CollateralOnramp,
 		CollateralOfframp:           CollateralOfframp,
 		PermissionedRamp:            PermissionedRamp,
+		CtfAutoRedeem:               CtfAutoRedeem,
+		AutoRedeemer:                AutoRedeemer,
+		PositionManager:             PositionManager,
+		CombosExchange:              CombosExchange,
+		CombosRouter:                CombosRouter,
 		PUSD:                        PUSD,
 		CTF:                         CTF,
 		USDCE:                       USDCE,
 	}
+}
+
+const (
+	ApprovalERC20Approve       = "erc20_approve"
+	ApprovalERC1155ForAll      = "erc1155_set_approval_for_all"
+	ApprovalPurposeTrading     = "trading"
+	ApprovalPurposeSettlement  = "settlement"
+	ApprovalPurposeEnableTrade = "enable_trading"
+	ApprovalPurposeAutoRedeem  = "auto_redeem"
+)
+
+// Approval describes one contract permission a deposit wallet needs for a
+// Polymarket capability. It is metadata only; pkg/relayer turns it into calldata.
+type Approval struct {
+	Token   string `json:"token"`
+	Spender string `json:"spender"`
+	Kind    string `json:"kind"`
+	Purpose string `json:"purpose"`
+}
+
+// TradingApprovals returns the pUSD + CTF approvals required for V2 CLOB orders.
+func TradingApprovals() []Approval {
+	return spenderApprovals(ApprovalPurposeTrading, CTFExchangeV2, NegRiskExchangeV2, NegRiskAdapterV2)
+}
+
+// SettlementAdapters returns the V2 collateral adapters used by split, merge,
+// and redeem flows.
+func SettlementAdapters() []string {
+	return []string{CtfCollateralAdapter, NegRiskCtfCollateralAdapter}
+}
+
+// SettlementApprovals returns the pUSD + CTF approvals required for V2 split,
+// merge, and redeem through the collateral adapters.
+func SettlementApprovals() []Approval {
+	return spenderApprovals(ApprovalPurposeSettlement, SettlementAdapters()...)
+}
+
+// EnableTradingApprovals returns the approvals observed in the
+// polymarket.com Enable Trading "Approve Tokens" flow after deposit-wallet
+// deployment: the original pUSD -> CTF and USDC.e -> CollateralOnramp
+// ERC-20 approvals, plus the Combos grants (pUSD approve and
+// PositionManager setApprovalForAll for both CombosRouter and
+// CombosExchange). Order matches the observed UI batch.
+func EnableTradingApprovals() []Approval {
+	return []Approval{
+		{Token: PUSD, Spender: CTF, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: USDCE, Spender: CollateralOnramp, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PositionManager, Spender: CombosRouter, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PUSD, Spender: CombosExchange, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PUSD, Spender: CombosRouter, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PositionManager, Spender: CombosExchange, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeEnableTrade},
+	}
+}
+
+// AutoRedeemApprovals returns the setApprovalForAll grants that enable
+// Polymarket's "Get Paid Instantly" auto-redemption for a deposit wallet:
+// CTF -> CtfAutoRedeem, CTF -> AutoRedeemer, and PositionManager ->
+// AutoRedeemer. Order matches the polymarket.com enablement batch.
+// Idempotent (setApprovalForAll(true) sticks) and permanent until the
+// wallet revokes the operators.
+func AutoRedeemApprovals() []Approval {
+	return []Approval{
+		{Token: CTF, Spender: CtfAutoRedeem, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeAutoRedeem},
+		{Token: CTF, Spender: AutoRedeemer, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeAutoRedeem},
+		{Token: PositionManager, Spender: AutoRedeemer, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeAutoRedeem},
+	}
+}
+
+func spenderApprovals(purpose string, spenders ...string) []Approval {
+	out := make([]Approval, 0, len(spenders)*2)
+	for _, spender := range spenders {
+		out = append(out,
+			Approval{Token: PUSD, Spender: spender, Kind: ApprovalERC20Approve, Purpose: purpose},
+			Approval{Token: CTF, Spender: spender, Kind: ApprovalERC1155ForAll, Purpose: purpose},
+		)
+	}
+	return out
 }
 
 // RedeemAdapterFor returns the V2 collateral adapter address that a

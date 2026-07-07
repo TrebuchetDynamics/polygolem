@@ -1,0 +1,55 @@
+---
+title: Docs Map
+---
+
+Use this map when you know the job you need done but not which Polygolem page
+owns it. The docs are organized around a safety ladder: read first, simulate
+second, mutate only after explicit wallet and protocol checks.
+
+## Choose your path
+
+| If you are... | Start here | Then read |
+| ------------- | ---------- | --------- |
+| New to Polymarket | [Polymarket API Overview](/docs/concepts/polymarket-api) | [Markets, Events & Tokens](/docs/concepts/markets-events-tokens), [Docs Map](/docs/getting-started/docs-map) |
+| Installing Polygolem | [Installation](/docs/getting-started/installation) | [Quick Start](/docs/getting-started/quickstart) |
+| Exploring markets with no wallet | [Quick Start](/docs/getting-started/quickstart) | [Market Discovery](/docs/guides/market-discovery), [Orderbook Data](/docs/guides/orderbook-data) |
+| Simulating a strategy | [Paper Trading](/docs/guides/paper-trading) | [Go-Bot Integration](/docs/guides/go-bot-integration), [Universal Client](/docs/guides/universal-client) |
+| Studying public wallets | [Wallet Intelligence](/docs/guides/wallet-intelligence) | [Data API](/docs/reference/data-api), [Safety Model](/docs/concepts/safety) |
+| Preparing live trading | [Safety Model](/docs/concepts/safety) | [Deposit Wallet Lifecycle](/docs/guides/deposit-wallet-lifecycle), [POLY_1271 Signing Chain](/docs/concepts/poly-1271-signing) |
+| Integrating from another tool | [MCP and OpenAPI](/docs/reference/mcp-openapi) | [Go SDK Contracts](/docs/reference/sdk), [CLI Commands](/docs/reference/cli) |
+| Auditing protocol details | [Polymarket API Overview](/docs/concepts/polymarket-api) | [Smart Contracts](/docs/concepts/contracts), [Coverage Matrix](/docs/reference/coverage-matrix) |
+
+## Safety ladder
+
+1. **No-wallet reads** — health, market search, order books, streams, public
+   wallet data, and local diagnostics. No secrets required.
+2. **Paper workflows** — simulate fills against live CLOB prices while keeping
+   all state local.
+3. **Readiness checks** — inspect deposit-wallet address, relayer auth,
+   balances, approvals, tick sizes, fee rates, and stale-market guards.
+4. **Tiny capped mutations** — only after `SIGNER_PRIVATE_KEY`, deposit
+   wallet/POLY_1271 mode, confirmations, and operator stop conditions are clear.
+
+## Mental model
+
+```text
+Question/event ──▶ market ──▶ YES/NO outcome tokens ──▶ CLOB order book
+
+Public APIs ──▶ read-only CLI/SDK ──▶ paper state
+     │                                    │
+     └──▶ intelligence signals            └──▶ operator confidence
+
+EOA key ──▶ CLOB auth + local signing ──▶ deposit wallet maker/signer
+                                      └──▶ POLY_1271 order signature
+```
+
+The EOA authenticates and signs; the deposit wallet is the on-order maker and
+holds pUSD/CTF positions. Polygolem keeps those identities separate throughout
+the docs and API surface.
+
+## Source-of-truth rule
+
+The web docsite is the navigation layer. Long protocol facts should point back
+to canonical Markdown under `docs/` or stable package contracts under `pkg/`.
+When pages disagree, prefer the canonical source and update this site to link or
+summarize it.

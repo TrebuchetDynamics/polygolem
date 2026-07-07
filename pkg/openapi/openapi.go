@@ -7,7 +7,11 @@
 // mutating operations.
 package openapi
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/TrebuchetDynamics/polygolem/pkg/capabilities"
+)
 
 // Spec returns a small OpenAPI 3.1 document for read-only local proxy/tooling
 // experiments. Callers may marshal it directly as JSON.
@@ -19,6 +23,7 @@ func Spec() map[string]any {
 			"version":     "0.1.0",
 			"description": "Read-only Polymarket discovery, data, orderbook, health, and diagnostics surfaces. Mutating trading and credentialed operations are deliberately excluded.",
 		},
+		"x-polygolem-capabilities": capabilities.ReadOnlyIDs(),
 		"paths": map[string]any{
 			"/health": get("Health check", "Check read-only Gamma and CLOB reachability."),
 			"/diag":   get("Diagnostics", "Return redacted local diagnostics and endpoint configuration."),

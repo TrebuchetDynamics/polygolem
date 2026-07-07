@@ -12,7 +12,7 @@ code should target next, but that is not part of the generated command
 surface until the matching package lands.
 
 The `internal/` packages are implementation detail. They are documented in
-[Internal Packages](/reference/internal-packages), but they do not carry the
+[Internal Packages](/docs/reference/internal-packages), but they do not carry the
 same semver promise as the `pkg/` packages below.
 
 Some current `pkg/` method signatures still expose implementation types from
@@ -191,11 +191,13 @@ func (c *MarketClient) Connect(ctx context.Context) error
 func (c *MarketClient) SubscribeAssets(ctx context.Context, assetIDs []string) error
 func (c *MarketClient) Close()
 func (c *MarketClient) IsConnected() bool
+func (c *MarketClient) Stats() StreamStatsSnapshot
 
 func (c *UserClient) Connect(ctx context.Context) error
 func (c *UserClient) SubscribeUser(ctx context.Context, markets []string) error
 func (c *UserClient) Close()
 func (c *UserClient) IsConnected() bool
+func (c *UserClient) Stats() StreamStatsSnapshot
 
 func (d *Deduplicator) Process(data []byte) bool
 func (d *Deduplicator) Reset()
@@ -214,6 +216,8 @@ type TickSizeChangeMessage struct
 type BestBidAskMessage struct
 type NewMarketMessage struct
 type MarketResolvedMessage struct
+type RawMessage struct
+type StreamStatsSnapshot struct
 type UserCredentials struct
 type UserOrderMessage struct
 type UserTradeMessage struct
@@ -221,7 +225,43 @@ type UserTradeMessage struct
 
 `pkg/stream` covers public market data and authenticated user order/trade
 streams. Set `Config.CustomFeatureEnabled = true` to request top-of-book and
-market lifecycle events from the V2 market channel.
+market lifecycle events from the V2 market channel. `MarketClient.OnRawMessage`
+exposes each deduplicated market payload for append-only JSONB recorders, and
+`Stats()` includes `last_message_at` plus per-event `event_counts` for
+coverage/freshness receipts.
+
+## `pkg/rtds` — Real-Time Data Service Chainlink Prices
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/rtds"
+```
+
+### Contract: Constructors
+
+```go
+type Client struct { /* unexported fields */ }
+
+func NewClient(cfg Config, feeds []string) *Client
+func DefaultConfig(url string) Config
+```
+
+### Contract: Methods
+
+```go
+func (c *Client) Connect(ctx context.Context) error
+func (c *Client) Connected() bool
+func (c *Client) Close() error
+```
+
+### Contract: DTOs
+
+```go
+type Config struct
+type ChainlinkPriceEvent struct
+```
+
+`pkg/rtds` connects to Polymarket's Real-Time Data Service and exposes the
+`crypto_prices_chainlink` feed used by crypto Up/Down markets.
 
 ## `pkg/marketdata` — Live Share-Price Snapshots
 
@@ -358,6 +398,30 @@ func (c *Client) SportsMarketTypes(ctx context.Context) ([]types.SportsMarketTyp
 func (c *Client) MarketByToken(ctx context.Context, tokenID string) (*types.MarketByTokenResponse, error)
 func (c *Client) EventsKeyset(ctx context.Context, params *types.KeysetParams) ([]types.Event, string, error)
 func (c *Client) MarketsKeyset(ctx context.Context, params *types.KeysetParams) ([]types.Market, string, error)
+```
+
+## `pkg/geoblock` — Geoblock Verdict
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/geoblock"
+```
+
+Read-only client for Polymarket's public geoblock endpoint. It reports whether
+the caller's IP is blocked from trading and where it appears to be
+(`pkg/geoblock/geoblock.go:1`).
+
+```go
+const DefaultURL = "https://polymarket.com/api/geoblock"
+
+type Result struct {
+    Blocked bool
+    IP      string
+    Country string
+    Region  string
+}
+
+func New(baseURL string, httpClient *http.Client) *Client
+func (c *Client) Check(ctx context.Context) (Result, error)
 ```
 
 ## `pkg/types` — Public DTOs
@@ -848,6 +912,23 @@ These helpers only build calldata and deterministic IDs. They do not submit
 transactions, bypass deposit-wallet gates, or perform split/merge/redeem
 execution.
 
+## `pkg/wallet` — Deposit-Wallet Identity
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/wallet"
+```
+
+Small identity/readiness module for deterministic deposit-wallet derivation.
+Deploy, approvals, funding, and settlement stay in their own packages
+(`pkg/wallet/doc.go:1`, `pkg/wallet/derive.go:24`).
+
+```go
+func DeriveDepositWallet(eoa string) (string, error)
+func DeriveProxyWallet(eoa string) string // deprecated
+func DeriveSafeWallet(eoa string) string  // deprecated
+func Readiness(chainID int64, eoa string) ReadyInfo
+```
+
 ## `pkg/contracts` — Polygon Contract Registry and Code Checks
 
 ```go
@@ -1028,6 +1109,19 @@ the relayer when needed, polls the deploy transaction, and submits the standard
 six-call pUSD + CTF approval batch. It does not transfer pUSD or bypass live
 execution gates; callers must fund and preflight explicitly before live trading.
 
+## `pkg/funding` — Explicit pUSD Funding Helper
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/funding"
+```
+
+This package submits Polygon mainnet transactions and must only be called after
+caller-owned live gates pass (`pkg/funding/funding.go:1`, `pkg/funding/funding.go:17`).
+
+```go
+func TransferPUSD(ctx context.Context, privateKeyHex, toAddress string, amount *big.Int, rpcURL string) (string, error)
+```
+
 ## `pkg/pagination` — Cursor & Offset Helpers
 
 ```go
@@ -1042,19 +1136,273 @@ func CollectOffset[T any](ctx context.Context, fn OffsetPageFunc[T], pageSize in
 func Batch[T, R any](ctx context.Context, items []T, concurrency int, fn BatchFunc[T, R]) ([]R, error)
 ```
 
+## `pkg/cryptoprice` — Crypto Reference Prices
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/cryptoprice"
+```
+
+Read-only client for Polymarket web crypto reference prices. It fetches the
+open/close reference price backing crypto Up/Down market resolution and does no
+signing (`pkg/cryptoprice/client.go:1`, `pkg/cryptoprice/client.go:69`).
+
+```go
+type CryptoPrice struct {
+    OpenPrice float64
+    ClosePrice *float64
+    TimestampMillis int64
+    Completed bool
+    Incomplete bool
+    Cached bool
+}
+
+func DefaultConfig() Config
+func NewClient(cfg Config) *Client
+func (c *Client) CryptoPrice(ctx context.Context, symbol string, eventStart time.Time, variant string, endDate time.Time) (CryptoPrice, error)
+```
+
+## `pkg/intel` — Wallet Intelligence DTOs and Scoring
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/intel"
+```
+
+Pure read-only DTOs and scoring helpers for wallet dossiers. `ScoreWallet`
+returns deterministic, explainable wallet scores from public metrics
+(`pkg/intel/types.go:1`, `pkg/intel/score.go:50`).
+
+```go
+func ShrinkageWinRate(wins, bets int, priorWins, priorBets float64) float64
+func ROI(realizedPnL, volume float64) float64
+func ScoreWallet(input ScoreInput) WalletScore
+```
+
+## `pkg/orderfills` — On-Chain Fill Truth Models
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/orderfills"
+```
+
+Typed `OrderFilled` reader contract and validators for on-chain fill evidence
+(`pkg/orderfills/orderfills.go:1`, `pkg/orderfills/orderfills.go:50`).
+
+```go
+type Reader interface {
+    OrderFilled(ctx context.Context, query Query) ([]Fill, error)
+}
+
+type BlockNumberReader interface {
+    LatestBlockNumber(ctx context.Context) (uint64, error)
+}
+
+func ValidateQuery(query Query) error
+func NormalizeFill(fill Fill) (Fill, error)
+func ValidateFill(fill Fill) error
+```
+
+## `pkg/orderresults` — Joined Order Result Reports
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/orderresults"
+```
+
+Builds one operator report from Data API positions/results plus optional CLOB
+account history (`pkg/orderresults/orderresults.go:1`, `pkg/orderresults/orderresults.go:30`).
+
+```go
+func BuildReport(ctx context.Context, source DataReader, user string, opts Options) (*Report, error)
+func (r *Report) RowByToken(tokenID string) *Row
+```
+
+## `pkg/rfq` — RFQ DTOs and Guarded Submit
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/rfq"
+```
+
+RFQ live submission is deliberately unsupported today. The package gives SDK
+consumers stable request/quote/response DTOs and validates inputs; `Submit`
+returns `ErrSubmitUnsupported` after validation (`pkg/rfq/rfq.go:1`,
+`pkg/rfq/rfq.go:18`, `pkg/rfq/rfq.go:114`).
+
+```go
+var ErrSubmitUnsupported error
+
+func NewClient() *Client
+func ValidateRequest(req Request) error
+func (c *Client) Submit(req Request) (*Response, error)
+```
+
+## `pkg/signers` — Public Signing Seam
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/signers"
+```
+
+Stable signer interface plus local secp256k1 adapter for auth, order, and
+deposit-wallet typed-data flows (`pkg/signers/signers.go:1`,
+`pkg/signers/signers.go:21`). Remote/cloud adapters are optional seams, not CLI
+defaults.
+
+```go
+type Signer interface {
+    Address() string
+    ChainID() int64
+    SignHash(hash [32]byte) ([]byte, error)
+    SignTypedData(domainHash, structHash [32]byte) ([32]byte, error)
+    SignEIP712(typed apitypes.TypedData) ([]byte, error)
+}
+
+func NewLocalSigner(privateKeyHex string, chainID int64) (*LocalSigner, error)
+func NewLocal(privateKeyHex string, chainID int64) (*LocalSigner, error)
+func RedactSecret(value string) string
+```
+
+## `pkg/mcp` — Read-Only Agent Handlers
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/mcp"
+```
+
+MCP exposes safe discovery artifacts and read-only handlers only. Tool names
+live in `mcp.SafeTools()` (`pkg/mcp/mcp.go:86`). See
+[MCP and OpenAPI](/docs/reference/mcp-openapi).
+
+```go
+func SafeTools() []Tool
+func NewServer() *Server
+func NewServerWithHandlers(handlers map[string]ToolHandler) *Server
+func NewReadOnlyHandlers(config HandlerConfig) map[string]ToolHandler
+func NewSDKReadOnlyHandlers(config HandlerConfig, gammaClient *gamma.Client, dataClient *data.Client, clobClient *clob.Client) map[string]ToolHandler
+func NewMarketDataSnapshotHandler(tracker *marketdata.Tracker) ToolHandler
+```
+
+## `pkg/openapi` — Read-Only OpenAPI Spec
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/openapi"
+```
+
+OpenAPI paths live in `openapi.Spec()` and exclude mutating operations
+(`pkg/openapi/openapi.go:1`, `pkg/openapi/openapi.go:14`).
+
+```go
+func Spec() map[string]any
+```
+
+## `pkg/plugins` — Embedder Extension Points
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/plugins"
+```
+
+Small interfaces for custom market-data resolution/filtering and pre-trade risk
+checks (`pkg/plugins/plugins.go:1`, `pkg/plugins/plugins.go:11`).
+
+```go
+type MarketDataPlugin interface { Resolve(...); Filter(...) }
+type RiskPlugin interface { CheckOrder(ctx context.Context, order Order) error }
+```
+
+## `pkg/capabilities` — Typed Capability Map
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/capabilities"
+```
+
+The Capability Map: typed metadata for every Polymarket surface polygolem
+exposes — service, auth requirement, wallet mode, and read-only/mutating
+classification (`pkg/capabilities/capabilities.go:1`). Single source of truth
+for surface claims; `docs/COMPATIBILITY.md` is generated from it.
+
+```go
+func All() []Capability
+func ByID() map[string]Capability
+func ReadOnlyIDs() []string
+```
+
+## `pkg/compat` — Compatibility Contract
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/compat"
+```
+
+Machine-readable compatibility contract assembled from the Capability Map and
+normalized error kinds, for downstream services and UIs
+(`pkg/compat/compat.go:1`).
+
+```go
+func Contract() CompatibilityContract
+func JSON() ([]byte, error)
+```
+
+## `pkg/polyerrors` — Stable Error Kinds
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/polyerrors"
+```
+
+Normalizes upstream Polymarket failures (rate limits, geoblock, auth
+rejection, tick-size mismatch, closed markets, insufficient funds, outages)
+into stable kinds for operators, agents, and UI adapters
+(`pkg/polyerrors/polyerrors.go:1`).
+
+```go
+func Normalize(in Input) Error
+func Kinds() []Kind
+```
+
+## `pkg/reconciliation` — Read-Only Reconciliation Report
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/reconciliation"
+```
+
+Builds a Reconciliation Report: read-only status labels and conflict detection
+across CLOB order records, Data API positions/trades, relayer transaction
+state, and optional on-chain fills (`pkg/reconciliation/reconciliation.go:1`).
+It labels observed status and source disagreement; it does not declare
+economic truth unless a source authority is named.
+
+```go
+func BuildReport(in Input) Report
+```
+
+## `pkg/upstreamdrift` — Official Docs Drift Checker
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/upstreamdrift"
+```
+
+Checks a saved official Polymarket docs index (`llms.txt`) against the
+polygolem compatibility surface (`pkg/upstreamdrift/llms.go:1`). Read-only and
+credential-free; backs the `polygolem drift llms` command.
+
+```go
+func CheckLLMS(text string) Report
+```
+
 ## Known Public SDK Gaps
 
 The following are intentional gaps in the current stable `pkg/` contract:
 
 | Gap | Current Status |
 |---|---|
-| Public type ownership | Gamma, Data API, and read-only CLOB DTOs are public in `pkg/types`; authenticated CLOB account/trading DTOs are public in `pkg/clob`; market WebSocket DTOs are public in `pkg/stream`; rewards, enrichment, and user-stream signatures still need promotion work before claiming a fully clean external SDK |
-| Authenticated user WebSocket stream | Public market stream is exposed; user stream waits for L2 WebSocket auth tests |
+| Public type ownership | Gamma, Data API, read-only CLOB DTOs, market/user stream DTOs, and authenticated CLOB account/trading DTOs are public; rewards and some enrichment DTOs still need promotion work before claiming a fully clean external SDK |
 | Consolidated V2 CLOB market info | Tick size, neg-risk, and fee-rate are separate calls today |
+
+## Update triggers
+
+Refresh this page when:
+
+- `find pkg -maxdepth 2 -type f -name '*.go'` shows a new or removed public package;
+- a public constructor, method, DTO, or error sentinel changes under `pkg/`;
+- a package graduates from `pkg/experimental/` into `pkg/`;
+- generated command docs or [Architecture](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/ARCHITECTURE.md) change public SDK boundaries.
 
 ## See Also
 
-- [Internal Packages](/reference/internal-packages) — full internal package contracts
-- [CLOB V2 API](/reference/clob-api) — upstream REST mapping and signed order contract
-- [CLI Commands](/reference/cli) — command-line surface
-- [Smart Contracts](/concepts/contracts) — on-chain addresses and ABI
+- [Internal Packages](/docs/reference/internal-packages) — full internal package contracts
+- [CLOB V2 API](/docs/reference/clob-api) — upstream REST mapping and signed order contract
+- [CLI Commands](/docs/reference/cli) — command-line surface
+- [Smart Contracts](/docs/concepts/contracts) — on-chain addresses and ABI

@@ -28,33 +28,44 @@ type Pricer interface {
 
 // Request describes one crypto-5m sweep.
 type Request struct {
-	Assets []string
-	Enrich bool
+	Assets     []string
+	Enrich     bool
+	HoursAhead int
+	Timezone   string
 }
 
 // MarketResult is a JSON-friendly per-asset sweep result.
 type MarketResult struct {
-	Asset       string   `json:"asset"`
-	EventID     string   `json:"event_id,omitempty"`
-	EventTitle  string   `json:"event_title,omitempty"`
-	EventSlug   string   `json:"event_slug,omitempty"`
-	MarketID    string   `json:"market_id,omitempty"`
-	Question    string   `json:"question,omitempty"`
-	ConditionID string   `json:"condition_id,omitempty"`
-	TokenIDs    []string `json:"token_ids,omitempty"`
-	Outcomes    []string `json:"outcomes,omitempty"`
-	WindowStart string   `json:"window_start,omitempty"`
-	WindowEnd   string   `json:"window_end,omitempty"`
-	Price       string   `json:"price,omitempty"`
-	Spread      string   `json:"spread,omitempty"`
-	Status      string   `json:"status"`
-	Error       string   `json:"error,omitempty"`
+	Asset            string   `json:"asset"`
+	EventID          string   `json:"event_id,omitempty"`
+	EventTitle       string   `json:"event_title,omitempty"`
+	EventSlug        string   `json:"event_slug,omitempty"`
+	MarketID         string   `json:"market_id,omitempty"`
+	Question         string   `json:"question,omitempty"`
+	ConditionID      string   `json:"condition_id,omitempty"`
+	TokenIDs         []string `json:"token_ids,omitempty"`
+	Outcomes         []string `json:"outcomes,omitempty"`
+	WindowStart      string   `json:"window_start,omitempty"`
+	WindowEnd        string   `json:"window_end,omitempty"`
+	WindowStartLocal string   `json:"window_start_local,omitempty"`
+	WindowEndLocal   string   `json:"window_end_local,omitempty"`
+	AcceptingOrders  bool     `json:"accepting_orders"`
+	LiquidityClob    float64  `json:"liquidity_clob,omitempty"`
+	Volume24hrClob   float64  `json:"volume_24h_clob,omitempty"`
+	BestBid          float64  `json:"best_bid,omitempty"`
+	BestAsk          float64  `json:"best_ask,omitempty"`
+	BookSpread       float64  `json:"book_spread,omitempty"`
+	Price            string   `json:"price,omitempty"`
+	Spread           string   `json:"spread,omitempty"`
+	Status           string   `json:"status"`
+	Error            string   `json:"error,omitempty"`
 }
 
 // Response is the JSON-friendly crypto-5m sweep result.
 type Response struct {
 	Interval    string         `json:"interval"`
 	WindowStart string         `json:"window_start"`
+	Timezone    string         `json:"timezone,omitempty"`
 	Assets      []string       `json:"assets"`
 	Count       int            `json:"count"`
 	Markets     []MarketResult `json:"markets"`
@@ -86,21 +97,33 @@ func (r *Runner) Run(ctx context.Context, req Request) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
+	loc, tz, err := loadLocation(req.Timezone)
+	if err != nil {
+		return Response{}, err
+	}
 
-	results := make([]MarketResult, 0, len(assets))
-	for _, asset := range assets {
-		results = append(results, r.resolveAsset(ctx, asset, windowStart, req.Enrich))
+	windows := req.HoursAhead*12 + 1
+	if windows < 1 {
+		windows = 1
+	}
+	results := make([]MarketResult, 0, len(assets)*windows)
+	for i := 0; i < windows; i++ {
+		start := windowStart.Add(time.Duration(i) * 5 * time.Minute)
+		for _, asset := range assets {
+			results = append(results, r.resolveAsset(ctx, asset, start, req.Enrich, loc))
+		}
 	}
 	return Response{
 		Interval:    "5m",
 		WindowStart: windowStart.UTC().Format(time.RFC3339),
+		Timezone:    tz,
 		Assets:      assets,
 		Count:       len(results),
 		Markets:     results,
 	}, nil
 }
 
-func (r *Runner) resolveAsset(ctx context.Context, asset string, windowStart time.Time, enrich bool) MarketResult {
+func (r *Runner) resolveAsset(ctx context.Context, asset string, windowStart time.Time, enrich bool, loc *time.Location) MarketResult {
 	asset = strings.TrimSpace(asset)
 	slug := marketresolver.CryptoWindowSlug(asset, "5m", windowStart)
 	if slug == "" {
@@ -115,23 +138,31 @@ func (r *Runner) resolveAsset(ctx context.Context, asset string, windowStart tim
 		return MarketResult{Asset: asset, Status: "no_active_market"}
 	}
 	for _, market := range event.Markets {
-		if !market.Active || market.Closed {
+		if !market.Active || market.Closed || !market.AcceptingOrders {
 			continue
 		}
 		tokenIDs := cryptomarkets.ParseTokenIDs(market.ClobTokenIDs)
 		result := MarketResult{
-			Asset:       asset,
-			EventID:     event.ID,
-			EventTitle:  event.Title,
-			EventSlug:   event.Slug,
-			MarketID:    market.ID,
-			Question:    market.Question,
-			ConditionID: market.ConditionID,
-			TokenIDs:    tokenIDs,
-			Outcomes:    []string(market.Outcomes),
-			WindowStart: windowStart.UTC().Format(time.RFC3339),
-			WindowEnd:   market.EndDateISO,
-			Status:      "active",
+			Asset:            asset,
+			EventID:          event.ID,
+			EventTitle:       event.Title,
+			EventSlug:        event.Slug,
+			MarketID:         market.ID,
+			Question:         market.Question,
+			ConditionID:      market.ConditionID,
+			TokenIDs:         tokenIDs,
+			Outcomes:         []string(market.Outcomes),
+			WindowStart:      windowStart.UTC().Format(time.RFC3339),
+			WindowEnd:        market.EndDateISO,
+			WindowStartLocal: windowStart.In(loc).Format(time.RFC3339),
+			WindowEndLocal:   windowStart.Add(5 * time.Minute).In(loc).Format(time.RFC3339),
+			AcceptingOrders:  market.AcceptingOrders,
+			LiquidityClob:    market.LiquidityClob,
+			Volume24hrClob:   market.Volume24hrClob,
+			BestBid:          market.BestBid,
+			BestAsk:          market.BestAsk,
+			BookSpread:       market.Spread,
+			Status:           "active",
 		}
 		if enrich && len(tokenIDs) > 0 && r.pricer != nil {
 			if price, err := r.pricer.Price(ctx, tokenIDs[0], "BUY"); err == nil {
@@ -144,6 +175,21 @@ func (r *Runner) resolveAsset(ctx context.Context, asset string, windowStart tim
 		return result
 	}
 	return MarketResult{Asset: asset, Status: "no_active_market"}
+}
+
+func loadLocation(name string) (*time.Location, string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" || strings.EqualFold(name, "UTC") {
+		return time.UTC, "UTC", nil
+	}
+	if strings.EqualFold(name, "local") {
+		return time.Local, "Local", nil
+	}
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid timezone %q (use IANA names like America/Chicago)", name)
+	}
+	return loc, name, nil
 }
 
 func (r *Runner) now() time.Time {

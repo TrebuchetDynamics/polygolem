@@ -21,7 +21,7 @@ func TestWrapERC7739GoldenVector(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const depositWallet = "0xfd5041047be8c192c725a66228f141196fa3cf9c"
+	const depositWallet = "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1"
 	var appDomainSep [32]byte
 	copy(appDomainSep[:], hexDecodeTest("0x1901df32864c97f6cdcb1823d5197ae11b39e229d94ef4beba15803ebbce9f63"))
 	var contents [32]byte

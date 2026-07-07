@@ -1,63 +1,90 @@
 # Safety
 
-Phase 1 is safe by default. The CLI supports read-only workflows and local paper
-state while keeping real execution hard-disabled.
+Polygolem is read-only by default and moves real funds only through explicit,
+credential-gated commands. This page describes the guards that actually exist in
+the shipped CLI. It is not a description of a future state; where a guard is
+partial today, this page says so.
 
 ## Read-Only Default
 
-Read-only mode is the default. It may call public market-data APIs for markets,
-order books, prices, and health checks. It must not require wallet credentials,
-sign payloads, or submit mutations.
+Read-only is the default. Market data, discovery, streaming, orderbook reads,
+data analytics, health checks, and diagnostics require no wallet credentials,
+sign no payloads, and submit no mutations. Authenticated paths are opt-in only
+when `SIGNER_PRIVATE_KEY` (legacy `POLYMARKET_PRIVATE_KEY`) is set.
 
 ## Paper Mode
 
-Paper mode is local-only. Simulated buys, simulated sells, positions, and reset
-operations are stored in local state. Paper behavior must not call authenticated
-trading endpoints or on-chain transaction paths.
+Paper mode is local-only. Simulated buys, sells, positions, and reset operations
+are stored in local state and never call authenticated trading endpoints or
+on-chain paths. Paper mode may read public market data to price simulations.
 
-## Live Gates
+## What can move funds
 
-Future live-capable commands require all gates:
+Only these command groups have live execution paths:
 
-- `POLYMARKET_LIVE_PROFILE=on`
-- `live_trading_enabled: true`
-- `--confirm-live`
-- successful `preflight`
+- `clob create-order`, `clob market-order`, `clob batch-orders` — sign and post
+  CLOB V2 orders.
+- `deposit-wallet deploy`, `approve`, `approve-adapters`, `batch`, `fund`,
+  `onboard`, `redeem` — relayer-sponsored or direct on-chain transactions.
 
-All four gates must pass before any future live-capable command may proceed.
-Phase 1 implements status and validation boundaries only; it does not implement
-real execution.
+Everything else is read-only. Bridge withdrawals, RFQ submission, and CTF
+split/merge are typed dry-run surfaces that return an explicit unsupported error
+before any live call (see the Safety-First Mutating Surface term in
+[CONTEXT.md](../CONTEXT.md)).
 
-## Preflight
+## Live-order cap
 
-Preflight checks config validity, wallet readiness, auth readiness, network consistency, API health, and chain consistency.
-It aggregates local configuration, credential readiness, remote API reachability,
-and expected network identity into one pass/fail result.
+Every order-placing command enforces a notional cap before signing:
+`POLYGOLEM_MAX_LIVE_ORDER_USD` (default **$1**). `create-order` and
+`market-order` check the single order; `batch-orders` checks each order and the
+summed batch notional. An order over the cap is rejected before the private key
+is loaded. Raise the cap deliberately with the environment variable; there is no
+flag that bypasses it.
 
-Automation must treat any preflight failure as terminal. A failed preflight
-means the requested operation is not safe to continue, and scripts should stop
-instead of retrying a different mode or assuming a partial result is usable.
+## Typed live-money confirmation
 
-## Failure Behavior
+Every deposit-wallet command that signs and submits real transactions requires a
+typed confirmation token, so a live submission cannot happen from a single
+mistyped flag:
 
-If any gate fails, the command must abort with a structured error and a non-zero
-exit code. The CLI must not silently downgrade to paper mode or read-only mode,
-because that would hide operator intent and make automation unsafe.
+| Command | Required token |
+|---|---|
+| `deposit-wallet approve-adapters` (with `--submit`) | `--confirm APPROVE_ADAPTERS` |
+| `deposit-wallet redeem` (with `--submit`) | `--confirm REDEEM_WINNERS` |
+| `deposit-wallet approve` (with `--submit`) | `--confirm APPROVE_TRADING` |
+| `deposit-wallet batch` | `--confirm SUBMIT_BATCH` |
+| `deposit-wallet onboard` | `--confirm ONBOARD_WALLET` |
 
-## Dangerous Operations
+The dry-run-capable commands (`approve`, `approve-adapters`, `redeem`) print
+calldata for review when run without `--submit`. The confirmation token is
+checked before the private key is loaded.
 
-Dangerous operations include real order submission, payload signing, on-chain transactions, token approvals, private-key handling, and authenticated trading mutations.
-Phase 1 intentionally contains no code path for those operations.
+## Preflight and readiness
 
-Future work that introduces any dangerous operation must add explicit tests,
-structured errors, credential redaction, preflight coverage, and live-gate
-enforcement before it is exposed through the CLI frontend.
+Preflight and live-readiness checks aggregate config validity, wallet readiness,
+auth readiness, API reachability, and chain consistency into one pass/fail
+result. Automation must treat any preflight failure as terminal and stop rather
+than retrying a different mode or assuming a partial result is usable.
 
-## Credential Handling
+The `polygolem live status` command evaluates advisory gates
+(`POLYMARKET_LIVE_PROFILE`, `--confirm-live`, preflight) and reports whether an
+operator has opted into a live posture. This status is **advisory**: it helps an
+operator confirm intent, but the enforced money guards are the live-order cap and
+the typed confirmation tokens above, not the `live status` flags.
 
-Read-only and paper workflows should not require private keys. Any future
-credential-aware status output must redact sensitive values and report readiness
-without printing secrets.
+## Failure behavior
+
+Live commands abort on failure with a structured error and non-zero exit code.
+The CLI never silently downgrades to paper or read-only mode, because that would
+hide operator intent and make automation unsafe.
+
+## Credential handling
+
+Read-only and paper workflows require no private key. The private key is read
+from the environment only, is never persisted or logged, and is printed only by
+`auth export-key`, which is double-confirmed. Diagnostics (`diag`) and config
+loading redact secrets; relayer and builder credentials are stored `0600` and
+never emitted in JSON output.
 
 ## Deposit Wallet Safety
 
@@ -150,13 +177,13 @@ operations. These rules apply.
    credentials enables deposit-wallet operations; it does not relax any
    gate or grant trading privileges.
 
-8. **Decision-window safety.** Automated order placement must bind the
-   strategy decision window to the selected market window. A signal for
-   `2026-05-09T08:20:00Z` must not buy a market that starts at
-   `2026-05-09T12:20:00Z`, even when the asset and timeframe match. The
-   required SDK path is a strict window resolver that returns a
-   `window_mismatch` status instead of silently falling back to a future
-   market.
+8. **Decision-window safety.** External applications that automate trading
+   decisions must bind each decision to the selected market window. A signal
+   for `2026-05-09T08:20:00Z` must not buy a market that starts at
+   `2026-05-09T12:20:00Z`, even when the asset and timeframe match. Polygolem
+   provides the strict window resolver that returns a `window_mismatch` status
+   instead of silently falling back to a future market; it does not create the
+   trading signal.
 
 ## Matched, Winning, And Redeemable
 

@@ -7,6 +7,228 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.1] — 2026-07-06
+
+Support for Polymarket's current wallet-approval flows (Get Paid Instantly
+auto-redemption and the Combos-era Enable Trading batch), plus an RTDS
+real-time price client.
+
+### Added
+
+- **Get Paid Instantly (auto-redeem).** New `deposit-wallet approve-auto-redeem`
+  command submits the 3-call `setApprovalForAll` batch polymarket.com signs
+  for the feature: CTF -> CtfAutoRedeem, CTF -> AutoRedeemer, and
+  PositionManager -> AutoRedeemer. Once mined, winning positions are redeemed
+  automatically after resolution. Dry-run by default; live submission
+  requires `--submit --confirm APPROVE_AUTO_REDEEM` (covered by the
+  fail-closed livegate test). SDK: `relayer.BuildAutoRedeemApprovalCalls`,
+  `contracts.AutoRedeemApprovals`. Calldata is pinned byte-for-byte against
+  a batch captured from the production UI.
+- **Contract registry entries** for the new Polymarket contracts:
+  `CtfAutoRedeem` (Sourcify-verified), `AutoRedeemer`, `PositionManager`
+  (Combos ERC-1155), `CombosExchange`, and `CombosRouter` — verified against
+  Polymarket's official deployment resources and on-chain bytecode.
+- **RTDS WebSocket client** (`pkg/rtds`) for Chainlink crypto prices, with
+  SDK reference docs.
+- Automated Cloudflare Pages deploy for the docs site
+  (`.github/workflows/docs-deploy.yml`).
+
+### Changed
+
+- **Enable Trading "Approve Tokens" batch grew from 2 to 6 calls**, matching
+  the current polymarket.com UI: the original pUSD -> CTF and USDC.e ->
+  CollateralOnramp approvals plus the Combos grants (pUSD approve and
+  PositionManager `setApprovalForAll` for both CombosRouter and
+  CombosExchange). `enabletrading.ValidateEnableTradingApprovalCalls` now
+  validates the 6-call shape and rejects the old 2-call batch; wallets
+  onboarded before this release should re-run `deposit-wallet
+  enable-trading` once to add the Combos grants (idempotent).
+
+## [v0.4.0] — 2026-07-06
+
+Safety and usability release from a skeptical funds-safety review.
+
+### Changed
+
+- **Breaking:** deposit-wallet commands that submit real transactions now
+  require a typed live-money confirmation token, matching the existing
+  `approve-adapters`/`redeem` gate: `deposit-wallet batch` requires
+  `--confirm SUBMIT_BATCH`, `deposit-wallet approve --submit` requires
+  `--confirm APPROVE_TRADING`, and `deposit-wallet onboard` requires
+  `--confirm ONBOARD_WALLET`. The token is checked before the private key is
+  loaded. Scripts that call these commands must add the flag.
+
+### Added
+
+- Rich CLI help. `polygolem --help` now opens with a "what this is / start
+  here" guide, worked examples, and a command list grouped by safety posture
+  (read-only market data separated from the commands that move real funds).
+  Every command group carries orientation text and a runnable example.
+- Weekly read-only upstream smoke workflow (`.github/workflows/smoke.yml`):
+  runs the credential-free smoke path plus `drift llms` on a schedule to catch
+  Polymarket API/docs drift early.
+
+### Fixed
+
+- `clob batch-orders` enforces `POLYGOLEM_MAX_LIVE_ORDER_USD` per order and on
+  the summed batch notional before signing (previously only `create-order` and
+  `market-order` were capped).
+- Rewrote `docs/SAFETY.md`, which described a Phase-1 state with no live
+  execution; it now documents the real guard set. Corrected the README
+  circuit-breaker claim: the breaker is an SDK-only `TradeGate`, not a CLI
+  default.
+
+### Internal
+
+- Extracted `internal/livegate`, the single home for the live-order cap and the
+  typed confirmation token, and routed every mutating command through it. Added
+  a fail-closed coverage test that enumerates every live-money command and
+  proves each rejects a violating invocation before the private key loads.
+
+## [v0.3.0] — 2026-07-05
+
+Cut to restore a correct `go install @latest` channel: `v0.2.1` predated the
+sigtype-3 deposit-wallet derivation fix (factory switch to BEACON proxies), and
+the invalid `v2026.5.9` tag was invisible to Go tooling. This is the first tag
+that includes the derivation fix and the packages/commands below.
+
+### Added
+
+- Five public SDK packages: `pkg/capabilities` (the typed Capability Map —
+  per-surface service, auth, wallet mode, read-only/mutating), `pkg/compat`
+  (machine-readable compatibility contract), `pkg/polyerrors` (stable error
+  kinds normalized from upstream failures), `pkg/reconciliation` (read-only
+  evidence reconciliation report), and `pkg/upstreamdrift` (official `llms.txt`
+  drift checker).
+- `polygolem drift llms`: read-only, credential-free check that a saved official
+  docs index still advertises every section the compatibility surface depends on.
+- Generated `docs/COMPATIBILITY.md` and `docs/COMPATIBILITY.json` from the
+  Capability Map, plus `docs/POLYMARKET-APIS.md` mapping the official Gamma/CLOB/
+  Data APIs to polygolem.
+- `pkg/geoblock`: read-only client for Polymarket's geoblock endpoint
+  (blocked flag plus caller IP/country/region), migrated from the mega-bot
+  consumer so all Polymarket HTTP lives in the SDK.
+- `pkg/types`: executable top-of-book math on `CLOBOrderBook` — `BestBid`,
+  `BestAsk`, and `AvailableAskSize(maxPrice)` — and `CLOBTickSize.Value()`
+  for a parsed positive tick size, replacing per-consumer string parsing.
+- `pkg/marketresolver`: canonical outcome helpers `NormalizeOutcome`,
+  `OutcomeForToken`, and `CryptoMarket.OutcomeForToken` mapping a winning
+  token ID to `up`/`down`/`unknown`.
+- `pkg/marketresolver`: exported crypto-market parsing helpers migrated
+  from the mega-bot consumer — `UpDownTokenIDs`, `InferTimeframe`,
+  `InferTimeframeFromWindow`, `WindowFromSlug` (inverse of
+  `CryptoWindowSlug`), `AssetSearchQueries`, `AssetMentioned`, and
+  `ParseJSONStringList`.
+- `pkg/contracts`: exported calldata builders for EOA and deposit-wallet
+  flows — `ERC20{Approve,Transfer,Allowance,BalanceOf}Calldata`,
+  `ERC1155{SetApprovalForAll,IsApprovedForAll}Calldata`,
+  `Ramp{Wrap,Unwrap}Calldata` for the V2 collateral on/offramp pUSD
+  conversion, plus `MaxUint256` and `Decode{Uint256,Bool}Result`.
+  Selectors are keccak-verified in tests and byte-identical to the
+  relayer's deposit-wallet batch encoding.
+
+### Changed
+
+- Authenticated commands now read `SIGNER_PRIVATE_KEY` first, falling back to
+  the legacy `POLYMARKET_PRIVATE_KEY`. Docs, help text, and the generated
+  command reference use the new name.
+- Raised the CI statement-coverage floor from 50% to 60% and documented the
+  enforced gate in the README.
+
+### Fixed
+
+- `clob batch-orders` now enforces `POLYGOLEM_MAX_LIVE_ORDER_USD` per order and
+  on the summed batch notional before signing. Previously the cap guarded only
+  `create-order` and `market-order`, so a batch could submit unlimited notional.
+- Rewrote `docs/SAFETY.md`, which still described a Phase-1 state with no live
+  execution and four enforced "live gates" that are actually advisory. It now
+  documents the real guard set (read-only default, live-order cap, typed
+  `APPROVE_ADAPTERS`/`REDEEM_WINNERS` confirmation tokens, credential handling).
+
+## [v0.2.1] — 2026-06-30
+
+### Added
+
+- **Raw WebSocket recorder support.** Market streams now expose deduplicated raw payload callbacks and per-event stats for collector freshness receipts.
+- **Crypto stream lookahead refresh.** `stream crypto` subscribes to current and near-future window tokens and refreshes at interval boundaries.
+- **Polymarket interface ADRs.** Documented the non-bot API boundary, deposit-wallet-only trading path, and stable public SDK surface.
+
+### Changed
+
+- **Docs now describe user-directed transactions** instead of embedded trading decisions, keeping strategy choices outside Polygolem.
+
+## [v0.2.0] — 2026-06-22
+
+### Added
+
+- **Wallet Intelligence V1 (`pkg/intel`, CLI workflows, and context glossary).**
+  Adds reproducible wallet dossier scoring, formula-versioned score output,
+  batch dossier alerts, source-authority/conflict handling, and E2E coverage
+  for read-only wallet intelligence signals.
+- **Public protocol conformance artifacts.** Added fixtures and tests for
+  CLOB auth, builder headers, POLY_1271 order signatures, deposit-wallet
+  batches, CTF calldata, JSON envelopes, and schema contracts so downstream
+  SDKs can verify parity without live credentials.
+- **MCP and OpenAPI surfaces.** Added `cmd/polygolem_mcp`,
+  `cmd/polygolem_openapi`, `pkg/mcp`, `pkg/openapi`, and documentation for
+  read-only agent/tool integrations.
+- **Public SDK expansion.** Added order fills, RFQ dry-run DTOs, CTF operation
+  DTOs, signer interfaces plus HTTP/KMS/Turnkey signer adapters, stream user
+  helpers, richer Gamma discovery collections, and more V2 market/type helpers.
+- **Examples and operator docs.** Added read-only monitor scripts, paper
+  strategy examples, basic/tradegate/boring-paper bots, operator one-pager,
+  safe happy path, threat model, upstream drift runbook, and coverage/parity
+  matrices.
+- **Live BTC 5-minute CLOB contract test and live-smoke script.** These expand
+  optional live validation while keeping default CI on fixture-backed `-short`
+  tests.
+
+### Changed
+
+- **CLOB live order paths are guardable through `TradeGate`.** `pkg/clob` and
+  `pkg/universal` can thread an opt-in gate through create-order paths while
+  keeping cancel paths open for risk reduction.
+- **Paper sell accounting now uses average-cost realized PnL.** Paper account
+  sells route through `State.Sell`, update remaining cost basis, and report
+  realized PnL deterministically.
+- **README and docs were reworked for open-source users.** The README now
+  emphasizes no-credential read-only flows, known limitations, production-safe
+  deposit-wallet usage, and SDK/package boundaries.
+- **CI now runs short tests and a race-detector pass.** Live-network E2E tests
+  no longer gate pull requests, while concurrency regressions are covered by
+  `go test -race -short ./...`.
+- **Dependency updates.** Bumped `github.com/ethereum/go-ethereum` to v1.17.3,
+  `github.com/spf13/cobra` to v1.10.2, and `golang.org/x/crypto` to v0.53.0.
+- **Docs site moved under `docs/docs-site/`.** Historical plans were archived
+  under `docs/history/` and the public documentation map was refreshed.
+
+### Fixed
+
+- **CLOB market orders price from the best book level** instead of stale or
+  inappropriate pricing inputs.
+- **Silent stream connections are detected and reconnect budget is reset** so
+  dead WebSocket sessions recover more reliably.
+- **Compact JSON signing is escape-aware** for HMAC body signing.
+- **Transport retries close response bodies on every iteration** to avoid
+  leaking resources.
+- **Risk breaker stays halted while still over loss/position limits** and clamps
+  negative loss records.
+- **Gamma query serialization now includes all declared filters.**
+- **Batch price validation, comment URL encoding, dedup caps, and TZ-offset
+  parsing** were hardened.
+- **Marketdata limit handling no longer truncates unset limits to one**, and
+  JSON output buffering prevents partial output on errors.
+- **Pagination helpers and relayer padding reject bad input safely.**
+- **Wallet nil dereference, mode validation, deployment-source labels, paper
+  sell-accounting edge cases, and AutoHeartbeat test races** were fixed.
+- **Swap submission now confirms receipts** so reverted swaps are not reported
+  as success.
+
+### Removed
+
+- Removed unenforced risk policy fields (`MaxOrderUSD`, `MaxOpenOrders`) that
+  looked authoritative but were not applied.
+
 ## [v0.1.1] — 2026-05-11
 
 ### Added
@@ -245,7 +467,12 @@ the May 2026 deposit-wallet migration and the documentation overhaul.
   (headless for existing users), Builder Fee Key (headless via L2 HMAC), Relayer API Key
   (headless via SIWE). See `docs/ONBOARDING.md`.
 
-[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.1...HEAD
+[v0.4.1]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.4.0...v0.4.1
+[v0.4.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.3.0...v0.4.0
+[v0.3.0]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.1...v0.3.0
+[v0.2.1]: https://github.com/TrebuchetDynamics/polygolem/compare/v0.2.0...v0.2.1
+[v0.2.0]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.2.0
 [v0.1.1]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.1.1
 [v2026.5.9]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v2026.5.9
 [0.1.0]: https://github.com/TrebuchetDynamics/polygolem/releases/tag/v0.1.0

@@ -9,7 +9,7 @@ func TestStreamStatsRecordsLifecycleCounters(t *testing.T) {
 	stats := NewStreamStats("market")
 	stats.SetSubscriptions([]string{"token-1", "token-2"}, nil)
 	stats.MarkConnected(time.Unix(100, 0).UTC())
-	stats.RecordMessage(time.Unix(101, 0).UTC())
+	stats.RecordEvent("book", time.Unix(101, 0).UTC())
 	stats.RecordDuplicate()
 	stats.RecordInvalid()
 	stats.RecordReconnect(time.Unix(102, 0).UTC())
@@ -21,6 +21,9 @@ func TestStreamStatsRecordsLifecycleCounters(t *testing.T) {
 	}
 	if snap.MessagesReceived != 1 || snap.DuplicateMessages != 1 || snap.InvalidMessages != 1 || snap.Reconnects != 1 {
 		t.Fatalf("unexpected counters: %+v", snap)
+	}
+	if snap.EventCounts["book"] != 1 {
+		t.Fatalf("unexpected event counts: %+v", snap.EventCounts)
 	}
 	if len(snap.AssetIDs) != 2 || snap.AssetIDs[0] != "token-1" {
 		t.Fatalf("asset ids not captured: %+v", snap.AssetIDs)

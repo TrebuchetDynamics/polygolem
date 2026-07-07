@@ -15,7 +15,7 @@ Generated command reference for `polygolem`.
 
 | Variable | Required for |
 |---|---|
-| `POLYMARKET_PRIVATE_KEY` | All authenticated CLOB and deposit-wallet commands. |
+| `SIGNER_PRIVATE_KEY` | All authenticated CLOB and deposit-wallet commands. Legacy `POLYMARKET_PRIVATE_KEY` is still accepted as a fallback. |
 | `RELAYER_API_KEY` | Optional pre-provisioned V2 relayer auth. Live deposit-wallet commands auto-mint and persist this key when it is missing. |
 | `RELAYER_API_KEY_ADDRESS` | Owner address for `RELAYER_API_KEY`. |
 | `POLYGOLEM_RELAYER_ENV_FILE` | Optional target/source env file for auto-minted V2 relayer credentials. |
@@ -27,6 +27,7 @@ Generated command reference for `polygolem`.
 | `POLYMARKET_CLOB_PASSPHRASE` | Passphrase for `POLYMARKET_CLOB_API_KEY`. |
 | `POLYMARKET_BUILDER_CODE` | Optional CLOB V2 order builder attribution bytes32. |
 | `POLYMARKET_CLOB_BUILDER_CODE` | Alias for `POLYMARKET_BUILDER_CODE`. |
+| `POLYGOLEM_MAX_LIVE_ORDER_USD` | Optional live CLOB order notional cap; defaults to 1 pUSD/USDC equivalent per order. |
 | `POLYMARKET_RELAYER_URL` | Optional relayer URL override. |
 
 Short-form `CLOB_API_KEY`, `CLOB_SECRET`, `CLOB_PASSPHRASE`, `CLOB_PASS_PHRASE`, `BUILDER_API_KEY`, `BUILDER_SECRET`, and `BUILDER_PASS_PHRASE` are also accepted for local automation.
@@ -43,10 +44,10 @@ polygolem --json version | jq .
 ## Command Tree
 
 ```text
-polygolem - Safe Polymarket SDK and CLI for Go
+polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
   auth - Inspect authentication readiness
     clob-probe - Probe configured CLOB L2 credentials with read-only calls
-    export-key - Display private key for wallet import (use with care)
+    export-key - HIGH RISK: display private key for wallet import
     headless-onboard - Run SIWE login + mint V2 Relayer API Key
     login - Sign in to Polymarket headlessly and mint V2 relayer credentials
     status - Check authentication readiness and API key status
@@ -99,6 +100,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
   deposit-wallet - Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
     approve - Build and optionally submit approval calls for the deposit wallet
     approve-adapters - Approve V2 collateral adapters for redeem (one-shot per wallet)
+    approve-auto-redeem - Enable Get Paid Instantly auto-redemption (one-shot per wallet)
     batch - Sign and submit a deposit wallet WALLET batch
     deploy - Deploy the deposit wallet via relayer WALLET-CREATE
     derive - Derive the deterministic deposit wallet address
@@ -115,7 +117,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
   discover - Market discovery via Polymarket Gamma API
     comments - List or fetch public Gamma comments
     crypto - Discover active crypto prediction markets
-    crypto-5m - List all 7 active 5-minute crypto markets
+    crypto-5m - List active 5-minute crypto markets
     crypto-window - Resolve the current crypto prediction window deterministically
     enrich - Enrich market with CLOB data
     market - Get market details
@@ -124,6 +126,8 @@ polygolem - Safe Polymarket SDK and CLI for Go
     search - Search markets and events
     series - List or fetch Gamma series
     tags - List or fetch Gamma tags/categories
+  drift - Check read-only upstream Polymarket drift
+    llms - Check a saved docs.polymarket.com llms.txt index
   events - List Polymarket events
     list - List events
   health - Check Gamma and CLOB API reachability
@@ -133,7 +137,7 @@ polygolem - Safe Polymarket SDK and CLI for Go
     market-flow - Summarize read-only market holder, trade, and open-interest flow
     wallet - Build a read-only wallet intelligence dossier
   live - Inspect live gate status
-    status
+    status - Inspect live gate status
   marketdata - Live CLOB orderbook and share-price snapshots
     crypto - Get live marketdata snapshots for crypto markets
     live - Stream enriched CLOB market-data snapshots
@@ -166,7 +170,25 @@ polygolem - Safe Polymarket SDK and CLI for Go
 
 ### polygolem
 
-Safe Polymarket SDK and CLI for Go
+Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
+
+polygolem is a Go CLI and SDK for safe Polymarket V2 deposit-wallet trading.
+
+Read-only by default: market data, discovery, streaming, order books, data
+analytics, health checks, and diagnostics need no credentials. Authenticated
+paths are opt-in only when SIGNER_PRIVATE_KEY is set, and every command that
+moves funds gates on an explicit cap and a typed --confirm token.
+
+Start here (no credentials needed):
+  polygolem health                 # is the API reachable?
+  polygolem discover search --query "Will BTC" --limit 5
+  polygolem orderbook get --token-id <id>
+  polygolem paper reset --cash 100 # simulate trading with zero risk
+
+When you are ready to trade with real funds, read the safety model first:
+  docs/SAFETY.md and docs/SAFE-HAPPY-PATH.md
+
+Every command accepts --json for a stable {ok,version,data,meta} envelope.
 
 **Usage:**
 
@@ -186,6 +208,7 @@ polygolem [flags]
 | `polygolem deposit-wallet` | Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status) |
 | `polygolem diag` | Print redacted local diagnostics |
 | `polygolem discover` | Market discovery via Polymarket Gamma API |
+| `polygolem drift` | Check read-only upstream Polymarket drift |
 | `polygolem events` | List Polymarket events |
 | `polygolem health` | Check Gamma and CLOB API reachability |
 | `polygolem intel` | Read-only wallet intelligence |
@@ -209,6 +232,13 @@ polygolem [flags]
 
 Inspect authentication readiness
 
+Authentication readiness and login for Polymarket.
+
+Read-only: 'auth status' and 'auth clob-probe' report credential readiness.
+Live: 'auth login' and 'auth headless-onboard' sign SIWE and mint/persist V2
+relayer credentials. 'auth export-key' prints your private key and is
+double-confirmed — avoid it unless importing into a temporary browser wallet.
+
 **Usage:**
 
 ```bash
@@ -220,7 +250,7 @@ polygolem auth [flags]
 | Command | Description |
 |---|---|
 | `polygolem auth clob-probe` | Probe configured CLOB L2 credentials with read-only calls |
-| `polygolem auth export-key` | Display private key for wallet import (use with care) |
+| `polygolem auth export-key` | HIGH RISK: display private key for wallet import |
 | `polygolem auth headless-onboard` | Run SIWE login + mint V2 Relayer API Key |
 | `polygolem auth login` | Sign in to Polymarket headlessly and mint V2 relayer credentials |
 | `polygolem auth status` | Check authentication readiness and API key status |
@@ -255,9 +285,9 @@ polygolem auth clob-probe [flags]
 
 ### polygolem auth export-key
 
-Display private key for wallet import (use with care)
+HIGH RISK: display private key for wallet import
 
-Displays the current POLYMARKET_PRIVATE_KEY and derived addresses
+Displays the current SIGNER_PRIVATE_KEY and derived addresses
 in formats suitable for wallet import. This is useful when a bot/agent
 generated the key and the user needs to import it into MetaMask/Rabby/etc.
 for the one-time Polymarket browser signup.
@@ -265,6 +295,8 @@ for the one-time Polymarket browser signup.
 SECURITY WARNING: The private key will be printed to your terminal.
 Anyone with access to your screen or shell history can steal your funds.
 Use this only in a secure environment and clear your terminal history after.
+This command requires both a typed confirmation token and the last six hex
+characters of the EOA address to reduce accidental key disclosure.
 
 Recommended flow for bot-generated keys:
   1. Run this command in a secure terminal
@@ -283,7 +315,8 @@ polygolem auth export-key [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--confirm` | `bool` | `false` | acknowledge security risk and print the private key |
+| `--confirm` | `string` | `""` | must be exactly EXPORT_PRIVATE_KEY to print the private key |
+| `--confirm-address-suffix` | `string` | `""` | last 6 hex characters of the EOA address |
 | `-h, --help` | `bool` | `false` | help for export-key |
 | `--json` | `bool` | `false` | emit JSON output |
 
@@ -292,7 +325,7 @@ polygolem auth export-key [flags]
 Run SIWE login + mint V2 Relayer API Key
 
 Compatibility name for 'polygolem auth login'. It signs the
-Polymarket SIWE login message with the EOA from POLYMARKET_PRIVATE_KEY,
+Polymarket SIWE login message with the EOA from SIGNER_PRIVATE_KEY,
 registers the EOA + maker profile, mints a V2 relayer key, and writes
 {RELAYER_API_KEY, RELAYER_API_KEY_ADDRESS} to a 0600 env file.
 
@@ -326,7 +359,7 @@ Sign in to Polymarket headlessly and mint V2 relayer credentials
 Signs in to Polymarket without a browser and prepares the
 deposit-wallet account relationship for automation.
 
-Polymarket login signs with the EOA from POLYMARKET_PRIVATE_KEY. That is the
+Polymarket login signs with the EOA from SIGNER_PRIVATE_KEY. That is the
 same address the website shows in its Sign-In With Ethereum prompt. The
 deposit wallet remains the trading wallet: it holds pUSD, appears as the
 POLY_1271 maker/signer in orders, receives CTF positions, and is used for
@@ -366,7 +399,7 @@ polygolem auth login [flags]
 
 Check authentication readiness and API key status
 
-Inspects the current POLYMARKET_PRIVATE_KEY and reports:
+Inspects the current SIGNER_PRIVATE_KEY and reports:
   - EOA address and deposit wallet address
   - Whether the deposit wallet is deployed
   - Whether EOA-bound CLOB credentials are present
@@ -393,6 +426,12 @@ polygolem auth status [flags]
 ### polygolem bridge
 
 Polymarket Bridge API
+
+Cross-chain deposits into Polymarket USD (pUSD) via the bridge.
+
+Read-only: assets (supported tokens/chains), status, quote. Deposit-address
+creation is supported. Live withdrawal/offramp submission is intentionally
+unsupported and returns an explicit error rather than moving funds.
 
 **Usage:**
 
@@ -524,7 +563,7 @@ polygolem builder [flags]
 Mint CLOB L2 creds via ClobAuth signature
 
 Signs the canonical ClobAuth EIP-712 message with the EOA loaded from
-POLYMARKET_PRIVATE_KEY, posts it to /auth/api-key, and persists the
+SIGNER_PRIVATE_KEY, posts it to /auth/api-key, and persists the
 returned {apiKey, secret, passphrase} to a 0600 env file.
 
 These are CLOB L2 trading creds — they authenticate book/balance reads,
@@ -588,6 +627,18 @@ polygolem builder onboard [flags]
 ### polygolem clob
 
 CLOB market data and authenticated account commands
+
+Central Limit Order Book (CLOB) market data and trading.
+
+Read-only (no credentials): book, markets, market, market-by-token, price-history,
+tick-size.
+
+Authenticated (needs SIGNER_PRIVATE_KEY): balance, orders, order, trades, and the
+account/key commands.
+
+Live-money (signs and submits): create-order, market-order, batch-orders, and the
+cancel commands. Order placement enforces the POLYGOLEM_MAX_LIVE_ORDER_USD cap
+(default $1) before signing.
 
 **Usage:**
 
@@ -1134,6 +1185,12 @@ polygolem clob update-balance [flags]
 
 Polymarket Data API analytics
 
+Wallet- and market-level analytics from Polymarket's Data API. Read-only; keyed by
+wallet address, no credentials required.
+
+Query any wallet's positions, closed positions, trades, activity, and portfolio
+value, plus market-level holders, open interest, live volume, and leaderboards.
+
 **Usage:**
 
 ```bash
@@ -1372,6 +1429,21 @@ polygolem data value [flags]
 
 Deposit wallet onboarding (WALLET-CREATE, nonce, batch, status)
 
+Deposit-wallet lifecycle for Polymarket V2 (POLY_1271) trading.
+
+Polymarket V2 requires a deposit wallet as the order maker/signer; your EOA is the
+signing key. The lifecycle is: derive -> deploy -> approve -> fund -> trade -> redeem.
+
+Read-only: derive, status, nonce, redeemable, settlement-status.
+
+Live-money (signs and submits real transactions): deploy, approve, approve-adapters,
+batch, fund, onboard, redeem. Each of these requires a typed --confirm token so a
+live submission cannot fire from a single mistyped flag — see docs/SAFETY.md for the
+token per command.
+
+Quickest path (deploy + approve + enable trading + fund):
+  polygolem deposit-wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
+
 **Usage:**
 
 ```bash
@@ -1384,6 +1456,7 @@ polygolem deposit-wallet [flags]
 |---|---|
 | `polygolem deposit-wallet approve` | Build and optionally submit approval calls for the deposit wallet |
 | `polygolem deposit-wallet approve-adapters` | Approve V2 collateral adapters for redeem (one-shot per wallet) |
+| `polygolem deposit-wallet approve-auto-redeem` | Enable Get Paid Instantly auto-redemption (one-shot per wallet) |
 | `polygolem deposit-wallet batch` | Sign and submit a deposit wallet WALLET batch |
 | `polygolem deposit-wallet deploy` | Deploy the deposit wallet via relayer WALLET-CREATE |
 | `polygolem deposit-wallet derive` | Derive the deterministic deposit wallet address |
@@ -1411,7 +1484,8 @@ Build and optionally submit approval calls for the deposit wallet
 Build the standard 6-call approval batch (pUSD + CTF for all 3 V2 exchange spenders).
 
 Without --submit, prints the calldata JSON for review.
-With --submit, signs and submits the WALLET batch via the relayer.
+With --submit, the operator must also pass --confirm APPROVE_TRADING to
+authorize the live-money WALLET batch.
 
 **Usage:**
 
@@ -1423,9 +1497,10 @@ polygolem deposit-wallet approve [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_TRADING' when --submit is set |
 | `-h, --help` | `bool` | `false` | help for approve |
 | `--json` | `bool` | `false` | emit JSON output |
-| `--submit` | `bool` | `false` | sign and submit the approval batch |
+| `--submit` | `bool` | `false` | sign and submit the approval batch (requires --confirm APPROVE_TRADING) |
 
 ### polygolem deposit-wallet approve-adapters
 
@@ -1465,6 +1540,40 @@ polygolem deposit-wallet approve-adapters [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 | `--submit` | `bool` | `false` | sign and submit the adapter approval batch (requires --confirm APPROVE_ADAPTERS) |
 
+### polygolem deposit-wallet approve-auto-redeem
+
+Enable Get Paid Instantly auto-redemption (one-shot per wallet)
+
+Submits the 3-call auto-redeem approval batch (CTF setApprovalForAll for
+CtfAutoRedeem and AutoRedeemer, plus PositionManager setApprovalForAll for
+AutoRedeemer). This is Polymarket's "Get Paid Instantly" one-time approval:
+once mined, winning positions are redeemed automatically after resolution
+and the payout lands in the wallet balance with no manual redeem step.
+
+Auto-redemption starts after the wallet's next trade; positions that
+already resolved before enabling must be redeemed manually one last time
+(see deposit-wallet redeem). The grant stays on permanently until the
+wallet revokes the operators. Idempotent.
+
+Without --submit, prints the calldata JSON for review.
+With --submit, the operator must also pass --confirm APPROVE_AUTO_REDEEM to
+authorize the live-money WALLET batch.
+
+**Usage:**
+
+```bash
+polygolem deposit-wallet approve-auto-redeem [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'APPROVE_AUTO_REDEEM' when --submit is set |
+| `-h, --help` | `bool` | `false` | help for approve-auto-redeem |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--submit` | `bool` | `false` | sign and submit the auto-redeem approval batch (requires --confirm APPROVE_AUTO_REDEEM) |
+
 ### polygolem deposit-wallet batch
 
 Sign and submit a deposit wallet WALLET batch
@@ -1474,8 +1583,8 @@ Sign an EIP-712 DepositWallet.Batch message and submit to the relayer.
 The --calls-json must be a JSON array of DepositWalletCall objects:
   [{"target":"0x...","value":"0","data":"0x..."}, ...]
 
-Use --auto-approve to build and submit the standard 6-call approval batch
-(pUSD + CTF for all 3 V2 exchange spenders).
+This command submits real transactions from the deposit wallet: it requires
+--confirm SUBMIT_BATCH to authorize the live-money WALLET batch.
 
 **Usage:**
 
@@ -1488,6 +1597,7 @@ polygolem deposit-wallet batch [flags]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--calls-json` | `string` | `""` | JSON array of DepositWalletCall objects |
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'SUBMIT_BATCH' |
 | `--deadline` | `int64` | `1800` | deadline seconds from now |
 | `-h, --help` | `bool` | `false` | help for batch |
 | `--json` | `bool` | `false` | emit JSON output |
@@ -1538,8 +1648,10 @@ Complete the UI Enable Trading signs for an existing deposit wallet
 Signs the same two prompts polymarket.com shows after deposit-wallet deploy:
 
 1. ClobAuth — EOA-signed message to create or derive CLOB API keys.
-2. Approve Tokens — DepositWallet.Batch signing for the 2-call UI token
-   approval batch: pUSD -> CTF and USDC.e -> CollateralOnramp.
+2. Approve Tokens — DepositWallet.Batch signing for the 6-call UI token
+   approval batch: pUSD -> CTF, USDC.e -> CollateralOnramp, and the Combos
+   grants (pUSD approve + PositionManager setApprovalForAll for both the
+   Combos Router and Combos Exchange).
 
 Use this when the wallet is already deployed but the UI still shows
 "Enable Trading" or "Approve Tokens". If relayer credentials are missing,
@@ -1627,6 +1739,9 @@ If relayer credentials are missing, Polygolem signs SIWE locally, registers
 the profile if needed, mints and persists the V2 relayer key, then continues
 automatically.
 
+This command deploys, approves, and (with --fund-amount) moves real funds, so
+it requires --confirm ONBOARD_WALLET to authorize the live-money sequence.
+
 **Usage:**
 
 ```bash
@@ -1637,6 +1752,7 @@ polygolem deposit-wallet onboard [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--confirm` | `string` | `""` | live-money confirmation token; must be 'ONBOARD_WALLET' |
 | `--fund-amount` | `string` | `""` | pUSD amount to transfer from EOA to deposit wallet (e.g. 0.71) |
 | `-h, --help` | `bool` | `false` | help for onboard |
 | `--json` | `bool` | `false` | emit JSON output |
@@ -1814,6 +1930,13 @@ polygolem diag [flags]
 
 Market discovery via Polymarket Gamma API
 
+Find Polymarket markets and events. Read-only; no credentials required.
+
+Search and list markets, look one up by id/slug/token, enrich with live CLOB
+quotes, browse tags/series/comments, and resolve crypto up/down windows
+(crypto-5m, crypto-window). This is the usual starting point: use it to find the
+token id you then pass to orderbook, clob, or paper.
+
 **Usage:**
 
 ```bash
@@ -1826,7 +1949,7 @@ polygolem discover [flags]
 |---|---|
 | `polygolem discover comments` | List or fetch public Gamma comments |
 | `polygolem discover crypto` | Discover active crypto prediction markets |
-| `polygolem discover crypto-5m` | List all 7 active 5-minute crypto markets |
+| `polygolem discover crypto-5m` | List active 5-minute crypto markets |
 | `polygolem discover crypto-window` | Resolve the current crypto prediction window deterministically |
 | `polygolem discover enrich` | Enrich market with CLOB data |
 | `polygolem discover market` | Get market details |
@@ -1903,13 +2026,16 @@ polygolem discover crypto [flags]
 
 ### polygolem discover crypto-5m
 
-List all 7 active 5-minute crypto markets
+List active 5-minute crypto markets
 
-Resolve the current 5-minute window for all supported crypto assets
-and return a consolidated view of every active market.
+Resolve current and near-future 5-minute windows for supported crypto assets
+and return a consolidated view of every open accepting market.
 
-Assets scanned: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
+Assets scanned by default: BTC, ETH, SOL, XRP, BNB, DOGE, HYPE
 
+Use --hours-ahead 1 for the current window plus the next hour.
+Use --timezone America/Denver to add local window fields.
+Use --asset BTC --asset ETH to narrow the sweep.
 Use --enrich to fetch live CLOB prices and spreads (slower).
 
 **Usage:**
@@ -1922,9 +2048,12 @@ polygolem discover crypto-5m [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--asset` | `stringSlice` | `[]` | crypto asset(s) to scan (repeat or comma-separate: BTC,ETH,SOL) |
 | `--enrich` | `bool` | `false` | enrich with CLOB price and spread |
 | `-h, --help` | `bool` | `false` | help for crypto-5m |
+| `--hours-ahead` | `int` | `0` | include future 5m windows this many hours ahead |
 | `--json` | `bool` | `false` | emit JSON output |
+| `--timezone` | `string` | `UTC` | display local window fields in this IANA timezone (example: America/Chicago) |
 
 ### polygolem discover crypto-window
 
@@ -2115,9 +2244,62 @@ polygolem discover tags [flags]
 | `--offset` | `int` | `0` | pagination offset |
 | `--slug` | `string` | `""` | tag slug |
 
+### polygolem drift
+
+Check read-only upstream Polymarket drift
+
+Check whether Polymarket's official docs still advertise the surfaces polygolem
+depends on. Read-only, credential-free, and offline: it runs against a saved
+llms.txt index, so it is safe in CI or air-gapped review.
+
+  curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/llms.txt
+  polygolem drift llms --file /tmp/llms.txt
+
+**Usage:**
+
+```bash
+polygolem drift [flags]
+```
+
+**Subcommands:**
+
+| Command | Description |
+|---|---|
+| `polygolem drift llms` | Check a saved docs.polymarket.com llms.txt index |
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-h, --help` | `bool` | `false` | help for drift |
+| `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem drift llms
+
+Check a saved docs.polymarket.com llms.txt index
+
+**Usage:**
+
+```bash
+polygolem drift llms [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--file` | `string` | `""` | saved docs.polymarket.com/llms.txt file; reads stdin when empty |
+| `-h, --help` | `bool` | `false` | help for llms |
+| `--json` | `bool` | `false` | emit JSON output |
+
 ### polygolem events
 
 List Polymarket events
+
+List Polymarket events. Read-only; no credentials.
+
+An event groups related markets under one question set. Browse events, then drill
+into a specific market with 'polygolem discover market'.
 
 **Usage:**
 
@@ -2175,6 +2357,12 @@ polygolem health [flags]
 ### polygolem intel
 
 Read-only wallet intelligence
+
+Reproducible, read-only statistical signals about public wallet activity.
+
+Scores are computed only from public Data API rows (trades, activity, closed
+positions) with a named formula version and the source rows exposed. A signal is
+research context, not trading advice and not a finding of misconduct.
 
 **Usage:**
 
@@ -2277,6 +2465,11 @@ polygolem intel wallet <wallet> [flags]
 
 Inspect live gate status
 
+Inspect the advisory live-trading gates (POLYMARKET_LIVE_PROFILE, --confirm-live,
+preflight). Read-only: this reports whether you have opted into a live posture; it
+does not itself authorize spending. The enforced money guards are the per-order cap
+and the typed --confirm tokens documented in docs/SAFETY.md.
+
 **Usage:**
 
 ```bash
@@ -2287,7 +2480,7 @@ polygolem live [flags]
 
 | Command | Description |
 |---|---|
-| `polygolem live status` |   |
+| `polygolem live status` | Inspect live gate status |
 
 **Flags:**
 
@@ -2297,6 +2490,8 @@ polygolem live [flags]
 | `--json` | `bool` | `false` | emit JSON output |
 
 ### polygolem live status
+
+Inspect live gate status
 
 **Usage:**
 
@@ -2308,12 +2503,19 @@ polygolem live status [flags]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
+| `--confirm-live` | `bool` | `false` | include the live confirmation gate in status evaluation |
 | `-h, --help` | `bool` | `false` | help for status |
 | `--json` | `bool` | `false` | emit JSON output |
 
 ### polygolem marketdata
 
 Live CLOB orderbook and share-price snapshots
+
+Live, normalized market-data snapshots per token. Read-only; no credentials.
+
+'marketdata live' subscribes to the public CLOB stream and reports the latest best
+bid/ask, spread, midpoint, tick size, last trade, and book levels as they update —
+a higher-level, normalized view than the raw 'stream' events.
 
 **Usage:**
 
@@ -2387,6 +2589,12 @@ polygolem marketdata live [flags]
 ### polygolem orderbook
 
 Read CLOB order book data
+
+Read the live CLOB order book for a token. Read-only; no credentials.
+
+Fetch bids/asks, best bid/ask, midpoint, and spread for a token id (get one from
+'polygolem discover'). For a continuously updated view, see 'polygolem marketdata
+live'; for the raw event stream, see 'polygolem stream'.
 
 **Usage:**
 
@@ -2542,6 +2750,16 @@ polygolem orderbook tick-size [flags]
 ### polygolem paper
 
 Paper trading simulation for crypto markets
+
+Simulate crypto up/down trading with no wallet and no risk.
+
+Paper mode holds a local cash/position ledger and prices simulations against live
+public market data. It never loads a private key, signs, or submits anything — a
+safe way to rehearse the flow before trading real funds.
+
+  polygolem paper reset --cash 100
+  polygolem paper trade --asset BTC --interval 5m --side up --size 1
+  polygolem paper positions
 
 **Usage:**
 
@@ -2724,6 +2942,12 @@ polygolem preflight [flags]
 
 Inspect Polymarket relayer state
 
+Inspect Polymarket V2 relayer state. Read-only.
+
+Look up a relayer transaction by id to see its state and on-chain hash. The
+wallet lifecycle mutations the relayer sponsors (deploy, batch, approvals) are
+driven from 'polygolem deposit-wallet', not here.
+
 **Usage:**
 
 ```bash
@@ -2763,6 +2987,12 @@ polygolem relayer transaction <tx-id> [flags]
 ### polygolem stream
 
 Polymarket WebSocket streams
+
+Subscribe to Polymarket's real-time WebSocket channels.
+
+'stream market' and 'stream crypto' need no credentials; 'stream user' streams your
+own order/trade events and needs CLOB L2 credentials. These emit raw channel events —
+for a normalized latest-snapshot view, use 'polygolem marketdata live' instead.
 
 **Usage:**
 

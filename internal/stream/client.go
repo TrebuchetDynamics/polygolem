@@ -145,6 +145,17 @@ type MarketResolvedMessage struct {
 	Tags           []string `json:"tags"`
 }
 
+// RawMessage is a deduplicated market-channel payload plus commonly indexed
+// fields. It is useful for append-only WebSocket recorders that want JSONB
+// payloads without depending on one typed event shape.
+type RawMessage struct {
+	ObservedAt time.Time       `json:"observed_at"`
+	EventType  string          `json:"event_type,omitempty"`
+	Market     string          `json:"market,omitempty"`
+	AssetID    string          `json:"asset_id,omitempty"`
+	Payload    json.RawMessage `json:"payload"`
+}
+
 // MarketClient manages a public market WebSocket connection.
 type MarketClient struct {
 	config     Config
@@ -166,6 +177,7 @@ type MarketClient struct {
 	OnBestBidAsk     func(BestBidAskMessage)
 	OnNewMarket      func(NewMarketMessage)
 	OnMarketResolved func(MarketResolvedMessage)
+	OnRawMessage     func(RawMessage)
 	OnError          func(error)
 }
 
@@ -250,68 +262,112 @@ func (mc *MarketClient) processMessage(msg []byte) {
 		mc.stats.RecordDuplicate()
 		return
 	}
-	mc.dispatch(msg)
+	observedAt := time.Now()
+	if mc.OnRawMessage != nil {
+		mc.OnRawMessage(rawMessageFromBytes(msg, observedAt))
+	}
+	mc.dispatch(msg, observedAt)
 }
 
-func (mc *MarketClient) dispatch(msg []byte) {
-	// Try parsing as each event type
-	if mc.OnBook != nil {
+func (mc *MarketClient) dispatch(msg []byte, observedAt time.Time) {
+	var envelope struct {
+		EventType string `json:"event_type"`
+	}
+	if err := json.Unmarshal(msg, &envelope); err != nil {
+		mc.stats.RecordInvalid()
+		return
+	}
+
+	switch envelope.EventType {
+	case "book":
 		var book BookMessage
-		if json.Unmarshal(msg, &book) == nil && book.EventType == "book" {
-			mc.stats.RecordMessage(time.Now())
+		if json.Unmarshal(msg, &book) != nil {
+			mc.stats.RecordInvalid()
+			return
+		}
+		mc.stats.RecordEvent(envelope.EventType, observedAt)
+		if mc.OnBook != nil {
 			mc.OnBook(book)
-			return
 		}
-	}
-	if mc.OnPriceChange != nil {
+	case "price_change":
 		var pc PriceChangeMessage
-		if json.Unmarshal(msg, &pc) == nil && pc.EventType == "price_change" {
-			mc.stats.RecordMessage(time.Now())
+		if json.Unmarshal(msg, &pc) != nil {
+			mc.stats.RecordInvalid()
+			return
+		}
+		mc.stats.RecordEvent(envelope.EventType, observedAt)
+		if mc.OnPriceChange != nil {
 			mc.OnPriceChange(pc)
-			return
 		}
-	}
-	if mc.OnLastTrade != nil {
+	case "last_trade_price":
 		var lt LastTradeMessage
-		if json.Unmarshal(msg, &lt) == nil && lt.EventType == "last_trade_price" {
-			mc.stats.RecordMessage(time.Now())
+		if json.Unmarshal(msg, &lt) != nil {
+			mc.stats.RecordInvalid()
+			return
+		}
+		mc.stats.RecordEvent(envelope.EventType, observedAt)
+		if mc.OnLastTrade != nil {
 			mc.OnLastTrade(lt)
-			return
 		}
-	}
-	if mc.OnTickSizeChange != nil {
+	case "tick_size_change":
 		var tick TickSizeChangeMessage
-		if json.Unmarshal(msg, &tick) == nil && tick.EventType == "tick_size_change" {
-			mc.stats.RecordMessage(time.Now())
+		if json.Unmarshal(msg, &tick) != nil {
+			mc.stats.RecordInvalid()
+			return
+		}
+		mc.stats.RecordEvent(envelope.EventType, observedAt)
+		if mc.OnTickSizeChange != nil {
 			mc.OnTickSizeChange(tick)
-			return
 		}
-	}
-	if mc.OnBestBidAsk != nil {
+	case "best_bid_ask":
 		var best BestBidAskMessage
-		if json.Unmarshal(msg, &best) == nil && best.EventType == "best_bid_ask" {
-			mc.stats.RecordMessage(time.Now())
+		if json.Unmarshal(msg, &best) != nil {
+			mc.stats.RecordInvalid()
+			return
+		}
+		mc.stats.RecordEvent(envelope.EventType, observedAt)
+		if mc.OnBestBidAsk != nil {
 			mc.OnBestBidAsk(best)
-			return
 		}
-	}
-	if mc.OnNewMarket != nil {
+	case "new_market":
 		var market NewMarketMessage
-		if json.Unmarshal(msg, &market) == nil && market.EventType == "new_market" {
-			mc.stats.RecordMessage(time.Now())
+		if json.Unmarshal(msg, &market) != nil {
+			mc.stats.RecordInvalid()
+			return
+		}
+		mc.stats.RecordEvent(envelope.EventType, observedAt)
+		if mc.OnNewMarket != nil {
 			mc.OnNewMarket(market)
-			return
 		}
-	}
-	if mc.OnMarketResolved != nil {
+	case "market_resolved":
 		var resolved MarketResolvedMessage
-		if json.Unmarshal(msg, &resolved) == nil && resolved.EventType == "market_resolved" {
-			mc.stats.RecordMessage(time.Now())
-			mc.OnMarketResolved(resolved)
+		if json.Unmarshal(msg, &resolved) != nil {
+			mc.stats.RecordInvalid()
 			return
 		}
+		mc.stats.RecordEvent(envelope.EventType, observedAt)
+		if mc.OnMarketResolved != nil {
+			mc.OnMarketResolved(resolved)
+		}
+	default:
+		mc.stats.RecordInvalid()
 	}
-	mc.stats.RecordInvalid()
+}
+
+func rawMessageFromBytes(msg []byte, observedAt time.Time) RawMessage {
+	var envelope struct {
+		EventType string `json:"event_type"`
+		Market    string `json:"market"`
+		AssetID   string `json:"asset_id"`
+	}
+	_ = json.Unmarshal(msg, &envelope)
+	return RawMessage{
+		ObservedAt: observedAt.UTC(),
+		EventType:  envelope.EventType,
+		Market:     envelope.Market,
+		AssetID:    envelope.AssetID,
+		Payload:    append(json.RawMessage(nil), msg...),
+	}
 }
 
 func (mc *MarketClient) pingLoop() {

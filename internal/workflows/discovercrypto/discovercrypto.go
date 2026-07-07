@@ -4,14 +4,11 @@ package discovercrypto
 import (
 	"context"
 
-	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
 	"github.com/TrebuchetDynamics/polygolem/internal/workflows/cryptomarkets"
 )
 
 // Searcher searches Gamma markets and events.
-type Searcher interface {
-	Search(ctx context.Context, params *polytypes.SearchParams) (*polytypes.SearchResponse, error)
-}
+type Searcher = cryptomarkets.Searcher
 
 // Pricer enriches CLOB token market data.
 type Pricer interface {
@@ -67,16 +64,17 @@ func New(searcher Searcher, pricer Pricer) *Runner {
 // Run searches Gamma, filters active crypto markets, and optionally enriches token data.
 func (r *Runner) Run(ctx context.Context, req Request) (Response, error) {
 	filter := cryptomarkets.Filter{Asset: req.Asset, Interval: req.Interval}
-	query := cryptomarkets.Query(filter)
 	limit := req.Limit
-	resp, err := r.searcher.Search(ctx, &polytypes.SearchParams{
-		Q:            query,
-		LimitPerType: &limit,
-	})
+	if limit <= 0 {
+		limit = 20
+	}
+
+	query, candidates, err := cryptomarkets.DiscoverPaged(ctx, r.searcher, filter, limit)
 	if err != nil {
 		return Response{}, err
 	}
-	markets := r.markets(ctx, resp, filter, req)
+	markets := r.markets(ctx, candidates, req)
+
 	return Response{
 		Query:    query,
 		Asset:    req.Asset,
@@ -86,9 +84,9 @@ func (r *Runner) Run(ctx context.Context, req Request) (Response, error) {
 	}, nil
 }
 
-func (r *Runner) markets(ctx context.Context, resp *polytypes.SearchResponse, filter cryptomarkets.Filter, req Request) []Market {
+func (r *Runner) markets(ctx context.Context, candidates []cryptomarkets.Candidate, req Request) []Market {
 	var results []Market
-	for _, candidate := range cryptomarkets.Select(resp, filter) {
+	for _, candidate := range candidates {
 		event := candidate.Event
 		market := candidate.Market
 		cm := Market{

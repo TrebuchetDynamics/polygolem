@@ -1,0 +1,67 @@
+# Upstream Drift Runbook
+
+Polygolem depends on Polymarket-owned Gamma, CLOB, Data API, and Relayer behavior. Fixtures catch local regressions; live drift still needs an operator loop.
+
+## Weekly read-only smoke
+
+Run from the repo root:
+
+```bash
+scripts/live-smoke.sh | tee smoke-$(date -u +%Y%m%dT%H%M%SZ).log
+```
+
+This default path is read-only: version, diagnostics, health, CLOB `/version`, and enriched crypto discovery. It should not require private keys or submit anything.
+
+## Optional tiny live smoke
+
+Only for a funded test wallet:
+
+```bash
+export POLYGOLEM_SMOKE_LIVE_ORDER=1
+export SIGNER_PRIVATE_KEY=0x...
+export POLYGOLEM_SMOKE_TOKEN_ID=<token>
+export POLYGOLEM_SMOKE_PRICE=0.01
+export POLYGOLEM_SMOKE_SIZE=1
+export POLYGOLEM_MAX_LIVE_ORDER_USD=1
+scripts/live-smoke.sh
+```
+
+The script refuses non-tiny smoke sizes/prices and stops on readiness failures.
+
+## Opt-in live E2E
+
+The live BTC 5m CLOB contract test is skipped by `go test -short ./...`. To run it manually:
+
+```bash
+go test ./tests -run TestBTCFiveMinuteLiveCLOBContracts -count=1 -v
+```
+
+Use it when CLOB/Gamma token mapping, book shape, fee fields, or market outcome behavior looks suspicious.
+
+## Official docs index check
+
+Save the official docs index, then run the offline checker:
+
+```bash
+curl -fsSL https://docs.polymarket.com/llms.txt -o /tmp/polymarket-llms.txt
+polygolem drift llms --file /tmp/polymarket-llms.txt
+```
+
+For CI or air-gapped review, check in or pass a saved fixture instead of fetching
+live. The command is read-only, uses no credentials, and only verifies that the
+official docs sections Polygolem depends on are still advertised by `llms.txt`.
+Use `--json` when another tool needs `ok`, `checked`, and `missing` fields.
+
+## When drift is suspected
+
+1. Save the JSON envelope and exact command.
+2. Compare the failing command with checked-in fixtures under `fixtures/`.
+3. Run `scripts/live-smoke.sh` to identify which upstream surface changed.
+4. Run `polygolem drift llms --file <saved-llms.txt>` against the saved official
+   page index. If the affected service is missing, inspect the new upstream docs
+   index before changing code.
+5. Re-check the official documentation for the affected endpoint: find the
+   endpoint's page in `llms.txt`, and append `.md` to its URL for a Markdown
+   version. Service-to-docs mapping: [POLYMARKET-APIS.md](./POLYMARKET-APIS.md).
+6. If the change is real, update the smallest fixture/test first, then code.
+7. Do not bypass deposit-wallet, readiness, or order-cap gates to work around upstream errors.

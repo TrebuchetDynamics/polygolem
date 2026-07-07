@@ -62,7 +62,7 @@ The first L1 request the browser issues after a fresh signup. Specifically:
 Then decode the typed-data the browser signed by reverse-engineering the
 hash from POLY_SIGNATURE + POLY_ADDRESS recovery.
 
-## Outputs go in BLOCKERS.md
+## Outputs go in docs/history/BLOCKERS.md
 
-Once captured, paste the redacted request into `BLOCKERS.md` § B-5 with
+Once captured, paste the redacted request into `docs/history/BLOCKERS.md` § B-5 with
 the analysis. The capture file itself is gitignored.

@@ -7,6 +7,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -139,26 +141,65 @@ func TestJSONGroupCommandUsesUsageErrorEnvelope(t *testing.T) {
 	}
 }
 
-func TestJSONSkeletonUsesInternalErrorEnvelope(t *testing.T) {
+func TestJSONLiveStatusReportsBlockedByDefault(t *testing.T) {
+	t.Setenv("POLYMARKET_LIVE_PROFILE", "")
+	t.Setenv("POLYMARKET_LIVE_TRADING_ENABLED", "false")
+
 	stdout, stderr, err := executeRootForTest("--json", "live", "status")
-	if err == nil {
-		t.Fatal("expected Execute to return internal error")
+	if err != nil {
+		t.Fatalf("Execute returned error: %v\nstderr=%s", err, stderr)
 	}
-	if stdout != "" {
-		t.Fatalf("stdout=%q, want empty", stdout)
+	if stderr != "" {
+		t.Fatalf("stderr=%q, want empty", stderr)
 	}
-	if got := ExitCode(err); got != 9 {
-		t.Fatalf("ExitCode=%d, want 9", got)
-	}
-	got := parseJSONEnvelopeForTest(t, stderr)
-	if got.OK {
-		t.Fatalf("ok=true, want false\nenvelope=%s", stderr)
+	got := parseJSONEnvelopeForTest(t, stdout)
+	if !got.OK {
+		t.Fatalf("ok=false, want true\nenvelope=%s", stdout)
 	}
 	if got.Meta.Command != "live status" {
 		t.Fatalf("meta.command=%q, want live status", got.Meta.Command)
 	}
-	if got.Error == nil || got.Error.Code != "INTERNAL_UNIMPLEMENTED" || got.Error.Category != "internal" {
-		t.Fatalf("unexpected error envelope: %+v\n%s", got.Error, stderr)
+	var data struct {
+		Allowed  bool `json:"allowed"`
+		Failures []struct {
+			Code string `json:"code"`
+		} `json:"failures"`
+	}
+	if err := json.Unmarshal(got.Data, &data); err != nil {
+		t.Fatalf("decode live status data: %v\n%s", err, got.Data)
+	}
+	if data.Allowed {
+		t.Fatal("live status allowed by default")
+	}
+	if len(data.Failures) == 0 {
+		t.Fatal("live status should explain blocked gates")
+	}
+}
+
+func TestJSONLiveStatusReportsAllowedWhenAllGatesPass(t *testing.T) {
+	t.Setenv("POLYMARKET_LIVE_PROFILE", "on")
+	t.Setenv("POLYMARKET_LIVE_TRADING_ENABLED", "true")
+
+	stdout, stderr, err := executeRootForTest("--json", "live", "status", "--confirm-live")
+	if err != nil {
+		t.Fatalf("Execute returned error: %v\nstderr=%s", err, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("stderr=%q, want empty", stderr)
+	}
+	got := parseJSONEnvelopeForTest(t, stdout)
+	var data struct {
+		Allowed  bool          `json:"allowed"`
+		Failures []interface{} `json:"failures"`
+	}
+	if err := json.Unmarshal(got.Data, &data); err != nil {
+		t.Fatalf("decode live status data: %v\n%s", err, got.Data)
+	}
+	if !data.Allowed {
+		t.Fatalf("allowed=false, want true; data=%s", got.Data)
+	}
+	if len(data.Failures) != 0 {
+		t.Fatalf("failures=%v, want none", data.Failures)
 	}
 }
 
@@ -392,7 +433,13 @@ func TestJSONAuthExportKeyConfirmedOutputsWalletImportData(t *testing.T) {
 	const privateKey = "0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
 	t.Setenv("POLYMARKET_PRIVATE_KEY", privateKey)
 
-	stdout, stderr, err := executeRootForTest("--json", "auth", "export-key", "--confirm")
+	signer, err := auth.NewPrivateKeySigner(privateKey, 137)
+	if err != nil {
+		t.Fatalf("init signer: %v", err)
+	}
+	suffix := addressSuffix(signer.Address(), 6)
+
+	stdout, stderr, err := executeRootForTest("--json", "auth", "export-key", "--confirm", "EXPORT_PRIVATE_KEY", "--confirm-address-suffix", suffix)
 	if err != nil {
 		t.Fatalf("Execute returned error: %v\nstderr:\n%s", err, stderr)
 	}
@@ -779,6 +826,92 @@ func TestCLOBCreateOrderHasPostOnlyFlag(t *testing.T) {
 	}
 	if flag.DefValue != "false" {
 		t.Fatalf("default post-only=%q, want false", flag.DefValue)
+	}
+}
+
+func TestCLOBLimitOrderCapRejectsBeforePrivateKey(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "0.50")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	stdout, _, err := executeRootForTest("clob", "create-order", "--token", "1", "--price", "0.25", "--size", "3")
+	if err == nil {
+		t.Fatal("expected live order cap error")
+	}
+	if stdout != "" {
+		t.Fatalf("stdout=%q, want empty", stdout)
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
+	}
+}
+
+func TestCLOBMarketOrderCapRejectsBeforePrivateKey(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "0.50")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	_, _, err := executeRootForTest("clob", "market-order", "--token", "1", "--amount", "0.51")
+	if err == nil {
+		t.Fatal("expected live order cap error")
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
+	}
+}
+
+func TestCLOBBatchOrdersCapRejectsAggregateNotional(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "1")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	// Each order is 0.60 notional (under the 1.00 cap individually) but the
+	// batch sums to 1.20, which must be rejected.
+	dir := t.TempDir()
+	ordersFile := filepath.Join(dir, "orders.json")
+	body := `[{"tokenID":"1","side":"buy","price":"0.30","size":"2"},{"tokenID":"1","side":"buy","price":"0.30","size":"2"}]`
+	if err := os.WriteFile(ordersFile, []byte(body), 0o600); err != nil {
+		t.Fatalf("write orders file: %v", err)
+	}
+
+	stdout, _, err := executeRootForTest("clob", "batch-orders", "--orders-file", ordersFile)
+	if err == nil {
+		t.Fatal("expected live order cap error for aggregate notional")
+	}
+	if stdout != "" {
+		t.Fatalf("stdout=%q, want empty", stdout)
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
+	}
+}
+
+func TestCLOBBatchOrdersCapRejectsSingleOversizedOrder(t *testing.T) {
+	t.Setenv("POLYGOLEM_MAX_LIVE_ORDER_USD", "1")
+	t.Setenv("POLYMARKET_PRIVATE_KEY", "")
+
+	dir := t.TempDir()
+	ordersFile := filepath.Join(dir, "orders.json")
+	body := `[{"tokenID":"1","side":"buy","price":"0.50","size":"1"},{"tokenID":"1","side":"buy","price":"0.90","size":"3"}]`
+	if err := os.WriteFile(ordersFile, []byte(body), 0o600); err != nil {
+		t.Fatalf("write orders file: %v", err)
+	}
+
+	_, _, err := executeRootForTest("clob", "batch-orders", "--orders-file", ordersFile)
+	if err == nil {
+		t.Fatal("expected live order cap error for oversized order")
+	}
+	if !strings.Contains(err.Error(), "POLYGOLEM_MAX_LIVE_ORDER_USD") {
+		t.Fatalf("error=%q, want cap hint", err.Error())
+	}
+	if strings.Contains(err.Error(), "POLYMARKET_PRIVATE_KEY") {
+		t.Fatalf("private key was loaded before cap validation: %q", err.Error())
 	}
 }
 

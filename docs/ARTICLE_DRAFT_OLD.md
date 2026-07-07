@@ -134,7 +134,7 @@ The live capture logs, corrected code, and updated docs are all in the repo. No 
 1. Polymarket Deposit Wallet Documentation — https://docs.polymarket.com/trading/deposit-wallets
 2. Polymarket Authentication Documentation — https://docs.polymarket.com/api-reference/authentication
 3. Polygolem ONBOARDING.md — https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/ONBOARDING.md
-4. Polygolem BLOCKERS.md — https://github.com/TrebuchetDynamics/polygolem/blob/main/BLOCKERS.md
+4. Polygolem historical blockers log — https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/history/BLOCKERS.md
 5. Polygolem LIVE-TRADING-BLOCKER-REPORT.md — https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/LIVE-TRADING-BLOCKER-REPORT.md
 
 ---

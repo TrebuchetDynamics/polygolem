@@ -23,7 +23,7 @@ for workflow practice, not for strategy backtesting.
 - A failing safety gate cannot accidentally promote a paper command to live —
   the paper code path simply has no signer wired in.
 
-See [Safety Model](/concepts/safety) for the full guarantee.
+See [Safety Model](/docs/concepts/safety) for the full guarantee.
 
 ## A typical workflow
 
@@ -111,7 +111,7 @@ polygolem paper reset
 ## What paper mode does *not* do
 
 - It does not call `clob create-order`, `clob cancel-order`, or any L2 endpoint.
-- It does not require, read, or accept `POLYMARKET_PRIVATE_KEY`.
+- It does not require, read, or accept `SIGNER_PRIVATE_KEY`.
 - It does not trigger preflight, builder-API checks, or deposit-wallet flows.
 - Paper PnL is not tax-reportable or reconciled against any external system.
 
@@ -119,4 +119,4 @@ polygolem paper reset
 
 - `polygolem paper --help` — every flag
 - [`docs/COMMANDS.md`](https://github.com/TrebuchetDynamics/polygolem/blob/main/docs/COMMANDS.md) — canonical command list
-- [Safety Model](/concepts/safety) — paper vs read-only vs live
+- [Safety Model](/docs/concepts/safety) — paper vs read-only vs live

@@ -6,6 +6,18 @@ on:
   pull_request:
 
 jobs:
+  docs-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/docs-site/package-lock.json
+      - run: npm --prefix docs/docs-site ci
+      - run: npm --prefix docs/docs-site run build
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -37,8 +49,8 @@ jobs:
           go test -short -coverprofile=coverage.out ./...
           coverage=$(go tool cover -func=coverage.out | grep "^total:" | awk '{print $3}' | sed 's/%//')
           echo "Total coverage: ${coverage}%"
-          min=50
-          if (( $(echo "$coverage < $min" | bc -l) )); then
+          min=60
+          if awk "BEGIN { exit !(${coverage} < ${min}) }"; then
             echo "FAIL: coverage ${coverage}% is below minimum ${min}%"
             exit 1
           fi

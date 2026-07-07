@@ -29,10 +29,69 @@ func TestPolygonMainnetIncludesV2Adapters(t *testing.T) {
 		"CollateralOfframp":           {r.CollateralOfframp, "0x2957922Eb93258b93368531d39fAcCA3B4dC5854"},
 		"PermissionedRamp":            {r.PermissionedRamp, "0xebC2459Ec962869ca4c0bd1E06368272732BCb08"},
 		"USDCE":                       {r.USDCE, "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"},
+		"CtfAutoRedeem":               {r.CtfAutoRedeem, "0xF3cFb6a6eBFeB51876289Eb235719EB1C65252B0"},
+		"AutoRedeemer":                {r.AutoRedeemer, "0xa1200000d0002264C9a1698e001292D00E1b00af"},
+		"PositionManager":             {r.PositionManager, "0x006F54F7f9A22e0000CC2AB60031000000ae9fEF"},
+		"CombosExchange":              {r.CombosExchange, "0xe3333700cA9d93003F00f0F71f8515005F6c00Aa"},
+		"CombosRouter":                {r.CombosRouter, "0x12121212006e4CD160D18e3f00711DA5c3372600"},
 	}
 	for name, c := range cases {
 		if c.got != c.want {
 			t.Errorf("%s = %q, want %q", name, c.got, c.want)
+		}
+	}
+}
+
+func TestApprovalSets(t *testing.T) {
+	trading := TradingApprovals()
+	if len(trading) != 6 {
+		t.Fatalf("TradingApprovals len=%d want 6", len(trading))
+	}
+	if trading[0] != (Approval{Token: PUSD, Spender: CTFExchangeV2, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeTrading}) {
+		t.Fatalf("first trading approval=%+v", trading[0])
+	}
+	if trading[1] != (Approval{Token: CTF, Spender: CTFExchangeV2, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeTrading}) {
+		t.Fatalf("second trading approval=%+v", trading[1])
+	}
+
+	settlement := SettlementApprovals()
+	if len(settlement) != 4 {
+		t.Fatalf("SettlementApprovals len=%d want 4", len(settlement))
+	}
+	if settlement[0].Spender != CtfCollateralAdapter || settlement[2].Spender != NegRiskCtfCollateralAdapter {
+		t.Fatalf("settlement approvals=%+v", settlement)
+	}
+
+	enable := EnableTradingApprovals()
+	wantEnable := []Approval{
+		{Token: PUSD, Spender: CTF, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: USDCE, Spender: CollateralOnramp, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PositionManager, Spender: CombosRouter, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PUSD, Spender: CombosExchange, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PUSD, Spender: CombosRouter, Kind: ApprovalERC20Approve, Purpose: ApprovalPurposeEnableTrade},
+		{Token: PositionManager, Spender: CombosExchange, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeEnableTrade},
+	}
+	if len(enable) != len(wantEnable) {
+		t.Fatalf("EnableTradingApprovals len=%d want %d", len(enable), len(wantEnable))
+	}
+	for i, want := range wantEnable {
+		if enable[i] != want {
+			t.Fatalf("enable trading approval %d = %+v, want %+v", i, enable[i], want)
+		}
+	}
+
+	autoRedeem := AutoRedeemApprovals()
+	if len(autoRedeem) != 3 {
+		t.Fatalf("AutoRedeemApprovals len=%d want 3", len(autoRedeem))
+	}
+	wantAutoRedeem := []Approval{
+		{Token: CTF, Spender: CtfAutoRedeem, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeAutoRedeem},
+		{Token: CTF, Spender: AutoRedeemer, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeAutoRedeem},
+		{Token: PositionManager, Spender: AutoRedeemer, Kind: ApprovalERC1155ForAll, Purpose: ApprovalPurposeAutoRedeem},
+	}
+	for i, want := range wantAutoRedeem {
+		if autoRedeem[i] != want {
+			t.Fatalf("auto-redeem approval %d = %+v, want %+v", i, autoRedeem[i], want)
 		}
 	}
 }

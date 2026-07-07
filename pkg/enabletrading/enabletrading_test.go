@@ -99,8 +99,8 @@ func TestSignClobAuthTypedDataRecoversEOA(t *testing.T) {
 
 func TestBuildEnableTradingApprovalCallsMatchObservedUIBatch(t *testing.T) {
 	calls := BuildEnableTradingApprovalCalls()
-	if len(calls) != 2 {
-		t.Fatalf("len=%d want 2", len(calls))
+	if len(calls) != 6 {
+		t.Fatalf("len=%d want 6", len(calls))
 	}
 
 	assertApproveCall(t, calls[0],
@@ -111,6 +111,47 @@ func TestBuildEnableTradingApprovalCallsMatchObservedUIBatch(t *testing.T) {
 		"0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
 		"0x93070a847efEf7F70739046A929D47a521F5B8ee",
 	)
+	assertSetApprovalForAllCall(t, calls[2],
+		"0x006F54F7f9A22e0000CC2AB60031000000ae9fEF",
+		"0x12121212006e4CD160D18e3f00711DA5c3372600",
+	)
+	assertApproveCall(t, calls[3],
+		"0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB",
+		"0xe3333700cA9d93003F00f0F71f8515005F6c00Aa",
+	)
+	assertApproveCall(t, calls[4],
+		"0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB",
+		"0x12121212006e4CD160D18e3f00711DA5c3372600",
+	)
+	assertSetApprovalForAllCall(t, calls[5],
+		"0x006F54F7f9A22e0000CC2AB60031000000ae9fEF",
+		"0xe3333700cA9d93003F00f0F71f8515005F6c00Aa",
+	)
+
+	if err := ValidateEnableTradingApprovalCalls(calls); err != nil {
+		t.Fatalf("built calls must pass their own validator: %v", err)
+	}
+}
+
+func TestValidateEnableTradingApprovalCallsRejectsTampering(t *testing.T) {
+	calls := BuildEnableTradingApprovalCalls()
+
+	short := calls[:5]
+	if err := ValidateEnableTradingApprovalCalls(short); err == nil {
+		t.Fatal("truncated batch must be rejected")
+	}
+
+	swapped := BuildEnableTradingApprovalCalls()
+	swapped[2], swapped[3] = swapped[3], swapped[2]
+	if err := ValidateEnableTradingApprovalCalls(swapped); err == nil {
+		t.Fatal("reordered batch must be rejected")
+	}
+
+	badOperator := BuildEnableTradingApprovalCalls()
+	badOperator[2].Data = strings.Replace(badOperator[2].Data, "12121212", "deadbeef", 1)
+	if err := ValidateEnableTradingApprovalCalls(badOperator); err == nil {
+		t.Fatal("foreign operator must be rejected")
+	}
 }
 
 func TestBuildEnableTradingApprovalBatchTypedDataMatchesObservedShape(t *testing.T) {
@@ -138,7 +179,7 @@ func TestBuildEnableTradingApprovalBatchTypedDataMatchesObservedShape(t *testing
 	if !strings.EqualFold(td.Message.Wallet, testDepositWallet) || td.Message.Nonce != "6" || td.Message.Deadline != "1778373936" {
 		t.Fatalf("unexpected message: %+v", td.Message)
 	}
-	if len(td.Message.Calls) != 2 {
+	if len(td.Message.Calls) != 6 {
 		t.Fatalf("calls=%d", len(td.Message.Calls))
 	}
 	assertTypeFields(t, td.Types["EIP712Domain"], []string{"name:string", "version:string", "chainId:uint256", "verifyingContract:address"})
@@ -262,6 +303,23 @@ func assertApproveCall(t *testing.T, call DepositWalletCall, wantTarget, wantSpe
 	}
 	if !strings.HasSuffix(data, strings.Repeat("f", 64)) {
 		t.Fatalf("max uint amount missing from calldata %s", call.Data)
+	}
+}
+
+func assertSetApprovalForAllCall(t *testing.T, call DepositWalletCall, wantTarget, wantOperator string) {
+	t.Helper()
+	if !strings.EqualFold(call.Target, wantTarget) {
+		t.Fatalf("target=%s want %s", call.Target, wantTarget)
+	}
+	data := strings.ToLower(strings.TrimPrefix(call.Data, "0x"))
+	if !strings.HasPrefix(data, "a22cb465") {
+		t.Fatalf("data selector=%s", call.Data)
+	}
+	if !strings.Contains(data, strings.ToLower(strings.TrimPrefix(wantOperator, "0x"))) {
+		t.Fatalf("operator %s missing from calldata %s", wantOperator, call.Data)
+	}
+	if !strings.HasSuffix(data, strings.Repeat("0", 63)+"1") {
+		t.Fatalf("approved=true missing from calldata %s", call.Data)
 	}
 }
 
