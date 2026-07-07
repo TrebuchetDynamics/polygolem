@@ -34,10 +34,10 @@
         "pkg/marketdata"
       ],
       "cli": [
-        "orderbook",
-        "clob book",
-        "clob markets",
-        "clob price-history"
+        "book",
+        "exchange book",
+        "exchange markets",
+        "exchange price-history"
       ],
       "summary": "Public order books, prices, spreads, tick sizes, and market metadata."
     },
@@ -55,9 +55,9 @@
         "pkg/clob"
       ],
       "cli": [
-        "clob create-order",
-        "clob market-order",
-        "clob cancel"
+        "exchange create-order",
+        "exchange market-order",
+        "exchange cancel"
       ],
       "summary": "Deposit-wallet CLOB V2 order signing, placement, cancellation, account reads, and builder attribution."
     },
@@ -73,9 +73,9 @@
         "pkg/data"
       ],
       "cli": [
-        "data positions",
-        "data trades",
-        "data activity"
+        "analytics positions",
+        "analytics trades",
+        "analytics activity"
       ],
       "summary": "Public wallet-level positions, activity, trades, value, holders, leaderboard, and open interest."
     },
@@ -92,9 +92,9 @@
         "pkg/universal"
       ],
       "cli": [
-        "discover search",
-        "discover markets",
-        "discover market"
+        "markets search",
+        "markets markets",
+        "markets market"
       ],
       "summary": "Public event, market, tag, series, comment, and search discovery."
     },
@@ -113,8 +113,8 @@
         "pkg/settlement"
       ],
       "cli": [
-        "deposit-wallet",
-        "relayer transaction"
+        "wallet",
+        "tx transaction"
       ],
       "summary": "Deposit-wallet deploy, approvals, gasless transactions, CTF redeem, and transaction lookup."
     },

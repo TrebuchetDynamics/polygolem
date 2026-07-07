@@ -62,7 +62,7 @@ func All() []Capability {
 			Auth:        []AuthRequirement{AuthNone},
 			WalletMode:  WalletNone,
 			SDKPackages: []string{"pkg/clob", "pkg/orderbook", "pkg/marketdata"},
-			CLI:         []string{"orderbook", "clob book", "clob markets", "clob price-history"},
+			CLI:         []string{"book", "exchange book", "exchange markets", "exchange price-history"},
 		},
 		{
 			ID:          "clob.trading",
@@ -72,7 +72,7 @@ func All() []Capability {
 			Auth:        []AuthRequirement{AuthL1, AuthL2, AuthPrivateKey},
 			WalletMode:  WalletDepositOnly,
 			SDKPackages: []string{"pkg/clob"},
-			CLI:         []string{"clob create-order", "clob market-order", "clob cancel"},
+			CLI:         []string{"exchange create-order", "exchange market-order", "exchange cancel"},
 		},
 		{
 			ID:          "data.positions",
@@ -82,7 +82,7 @@ func All() []Capability {
 			Auth:        []AuthRequirement{AuthNone},
 			WalletMode:  WalletNone,
 			SDKPackages: []string{"pkg/data"},
-			CLI:         []string{"data positions", "data trades", "data activity"},
+			CLI:         []string{"analytics positions", "analytics trades", "analytics activity"},
 		},
 		{
 			ID:          "gamma.markets",
@@ -92,7 +92,7 @@ func All() []Capability {
 			Auth:        []AuthRequirement{AuthNone},
 			WalletMode:  WalletNone,
 			SDKPackages: []string{"pkg/gamma", "pkg/universal"},
-			CLI:         []string{"discover search", "discover markets", "discover market"},
+			CLI:         []string{"markets search", "markets markets", "markets market"},
 		},
 		{
 			ID:          "relayer.deposit_wallet",
@@ -102,7 +102,7 @@ func All() []Capability {
 			Auth:        []AuthRequirement{AuthSIWE, AuthPrivateKey},
 			WalletMode:  WalletDepositOnly,
 			SDKPackages: []string{"pkg/relayer", "pkg/ctf", "pkg/settlement"},
-			CLI:         []string{"deposit-wallet", "relayer transaction"},
+			CLI:         []string{"wallet", "tx transaction"},
 		},
 		{
 			ID:          "websocket.market",
