@@ -78,6 +78,28 @@ polygolem prices crypto --asset BTC --interval 5m --limit 10
 polygolem prices crypto --asset SOL --limit 5
 ```
 
+## Browse Polymarket categories
+
+Polymarket's website category nav is not exposed as one public category-list
+API. Polygolem keeps a small curated mapping and fetches category feeds through
+Gamma `events/keyset` where a stable `tag_slug` exists:
+
+```bash
+# List curated polymarket.com categories and route/feed metadata
+polygolem markets categories --json
+
+# Fetch the Mentions feed (maps to Gamma tag_slug=tweets-markets)
+polygolem markets categories --slug mentions --events --limit 10 --json
+
+# Fetch the World Cup feed (maps to curated World Cup tags)
+polygolem markets categories --slug world-cup --events --limit 10 --json
+```
+
+`Breaking` is listed as route-only because no stable Gamma `tag_slug` was found
+for it. `All` and `Trending` use the plain Gamma `events/keyset` feed without a
+`tag_slug`. Source: `pkg/gamma/categories.go:17` to `pkg/gamma/categories.go:35`,
+`internal/gamma/categories.go:36` to `internal/gamma/categories.go:68`.
+
 ## Get market details
 
 ```bash

@@ -41,6 +41,13 @@ summed batch notional. An order over the cap is rejected before the private key
 is loaded. Raise the cap deliberately with the environment variable; there is no
 flag that bypasses it.
 
+`exchange market-order --dry-run` is the exception because it does not post an
+order. It signs locally, hides the valid signature, and prints a POLY_1271
+preview so operators can verify `signatureType=3`, maker/signer deposit wallet,
+and the expected `DepositWallet` `TypedDataSign` wrapper before submitting
+(`internal/cli/cmd_clob.go:594` to `internal/cli/cmd_clob.go:619`,
+`internal/clob/orders.go:1021` to `internal/clob/orders.go:1059`).
+
 ## Typed live-money confirmation
 
 Every deposit-wallet command that signs and submits real transactions requires a

@@ -24,6 +24,7 @@ polygolem markets market --id    0xbd31dc8a...
 polygolem markets market --slug  will-btc-be-above
 polygolem markets enrich --id    0xbd31dc8a...   # joins Gamma + CLOB
 polygolem markets tags --limit 100
+polygolem markets categories --slug mentions --events --limit 10
 polygolem markets series --limit 20
 polygolem markets comments --entity-id 123 --entity-type market
 ```
@@ -33,7 +34,7 @@ polygolem markets comments --entity-id 123 --entity-type market
 | Category | Endpoints |
 |----------|-----------|
 | Markets  | List, by ID, by slug, by token ID |
-| Events   | List, by ID, by slug, keyset pagination |
+| Events   | List, by ID, by slug, keyset pagination, curated category feeds |
 | Search   | Cross-entity (markets, events, profiles, tags) |
 | Tags     | List, by ID, by slug, related |
 | Series   | List, by ID |
@@ -54,6 +55,7 @@ polygolem markets comments --entity-id 123 --entity-type market
 | `EventByID` | `GET /events/{id}` | Public | One event by Gamma ID |
 | `EventBySlug` | `GET /events?slug=...&limit=1` | Public | Polygolem resolves slug through the list endpoint |
 | `EventsKeyset` | `GET /events-keyset` | Public | Keyset pagination with `keyset_id` |
+| `CategoryEvents` | `GET /events/keyset` | Public | Curated polymarket.com category feeds using `tag_slug` where available; `Breaking` is route-only (`pkg/gamma/categories.go:17` to `pkg/gamma/categories.go:74`) |
 | `Series`, `SeriesByID` | `GET /series`, `GET /series/{id}` | Public | Market series metadata |
 | `Search` | `GET /public-search` | Public | Cross-entity public search |
 | `Tags`, `TagByID`, `TagBySlug` | `GET /tags`, `GET /tags/{id-or-slug}` | Public | Tag taxonomy |
@@ -70,6 +72,7 @@ polygolem markets comments --entity-id 123 --entity-type market
 |---|---|
 | Gamma write APIs | Not wrapped; polygolem treats Gamma as read-only |
 | Full sports game endpoints | Only teams, sports metadata, and sports market types are wrapped |
+| Exact website category menu endpoint | No single public endpoint observed; polygolem uses a curated mapping plus Gamma `events/keyset` feeds |
 | Profile mutation | Not wrapped |
 
 ## Upstream

@@ -398,7 +398,16 @@ func (c *Client) SportsMarketTypes(ctx context.Context) ([]types.SportsMarketTyp
 func (c *Client) MarketByToken(ctx context.Context, tokenID string) (*types.MarketByTokenResponse, error)
 func (c *Client) EventsKeyset(ctx context.Context, params *types.KeysetParams) ([]types.Event, string, error)
 func (c *Client) MarketsKeyset(ctx context.Context, params *types.KeysetParams) ([]types.Market, string, error)
+func PolymarketCategories() []types.PolymarketCategory
+func PolymarketCategoryBySlug(slug string) (types.PolymarketCategory, bool)
+func (c *Client) CategoryEvents(ctx context.Context, slug string, params *types.CategoryEventsParams) (*types.CategoryEventsResponse, error)
 ```
+
+`CategoryEvents` uses the curated polymarket.com category mapping in `pkg/gamma`
+and Gamma `GET /events/keyset` feeds. It does not assume a single website
+category-list API exists (`pkg/gamma/categories.go:17` to
+`pkg/gamma/categories.go:74`, `internal/gamma/categories.go:36` to
+`internal/gamma/categories.go:68`).
 
 ## `pkg/geoblock` — Geoblock Verdict
 

@@ -38,6 +38,7 @@ Polymarket splits its platform across purpose-specific services. polygolem pins 
 Read-only REST service for finding and describing markets. No authentication.
 
 - polygolem client: `internal/gamma/client.go:15`, public SDK `pkg/gamma`, CLI `markets *` commands.
+- Polymarket website categories are modeled as a curated mapping in `pkg/gamma/categories.go:17`; feed-capable categories call Gamma `GET /events/keyset` with `tag_slug` through `internal/gamma/categories.go:36` to `internal/gamma/categories.go:68`. There is no observed single public endpoint for the exact website category menu.
 - Key official pages: [Fetching markets](https://docs.polymarket.com/market-data/fetching-markets), [List markets](https://docs.polymarket.com/api-reference/markets/list-markets), [List events](https://docs.polymarket.com/api-reference/events/list-events), [Tags](https://docs.polymarket.com/api-reference/tags/list-tags), [Search](https://docs.polymarket.com/api-reference/search/search-markets-events-and-profiles).
 - Concepts: [Markets & Events](https://docs.polymarket.com/concepts/markets-events) explains the event → market → outcome-token hierarchy; a market's `conditionId` and two `clobTokenIds` are the join keys into the CLOB API.
 

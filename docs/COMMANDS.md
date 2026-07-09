@@ -113,6 +113,7 @@ polygolem - Go CLI and SDK for safe Polymarket V2 deposit-wallet trading
     trades - List authenticated CLOB trades
     update-balance - Refresh CLOB balance and allowances
   markets - Market discovery via Polymarket Gamma API
+    categories - List curated polymarket.com categories or fetch a category feed
     comments - List or fetch public Gamma comments
     crypto - Discover active crypto prediction markets
     crypto-5m - List active 5-minute crypto markets
@@ -1537,6 +1538,7 @@ polygolem exchange market-order [flags]
 |---|---|---|---|
 | `--amount` | `string` | `""` | buy: USDC notional to spend; sell: number of shares to sell |
 | `--builder-code` | `string` | `""` | 0x-prefixed bytes32 builder attribution code |
+| `--dry-run` | `bool` | `false` | build signing preview without posting the order |
 | `-h, --help` | `bool` | `false` | help for market-order |
 | `--json` | `bool` | `false` | emit JSON output |
 | `--order-type` | `string` | `FOK` | market order type: FOK (all-or-nothing) or FAK (fill what crosses, cancel the rest) |
@@ -1765,6 +1767,7 @@ polygolem markets [flags]
 
 | Command | Description |
 |---|---|
+| `polygolem markets categories` | List curated polymarket.com categories or fetch a category feed |
 | `polygolem markets comments` | List or fetch public Gamma comments |
 | `polygolem markets crypto` | Discover active crypto prediction markets |
 | `polygolem markets crypto-5m` | List active 5-minute crypto markets |
@@ -1783,6 +1786,30 @@ polygolem markets [flags]
 |---|---|---|---|
 | `-h, --help` | `bool` | `false` | help for markets |
 | `--json` | `bool` | `false` | emit JSON output |
+
+### polygolem markets categories
+
+List curated polymarket.com categories or fetch a category feed
+
+**Usage:**
+
+```bash
+polygolem markets categories [flags]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--ascending` | `bool` | `false` | sort category events ascending |
+| `--closed` | `bool` | `false` | include closed category events |
+| `--cursor` | `string` | `""` | Gamma next_cursor for category events |
+| `--events` | `bool` | `false` | fetch Gamma events/keyset feed for --slug |
+| `-h, --help` | `bool` | `false` | help for categories |
+| `--json` | `bool` | `false` | emit JSON output |
+| `--limit` | `int` | `20` | max category events |
+| `--order` | `string` | `volume24hr` | Gamma category event order |
+| `--slug` | `string` | `""` | curated category slug (for example politics, world-cup, mentions) |
 
 ### polygolem markets comments
 

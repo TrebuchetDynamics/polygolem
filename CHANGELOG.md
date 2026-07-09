@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Curated polymarket.com category mapping plus Gamma `events/keyset` category
+  feeds, exposed through `pkg/gamma.CategoryEvents` and `polygolem markets
+  categories --events`.
+- `polygolem exchange market-order --dry-run` now builds a non-posting
+  POLY_1271 signing preview for buy/sell orders, including the expected
+  `DepositWallet` `TypedDataSign` / `signatureType=3` context.
+
 ### Changed
 
 - Replaced `internal/config`'s Viper loader with stdlib environment parsing and

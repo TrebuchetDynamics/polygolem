@@ -76,6 +76,14 @@ When placing orders, the CLOB HTTP layer checks the L2 HMAC headers against the 
 
 ## Step 3 — Order Struct
 
+Before posting a market order, `polygolem exchange market-order --dry-run`
+prints a redacted preview of this shape and does not submit the order
+(`internal/cli/cmd_clob.go:614` to `internal/cli/cmd_clob.go:619`,
+`internal/clob/orders.go:1021` to `internal/clob/orders.go:1059`). Browser
+wallets may label the nested deposit-wallet prompt as **Unknown Signature Type**;
+for Polymarket V2 this is expected when the raw typed data shows
+`name=DepositWallet`, `operation=TypedDataSign`, and order `signatureType=3`.
+
 The signed order payload must have:
 
 ```go

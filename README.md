@@ -137,7 +137,7 @@ Top-level commands are grouped by safety posture in `polygolem --help`:
 | Command | Audience | Purpose |
 |---|---|---|
 | `ping` | everyone | Check Gamma + CLOB reachability |
-| `markets` | users, researchers | Search/list/enrich markets and crypto windows |
+| `markets` | users, researchers | Search/list/enrich markets, categories, and crypto windows |
 | `book` | traders, quants | Read books, midpoint, spread, tick size, fee rate |
 | `exchange` | traders, operators | CLOB books, account reads, order placement/cancel, read-only simulation |
 | `analytics` | researchers | Public Data API positions, trades, holders, volume, leaderboards |
@@ -175,6 +175,10 @@ polygolem wallet onboard --fund-amount 0.71 --confirm ONBOARD_WALLET
 
 # Refresh CLOB balance/allowance.
 polygolem exchange update-balance --asset-type collateral
+
+# Preview the POLY_1271 buy signature shape without posting.
+polygolem exchange market-order --dry-run \
+  --token <TOKEN_ID> --side buy --amount 1 --price <WORST_ACCEPTABLE_PRICE>
 
 # Place a tiny capped market/FOK buy.
 POLYGOLEM_MAX_LIVE_ORDER_USD=1 polygolem exchange market-order \

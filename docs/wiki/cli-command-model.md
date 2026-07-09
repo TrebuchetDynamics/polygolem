@@ -44,6 +44,18 @@ environment variables, command tree, and every command section
 
 ## Important command seams
 
+- `markets categories` is read-only. It lists the curated polymarket.com
+  category mapping and, with `--events`, fetches category feeds through Gamma
+  `events/keyset` (`internal/cli/cmd_discover.go:132` to
+  `internal/cli/cmd_discover.go:163`, `pkg/gamma/categories.go:17` to
+  `pkg/gamma/categories.go:35`, `internal/gamma/categories.go:36` to
+  `internal/gamma/categories.go:68`).
+- `exchange market-order --dry-run` builds a local POLY_1271 preview instead of
+  posting an order. The CLI routes dry-run to `PreviewMarketOrder` and the
+  preview reports `signature_type`, deposit-wallet maker/signer context, and
+  `signature_included=false` (`internal/cli/cmd_clob.go:594` to
+  `internal/cli/cmd_clob.go:619`, `internal/clob/orders.go:1021` to
+  `internal/clob/orders.go:1059`).
 - `exchange simulate` is read-only. It calls a simulation runner and only writes
   JSON; its help explicitly says it does not load a key, sign, or submit an
   order (`internal/cli/cmd_clob_simulate.go:16` to
@@ -57,6 +69,6 @@ environment variables, command tree, and every command section
 
 ## Update triggers
 
-Refresh this page when `internal/cli/root.go`, `internal/cli/cmd_clob*.go`,
-`internal/cli/deposit_wallet.go`, `internal/output/output.go`, or
-`internal/cli/docs_generation.go` changes.
+Refresh this page when `internal/cli/root.go`, `internal/cli/cmd_discover.go`,
+`internal/cli/cmd_clob*.go`, `internal/cli/deposit_wallet.go`,
+`internal/output/output.go`, or `internal/cli/docs_generation.go` changes.
