@@ -129,6 +129,39 @@ token id you then pass to book, exchange, or sim.`
 	tagsCmd.Flags().IntVar(&tagsOffset, "offset", 0, "pagination offset")
 	cmd.AddCommand(tagsCmd)
 
+	var categorySlug, categoryCursor, categoryOrder string
+	var categoryLimit int
+	var categoryEvents, categoryClosed, categoryAscending bool
+	categoriesCmd := &cobra.Command{Use: "categories", Short: "List curated polymarket.com categories or fetch a category feed", Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			operation := discoverreads.Categories
+			if categoryEvents {
+				operation = discoverreads.CategoryEvents
+			}
+			result, err := reads.Run(cmd.Context(), discoverreads.Request{
+				Operation: operation,
+				Slug:      categorySlug,
+				Limit:     categoryLimit,
+				Cursor:    categoryCursor,
+				Order:     categoryOrder,
+				Closed:    categoryClosed,
+				Ascending: categoryAscending,
+			})
+			if err != nil {
+				return err
+			}
+			return writeCommandJSON(cmd, result)
+		},
+	}
+	categoriesCmd.Flags().StringVar(&categorySlug, "slug", "", "curated category slug (for example politics, world-cup, mentions)")
+	categoriesCmd.Flags().BoolVar(&categoryEvents, "events", false, "fetch Gamma events/keyset feed for --slug")
+	categoriesCmd.Flags().IntVar(&categoryLimit, "limit", 20, "max category events")
+	categoriesCmd.Flags().StringVar(&categoryCursor, "cursor", "", "Gamma next_cursor for category events")
+	categoriesCmd.Flags().StringVar(&categoryOrder, "order", "volume24hr", "Gamma category event order")
+	categoriesCmd.Flags().BoolVar(&categoryClosed, "closed", false, "include closed category events")
+	categoriesCmd.Flags().BoolVar(&categoryAscending, "ascending", false, "sort category events ascending")
+	cmd.AddCommand(categoriesCmd)
+
 	var seriesLimit, seriesOffset int
 	var seriesID string
 	var seriesClosed bool

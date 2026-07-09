@@ -200,3 +200,6 @@ type SportsMarketType = types.SportsMarketType
 type KeysetParams = types.KeysetParams
 type KeysetResponse[T any] = types.KeysetResponse[T]
 type MarketByTokenResponse = types.MarketByTokenResponse
+type PolymarketCategory = types.PolymarketCategory
+type CategoryEventsParams = types.CategoryEventsParams
+type CategoryEventsResponse = types.CategoryEventsResponse

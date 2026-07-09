@@ -9,10 +9,12 @@ import (
 )
 
 type fakeGamma struct {
-	marketsCalled bool
-	searchParams  *polytypes.SearchParams
-	marketByID    string
-	marketByIDNil bool
+	marketsCalled       bool
+	searchParams        *polytypes.SearchParams
+	marketByID          string
+	marketByIDNil       bool
+	categoryEventsCat   polytypes.PolymarketCategory
+	categoryEventsParam *polytypes.CategoryEventsParams
 }
 
 func (f *fakeGamma) Markets(context.Context, *polytypes.GetMarketsParams) ([]polytypes.Market, error) {
@@ -67,6 +69,12 @@ func (f *fakeGamma) CommentByID(context.Context, string) (*polytypes.Comment, er
 
 func (f *fakeGamma) CommentsByUser(context.Context, string, int) ([]polytypes.Comment, error) {
 	return []polytypes.Comment{{ID: "comment-1", Body: "hello"}}, nil
+}
+
+func (f *fakeGamma) CategoryEvents(_ context.Context, category polytypes.PolymarketCategory, params *polytypes.CategoryEventsParams) ([]polytypes.Event, string, error) {
+	f.categoryEventsCat = category
+	f.categoryEventsParam = params
+	return []polytypes.Event{{ID: "event-1", Slug: "event-one"}}, "cursor-2", nil
 }
 
 type fakeEnricher struct {
@@ -131,6 +139,42 @@ func TestRunnerEnrichFetchesMarketThenEnriches(t *testing.T) {
 
 // TestRunnerEnrichErrorsWhenMarketNotFound guards the regression where a nil
 // market (Gamma returning a JSON null body) was dereferenced, panicking.
+func TestRunnerCategoriesReturnsCuratedMapping(t *testing.T) {
+	runner := New(Config{Gamma: &fakeGamma{}, Enricher: &fakeEnricher{}})
+
+	got, err := runner.Run(context.Background(), Request{Operation: Categories})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	categories, ok := got.([]polytypes.PolymarketCategory)
+	if !ok || len(categories) == 0 {
+		t.Fatalf("result=%#v", got)
+	}
+	if categories[0].Slug != "trending" {
+		t.Fatalf("first category=%+v", categories[0])
+	}
+}
+
+func TestRunnerCategoryEventsUsesCuratedGammaFeed(t *testing.T) {
+	gamma := &fakeGamma{}
+	runner := New(Config{Gamma: gamma, Enricher: &fakeEnricher{}})
+
+	got, err := runner.Run(context.Background(), Request{Operation: CategoryEvents, Slug: "mentions", Limit: 3, Order: "volume24hr"})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	resp, ok := got.(*polytypes.CategoryEventsResponse)
+	if !ok || len(resp.Events) != 1 || resp.NextCursor != "cursor-2" {
+		t.Fatalf("result=%#v", got)
+	}
+	if gamma.categoryEventsCat.Slug != "mentions" || len(gamma.categoryEventsCat.TagSlugs) != 1 || gamma.categoryEventsCat.TagSlugs[0] != "tweets-markets" {
+		t.Fatalf("category=%+v", gamma.categoryEventsCat)
+	}
+	if gamma.categoryEventsParam == nil || gamma.categoryEventsParam.Limit != 3 || gamma.categoryEventsParam.Order != "volume24hr" {
+		t.Fatalf("params=%+v", gamma.categoryEventsParam)
+	}
+}
+
 func TestRunnerEnrichErrorsWhenMarketNotFound(t *testing.T) {
 	gamma := &fakeGamma{marketByIDNil: true}
 	runner := New(Config{Gamma: gamma, Enricher: &fakeEnricher{}})

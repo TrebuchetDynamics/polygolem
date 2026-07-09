@@ -6,19 +6,22 @@ import (
 	"fmt"
 
 	"github.com/TrebuchetDynamics/polygolem/internal/polytypes"
+	sdkgamma "github.com/TrebuchetDynamics/polygolem/pkg/gamma"
 )
 
 // Operation selects one generic read-only discovery request.
 type Operation string
 
 const (
-	Markets  Operation = "markets"
-	Search   Operation = "search"
-	Market   Operation = "market"
-	Enrich   Operation = "enrich"
-	Tags     Operation = "tags"
-	Series   Operation = "series"
-	Comments Operation = "comments"
+	Markets        Operation = "markets"
+	Search         Operation = "search"
+	Market         Operation = "market"
+	Enrich         Operation = "enrich"
+	Tags           Operation = "tags"
+	Series         Operation = "series"
+	Comments       Operation = "comments"
+	Categories     Operation = "categories"
+	CategoryEvents Operation = "category-events"
 )
 
 // Config wires discovery read adapters.
@@ -43,6 +46,7 @@ type Request struct {
 	Closed    bool
 	Ascending bool
 	TagID     int
+	Cursor    string
 
 	EntityID   int
 	EntityType string
@@ -63,6 +67,7 @@ type GammaReader interface {
 	Comments(context.Context, *polytypes.CommentQuery) ([]polytypes.Comment, error)
 	CommentByID(context.Context, string) (*polytypes.Comment, error)
 	CommentsByUser(context.Context, string, int) ([]polytypes.Comment, error)
+	CategoryEvents(context.Context, polytypes.PolymarketCategory, *polytypes.CategoryEventsParams) ([]polytypes.Event, string, error)
 }
 
 // Enricher is the CLOB-backed market enrichment adapter used by this workflow.
@@ -98,6 +103,10 @@ func (r *Runner) Run(ctx context.Context, req Request) (any, error) {
 		return r.runSeries(ctx, req)
 	case Comments:
 		return r.runComments(ctx, req)
+	case Categories:
+		return r.runCategories(req)
+	case CategoryEvents:
+		return r.runCategoryEvents(ctx, req)
 	default:
 		return nil, fmt.Errorf("unknown discover operation %q", req.Operation)
 	}
@@ -165,6 +174,40 @@ func (r *Runner) runSeries(ctx context.Context, req Request) (any, error) {
 		return r.gamma.SeriesByID(ctx, req.ID)
 	}
 	return r.gamma.Series(ctx, &polytypes.GetSeriesParams{Limit: req.Limit, Offset: req.Offset, Closed: &req.Closed})
+}
+
+func (r *Runner) runCategories(req Request) (any, error) {
+	if req.Slug != "" {
+		category, ok := sdkgamma.PolymarketCategoryBySlug(req.Slug)
+		if !ok {
+			return nil, fmt.Errorf("unknown polymarket category %q", req.Slug)
+		}
+		return category, nil
+	}
+	return sdkgamma.PolymarketCategories(), nil
+}
+
+func (r *Runner) runCategoryEvents(ctx context.Context, req Request) (*polytypes.CategoryEventsResponse, error) {
+	if req.Slug == "" {
+		return nil, fmt.Errorf("--slug required")
+	}
+	category, ok := sdkgamma.PolymarketCategoryBySlug(req.Slug)
+	if !ok {
+		return nil, fmt.Errorf("unknown polymarket category %q", req.Slug)
+	}
+	if category.FeedMode == sdkgamma.CategoryFeedRouteOnly {
+		return nil, fmt.Errorf("category %q is route-only and has no Gamma events/keyset feed", category.Slug)
+	}
+	closed := req.Closed
+	params := &polytypes.CategoryEventsParams{Limit: req.Limit, Cursor: req.Cursor, Order: req.Order, Closed: &closed}
+	if req.Ascending {
+		params.Ascending = &req.Ascending
+	}
+	events, cursor, err := r.gamma.CategoryEvents(ctx, category, params)
+	if err != nil {
+		return nil, err
+	}
+	return &polytypes.CategoryEventsResponse{Category: category, Events: events, NextCursor: cursor, HasMore: cursor != ""}, nil
 }
 
 func (r *Runner) runComments(ctx context.Context, req Request) (any, error) {
