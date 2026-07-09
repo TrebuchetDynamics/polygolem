@@ -61,6 +61,25 @@ type MarketOrderParams struct {
 	OrderType string
 }
 
+type OrderSignaturePreview struct {
+	TokenID           string `json:"token_id"`
+	Side              string `json:"side"`
+	OrderType         string `json:"order_type"`
+	Price             string `json:"price"`
+	MakerAmount       string `json:"maker_amount"`
+	TakerAmount       string `json:"taker_amount"`
+	Maker             string `json:"maker"`
+	Signer            string `json:"signer"`
+	SignatureType     int    `json:"signature_type"`
+	NegRisk           bool   `json:"neg_risk"`
+	ExchangeContract  string `json:"exchange_contract"`
+	WalletDomain      string `json:"wallet_domain"`
+	WalletOperation   string `json:"wallet_operation"`
+	SignatureLength   int    `json:"signature_length"`
+	SignatureIncluded bool   `json:"signature_included"`
+	Note              string `json:"note"`
+}
+
 type OrderPlacementResponse struct {
 	Success            bool     `json:"success"`
 	OrderID            string   `json:"orderID"`
@@ -992,70 +1011,119 @@ func (c *Client) CreateMarketOrder(ctx context.Context, privateKey string, param
 	if err := c.ensureCanTrade(); err != nil {
 		return nil, err
 	}
-	side, err := normalizeOrderSide(params.Side)
+	draft, _, err := c.marketOrderDraft(ctx, params)
 	if err != nil {
 		return nil, err
+	}
+	return c.signAndPostOrder(ctx, privateKey, draft)
+}
+
+func (c *Client) PreviewMarketOrder(ctx context.Context, privateKey string, params MarketOrderParams) (*OrderSignaturePreview, error) {
+	draft, price, err := c.marketOrderDraft(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	signer, _, err := signerAndDepositWallet(privateKey)
+	if err != nil {
+		return nil, err
+	}
+	nr, err := c.NegRisk(ctx, draft.tokenID.String())
+	if err != nil {
+		return nil, fmt.Errorf("neg-risk lookup: %w", err)
+	}
+	draft.builderCode = c.builderCode
+	order, err := buildSignedOrderPayload(signer, draft, orderNow(), nr.NegRisk)
+	if err != nil {
+		return nil, err
+	}
+	exchange := clobExchangeAddress
+	if nr.NegRisk {
+		exchange = negRiskExchangeAddress
+	}
+	return &OrderSignaturePreview{
+		TokenID:           order.TokenID,
+		Side:              order.Side,
+		OrderType:         draft.orderType,
+		Price:             price.FloatString(6),
+		MakerAmount:       order.MakerAmount,
+		TakerAmount:       order.TakerAmount,
+		Maker:             order.Maker,
+		Signer:            order.Signer,
+		SignatureType:     order.SignatureType,
+		NegRisk:           nr.NegRisk,
+		ExchangeContract:  exchange,
+		WalletDomain:      "DepositWallet v1 chain 137",
+		WalletOperation:   "TypedDataSign",
+		SignatureLength:   len(order.Signature),
+		SignatureIncluded: false,
+		Note:              "POLY_1271 orders use signatureType=3 and a DepositWallet TypedDataSign wrapper; some wallet UIs label this as Unknown Signature Type. The signed order is not printed or submitted by this preview.",
+	}, nil
+}
+
+func (c *Client) marketOrderDraft(ctx context.Context, params MarketOrderParams) (orderDraft, *big.Rat, error) {
+	side, err := normalizeOrderSide(params.Side)
+	if err != nil {
+		return orderDraft{}, nil, err
 	}
 	tokenID, err := parseTokenID(params.TokenID)
 	if err != nil {
-		return nil, err
+		return orderDraft{}, nil, err
 	}
 	amount, err := parseRat(params.Amount, "amount")
 	if err != nil {
-		return nil, err
+		return orderDraft{}, nil, err
 	}
 	if amount.Sign() <= 0 {
-		return nil, fmt.Errorf("amount must be positive")
+		return orderDraft{}, nil, fmt.Errorf("amount must be positive")
 	}
 	orderType, err := parseMarketOrderType(params.OrderType)
 	if err != nil {
-		return nil, err
+		return orderDraft{}, nil, err
 	}
 	tick, err := c.TickSize(ctx, params.TokenID)
 	if err != nil {
-		return nil, fmt.Errorf("tick size lookup failed: %w", err)
+		return orderDraft{}, nil, fmt.Errorf("tick size lookup failed: %w", err)
 	}
 	tickScale := decimalPlaces(firstNonEmpty(tick.TickSize, tick.MinimumTickSize))
 	var price *big.Rat
 	if strings.TrimSpace(params.Price) != "" {
 		price, err = parseRat(params.Price, "price")
 		if err != nil {
-			return nil, err
+			return orderDraft{}, nil, err
 		}
 	} else {
 		price, err = c.marketOrderPrice(ctx, params.TokenID, side, amount, orderType)
 		if err != nil {
-			return nil, err
+			return orderDraft{}, nil, err
 		}
 	}
 	if price.Sign() <= 0 {
-		return nil, fmt.Errorf("price must be positive")
+		return orderDraft{}, nil, fmt.Errorf("price must be positive")
 	}
 
 	var maker, taker *big.Rat
 	if side == "BUY" {
 		maker = truncateRat(amount, 2)
 		if maker.Sign() <= 0 {
-			return nil, fmt.Errorf("amount must be at least 0.01 for market buy orders")
+			return orderDraft{}, nil, fmt.Errorf("amount must be at least 0.01 for market buy orders")
 		}
 		taker = new(big.Rat).Quo(maker, price)
 		taker = truncateRat(taker, tickScale+2)
 	} else {
 		maker = truncateRat(amount, tickScale+2)
 		if maker.Sign() <= 0 {
-			return nil, fmt.Errorf("amount must be at least the market sell precision")
+			return orderDraft{}, nil, fmt.Errorf("amount must be at least the market sell precision")
 		}
 		taker = new(big.Rat).Mul(maker, price)
 		taker = truncateRat(taker, 2)
 	}
-	draft := orderDraft{
+	return orderDraft{
 		tokenID:     tokenID,
 		side:        side,
 		makerAmount: fixedDecimal(maker, 6),
 		takerAmount: fixedDecimal(taker, 6),
 		orderType:   orderType,
-	}
-	return c.signAndPostOrder(ctx, privateKey, draft)
+	}, price, nil
 }
 
 func (c *Client) signAndPostOrder(ctx context.Context, privateKey string, draft orderDraft) (*OrderPlacementResponse, error) {

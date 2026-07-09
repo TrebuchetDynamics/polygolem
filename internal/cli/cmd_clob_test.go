@@ -303,6 +303,7 @@ func TestCLOBAuthenticatedReadCommandsKeepFlags(t *testing.T) {
 		{args: []string{"exchange", "orders"}, flags: []string{"output"}},
 		{args: []string{"exchange", "order"}, flags: []string{"output"}},
 		{args: []string{"exchange", "trades"}, flags: []string{"output"}},
+		{args: []string{"exchange", "market-order"}, flags: []string{"dry-run", "amount", "price", "side", "token"}},
 	} {
 		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
 			cmd, _, err := root.Find(tc.args)

@@ -404,6 +404,54 @@ func TestCreateMarketOrderSellPriceUsesBestBidWithRealAPIOrdering(t *testing.T) 
 	}
 }
 
+func TestPreviewMarketOrderExplainsPoly1271BuyWithoutPosting(t *testing.T) {
+	var orderPosted, apiKeyDerived bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/tick-size":
+			_, _ = w.Write([]byte(`{"minimum_tick_size":"0.01","minimum_order_size":"5"}`))
+		case "/neg-risk":
+			_, _ = w.Write([]byte(`{"neg_risk":true}`))
+		case "/auth/derive-api-key":
+			apiKeyDerived = true
+			http.Error(w, "preview must not derive API keys", http.StatusInternalServerError)
+		case "/order":
+			orderPosted = true
+			http.Error(w, "preview must not post orders", http.StatusInternalServerError)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+
+	preview, err := client.PreviewMarketOrder(context.Background(), testOrderPrivateKey, MarketOrderParams{
+		TokenID:   "12345",
+		Side:      "buy",
+		Amount:    "1.000000",
+		Price:     "0.640000",
+		OrderType: "FOK",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if orderPosted || apiKeyDerived {
+		t.Fatalf("preview posted=%v derivedAPIKey=%v", orderPosted, apiKeyDerived)
+	}
+	if preview.SignatureType != signatureTypePoly1271 || preview.WalletOperation != "TypedDataSign" || !strings.Contains(preview.Note, "Unknown") {
+		t.Fatalf("preview missing POLY_1271 warning context: %+v", preview)
+	}
+	if !preview.NegRisk || !strings.EqualFold(preview.ExchangeContract, negRiskExchangeAddress) {
+		t.Fatalf("neg risk/exchange=%v/%s", preview.NegRisk, preview.ExchangeContract)
+	}
+	if preview.MakerAmount != "1000000" || preview.TakerAmount != "1562500" || preview.SignatureLength != 636 || preview.SignatureIncluded {
+		t.Fatalf("preview=%+v", preview)
+	}
+}
+
 func TestCreateMarketOrderUsesEOABoundAuthAndDepositMaker(t *testing.T) {
 	wantDepositWallet := "0xd2C50736787e5eeefA6c2E81496AE56d51D6b7B1"
 	var deriveAddress string

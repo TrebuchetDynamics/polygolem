@@ -580,6 +580,7 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 	cmd.AddCommand(batchOrdersCmd)
 
 	var marketOrderOutput, marketOrderToken, marketOrderSide, marketOrderAmount, marketOrderPrice, marketOrderType, marketOrderBuilderCode string
+	var marketOrderDryRun bool
 	marketOrderCmd := &cobra.Command{Use: "market-order", Short: "Create a signed CLOB market/FOK order", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := checkOutput(marketOrderOutput); err != nil {
@@ -590,22 +591,34 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 				return err
 			}
 			w.clob.SetBuilderCode(builderCode)
-			if err := enforceMarketOrderCap(marketOrderAmount); err != nil {
-				return err
+			if !marketOrderDryRun {
+				if err := enforceMarketOrderCap(marketOrderAmount); err != nil {
+					return err
+				}
 			}
 			key, err := privateKey()
 			if err != nil {
 				return err
 			}
-			warnIfNoDepositKey(cmd.Context(), cmd.ErrOrStderr(), key)
+			if !marketOrderDryRun {
+				warnIfNoDepositKey(cmd.Context(), cmd.ErrOrStderr(), key)
+			}
 
-			res, err := w.clob.CreateMarketOrder(cmd.Context(), key, clob.MarketOrderParams{
+			params := clob.MarketOrderParams{
 				TokenID:   marketOrderToken,
 				Side:      marketOrderSide,
 				Amount:    marketOrderAmount,
 				Price:     marketOrderPrice,
 				OrderType: marketOrderType,
-			})
+			}
+			if marketOrderDryRun {
+				res, err := w.clob.PreviewMarketOrder(cmd.Context(), key, params)
+				if err != nil {
+					return err
+				}
+				return w.printJSON(cmd, res)
+			}
+			res, err := w.clob.CreateMarketOrder(cmd.Context(), key, params)
 			if err != nil {
 				return err
 			}
@@ -619,6 +632,7 @@ docs/HEADLESS-BUILDER-KEYS-INVESTIGATION.md.`,
 	marketOrderCmd.Flags().StringVar(&marketOrderPrice, "price", "", "optional worst acceptable price (default: swept from the book)")
 	marketOrderCmd.Flags().StringVar(&marketOrderType, "order-type", "FOK", "market order type: FOK (all-or-nothing) or FAK (fill what crosses, cancel the rest)")
 	marketOrderCmd.Flags().StringVar(&marketOrderBuilderCode, "builder-code", "", "0x-prefixed bytes32 builder attribution code")
+	marketOrderCmd.Flags().BoolVar(&marketOrderDryRun, "dry-run", false, "build signing preview without posting the order")
 	cmd.AddCommand(marketOrderCmd)
 
 	var heartbeatOutput, heartbeatID string
