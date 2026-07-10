@@ -39,6 +39,98 @@ type Snapshot struct {
 	Asks             []Level `json:"asks,omitempty"`
 }
 
+// Liquidity is the best-level liquidity projection for one token snapshot.
+type Liquidity struct {
+	MarketID  string
+	AssetID   string
+	BidSize   float64
+	AskSize   float64
+	Imbalance float64
+}
+
+// Depth is the total and near-touch depth projection for one token snapshot.
+type Depth struct {
+	MarketID   string
+	AssetID    string
+	TotalBid   float64
+	TotalAsk   float64
+	BidDepth1C float64
+	BidDepth2C float64
+	BidDepth5C float64
+	AskDepth1C float64
+	AskDepth2C float64
+	AskDepth5C float64
+}
+
+// LiquidityFor projects best-level liquidity from a tracked snapshot.
+func LiquidityFor(snapshot Snapshot) Liquidity {
+	bid := firstLevelSize(snapshot.Bids)
+	ask := firstLevelSize(snapshot.Asks)
+	imbalance := 0.0
+	if bid+ask != 0 {
+		imbalance = bid / (bid + ask)
+	}
+	return Liquidity{
+		MarketID:  snapshot.Market,
+		AssetID:   snapshot.AssetID,
+		BidSize:   bid,
+		AskSize:   ask,
+		Imbalance: imbalance,
+	}
+}
+
+// DepthFor projects total and 1/2/5-cent depth from a tracked snapshot.
+func DepthFor(snapshot Snapshot) Depth {
+	row := Depth{MarketID: snapshot.Market, AssetID: snapshot.AssetID}
+	bestBid := firstLevelPrice(snapshot.Bids)
+	bestAsk := firstLevelPrice(snapshot.Asks)
+	for _, level := range snapshot.Bids {
+		price, size := levelValues(level)
+		row.TotalBid += size
+		addDepth(size, bestBid-price, &row.BidDepth1C, &row.BidDepth2C, &row.BidDepth5C)
+	}
+	for _, level := range snapshot.Asks {
+		price, size := levelValues(level)
+		row.TotalAsk += size
+		addDepth(size, price-bestAsk, &row.AskDepth1C, &row.AskDepth2C, &row.AskDepth5C)
+	}
+	return row
+}
+
+func firstLevelPrice(levels []Level) float64 {
+	if len(levels) == 0 {
+		return 0
+	}
+	value, _ := parsePrice(levels[0].Price)
+	return value
+}
+
+func firstLevelSize(levels []Level) float64 {
+	if len(levels) == 0 {
+		return 0
+	}
+	value, _ := strconv.ParseFloat(strings.TrimSpace(levels[0].Size), 64)
+	return value
+}
+
+func levelValues(level Level) (float64, float64) {
+	price, _ := parsePrice(level.Price)
+	size, _ := strconv.ParseFloat(strings.TrimSpace(level.Size), 64)
+	return price, size
+}
+
+func addDepth(size, distance float64, one, two, five *float64) {
+	if distance >= 0 && distance <= 0.010000001 {
+		*one += size
+	}
+	if distance >= 0 && distance <= 0.020000001 {
+		*two += size
+	}
+	if distance >= 0 && distance <= 0.050000001 {
+		*five += size
+	}
+}
+
 // Tracker keeps an in-memory latest snapshot per asset ID.
 type Tracker struct {
 	mu        sync.RWMutex

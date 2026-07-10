@@ -160,6 +160,37 @@ func TestTrackerBestBidAskUpdatesSnapshotWithoutBookDelta(t *testing.T) {
 	}
 }
 
+func TestLiquidityAndDepthForSnapshot(t *testing.T) {
+	snapshot := Snapshot{
+		Market:  "market-1",
+		AssetID: "token-1",
+		Bids: []Level{
+			{Price: "0.49", Size: "10"},
+			{Price: "0.47", Size: "5"},
+		},
+		Asks: []Level{
+			{Price: "0.51", Size: "20"},
+			{Price: "0.54", Size: "7"},
+		},
+	}
+
+	liquidity := LiquidityFor(snapshot)
+	if liquidity.BidSize != 10 || liquidity.AskSize != 20 || liquidity.Imbalance != 1.0/3.0 {
+		t.Fatalf("unexpected liquidity: %#v", liquidity)
+	}
+
+	depth := DepthFor(snapshot)
+	if depth.TotalBid != 15 || depth.TotalAsk != 27 {
+		t.Fatalf("unexpected totals: %#v", depth)
+	}
+	if depth.BidDepth1C != 10 || depth.BidDepth2C != 15 || depth.BidDepth5C != 15 {
+		t.Fatalf("unexpected bid depth: %#v", depth)
+	}
+	if depth.AskDepth1C != 20 || depth.AskDepth2C != 20 || depth.AskDepth5C != 27 {
+		t.Fatalf("unexpected ask depth: %#v", depth)
+	}
+}
+
 func TestTrackerTickSizeChangeTracksCurrentTickSize(t *testing.T) {
 	tracker := NewTracker()
 
