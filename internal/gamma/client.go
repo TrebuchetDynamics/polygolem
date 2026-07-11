@@ -273,7 +273,7 @@ func buildQueryPath(basePath string, params interface{}) (string, error) {
 			q.Add("clob_token_ids", s)
 		}
 		for _, s := range p.ConditionIDs {
-			q.Add("condition_ids", s)
+			q.Add("condition_ids[]", s)
 		}
 		if p.LiquidityNumMin != nil {
 			q.Set("liquidity_num_min", strconv.FormatFloat(*p.LiquidityNumMin, 'f', -1, 64))

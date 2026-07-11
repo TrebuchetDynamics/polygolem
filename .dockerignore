@@ -1,0 +1,10 @@
+**
+!go.mod
+!go.sum
+!pkg/
+!pkg/**
+!internal/
+!internal/**
+!cmd/
+!cmd/polygolem_market_results/
+!cmd/polygolem_market_results/**

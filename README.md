@@ -204,7 +204,7 @@ when you want Polymarket data or user-directed flows inside a Go service.
 |---|---|
 | One typed client | [`pkg/universal`](pkg/universal) |
 | CLOB books, orders, balances | [`pkg/clob`](pkg/clob), [`pkg/orderbook`](pkg/orderbook), [`pkg/orderfills`](pkg/orderfills) |
-| Market discovery | [`pkg/gamma`](pkg/gamma), [`pkg/marketresolver`](pkg/marketresolver), [`pkg/cryptoprice`](pkg/cryptoprice), [`pkg/geoblock`](pkg/geoblock) |
+| Market discovery | [`pkg/gamma`](pkg/gamma), [`pkg/marketresolver`](pkg/marketresolver), [`pkg/marketresults`](pkg/marketresults), [`pkg/cryptoprice`](pkg/cryptoprice), [`pkg/geoblock`](pkg/geoblock) |
 | Public analytics | [`pkg/data`](pkg/data), [`pkg/intel`](pkg/intel), [`pkg/orderresults`](pkg/orderresults), [`pkg/reconciliation`](pkg/reconciliation) |
 | Streams and snapshots | [`pkg/stream`](pkg/stream), [`pkg/marketdata`](pkg/marketdata), [`pkg/rtds`](pkg/rtds) |
 | Deposit wallet + contracts | [`pkg/wallet`](pkg/wallet), [`pkg/relayer`](pkg/relayer), [`pkg/contracts`](pkg/contracts), [`pkg/funding`](pkg/funding), [`pkg/settlement`](pkg/settlement), [`pkg/enabletrading`](pkg/enabletrading) |

@@ -48,6 +48,7 @@ import (
 	"github.com/TrebuchetDynamics/polygolem/pkg/intel"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketdata"
 	"github.com/TrebuchetDynamics/polygolem/pkg/marketresolver"
+	"github.com/TrebuchetDynamics/polygolem/pkg/marketresults"
 	"github.com/TrebuchetDynamics/polygolem/pkg/mcp"
 	"github.com/TrebuchetDynamics/polygolem/pkg/openapi"
 	"github.com/TrebuchetDynamics/polygolem/pkg/orderbook"
@@ -132,6 +133,8 @@ func TestPublicSDKSignatures(t *testing.T) {
 	var marketDataTickSize func(*marketdata.Tracker, sdkstream.TickSizeChangeMessage) marketdata.Snapshot = (*marketdata.Tracker).ApplyTickSizeChange
 	var marketResolver *marketresolver.Resolver = marketresolver.NewResolver("")
 	var marketResolverResult marketresolver.ResolveResult
+	var marketResultsResolver *marketresults.Resolver = marketresults.NewResolver("", "")
+	var marketResult marketresults.Result
 	var cryptoPriceClient *cryptoprice.Client = cryptoprice.NewClient(cryptoprice.Config{})
 	var cryptoPrice cryptoprice.CryptoPrice
 	var enableTradingParams enabletrading.EnableTradingParams
@@ -269,7 +272,7 @@ func TestPublicSDKSignatures(t *testing.T) {
 	_, _, _, _, _, _, _, _, _, _ = streamClient, streamConfig, streamConnect, streamSubscribe, streamClose, streamConnected, streamBook, streamPriceChange, streamLastTrade, streamTickSize
 	_, _, _, _, _, _, _, _, _ = streamBestBidAsk, streamNewMarket, streamMarketResolved, streamDeduplicator, rtdsClient, rtdsConfig, rtdsPrice, marketDataTracker, marketDataSnapshot
 	_, _ = marketDataBestBidAsk, marketDataTickSize
-	_, _, _, _ = marketResolver, marketResolverResult, enableTradingParams, enableTradingBuildCalls
+	_, _, _, _, _, _ = marketResolver, marketResolverResult, marketResultsResolver, marketResult, enableTradingParams, enableTradingBuildCalls
 	_, _, _, _, _, _, _ = cryptoPriceClient, cryptoPrice, fundingTransfer, intelScore, mcpTools, mcpServer, openAPISpec
 	var normalizedError polyerrors.Error = polyerrors.Normalize(polyerrors.Input{HTTPStatus: 429})
 	_ = normalizedError

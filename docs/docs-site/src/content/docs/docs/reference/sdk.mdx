@@ -805,6 +805,16 @@ func (c *Client) StreamClient() *stream.MarketClient
 func (c *Client) StreamClientWithConfig(cfg stream.Config) *stream.MarketClient
 ```
 
+## `pkg/marketresults` — Authoritative Market Results
+
+```go
+import "github.com/TrebuchetDynamics/polygolem/pkg/marketresults"
+```
+
+`NewResolver(clobBaseURL, gammaBaseURL)` combines public CLOB winner data with
+Gamma's closed timestamp. `Resolve(ctx, conditionID)` returns `nil` until both
+sources prove a complete result; transport errors fail closed.
+
 ## `pkg/marketresolver` — Token ID Resolution
 
 ```go

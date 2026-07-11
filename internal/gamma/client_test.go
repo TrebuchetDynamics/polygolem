@@ -42,6 +42,28 @@ func TestActiveMarketsUsesContextAndParsesMarkets(t *testing.T) {
 	}
 }
 
+func TestMarketsUsesGammaArraySyntaxForConditionIDs(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.URL.Query()["condition_ids[]"]; len(got) != 2 || got[0] != "c1" || got[1] != "c2" {
+			t.Fatalf("condition_ids[] = %#v", got)
+		}
+		if got := r.URL.Query()["condition_ids"]; len(got) != 0 {
+			t.Fatalf("obsolete condition_ids = %#v", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+	if _, err := client.Markets(context.Background(), &polytypes.GetMarketsParams{
+		ConditionIDs: []string{"c1", "c2"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestMarketsWithParams(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("limit") != "5" {

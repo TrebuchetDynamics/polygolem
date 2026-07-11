@@ -45,6 +45,7 @@ Stable interfaces for downstream Go consumers (e.g., `go-bot`).
 | `pkg/intel` | Read-only wallet intelligence DTOs and pure scoring helpers (`pkg/intel/types.go:1`, `pkg/intel/score.go:48`). |
 | `pkg/marketdata` | Normalized live best bid, best ask, spread, midpoint, tick-size, last-trade, and book snapshots from public stream events. |
 | `pkg/marketresolver` | Resolve market identifiers (ID, slug, token-id) to a canonical view. |
+| `pkg/marketresults` | Resolve public CLOB winners with authoritative Gamma closed timestamps. |
 | `pkg/mcp` | Minimal read-only Model Context Protocol surface for agent integrations (`pkg/mcp/mcp.go:1`). |
 | `pkg/openapi` | Minimal OpenAPI description for safe read-only tooling (`pkg/openapi/openapi.go:1`). |
 | `pkg/orderbook` | Read-only CLOB order-book reader. |
