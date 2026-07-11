@@ -68,7 +68,7 @@ func (c *Client) MarketByID(ctx context.Context, id string) (*polytypes.Market, 
 // MarketBySlug returns a single market by slug.
 func (c *Client) MarketBySlug(ctx context.Context, slug string) (*polytypes.Market, error) {
 	var result *polytypes.Market
-	if err := c.transport.Get(ctx, "/markets/"+slug, &result); err != nil {
+	if err := c.transport.Get(ctx, "/markets/slug/"+url.PathEscape(slug), &result); err != nil {
 		return nil, err
 	}
 	return result, nil

@@ -27,6 +27,13 @@ func (f fakeGammaClient) Markets(context.Context, *types.GetMarketsParams) ([]ty
 	return f.markets, f.err
 }
 
+func (f fakeGammaClient) MarketBySlug(context.Context, string) (*types.Market, error) {
+	if f.err != nil || len(f.markets) == 0 {
+		return nil, f.err
+	}
+	return &f.markets[0], nil
+}
+
 func TestNewResolverUsesProductionGammaDefault(t *testing.T) {
 	resolver := NewResolver("", "")
 	if resolver.gammaBaseURL != defaultGammaBaseURL {

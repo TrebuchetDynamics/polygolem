@@ -930,7 +930,7 @@ func newE2EGammaServer(t *testing.T, rec *e2eRecorder) *httptest.Server {
 			respondJSON(t, w, map[string]string{"data": "ok"})
 		case "/markets":
 			respondJSON(t, w, []map[string]interface{}{market})
-		case "/markets/market-1", "/markets/will-btc-hit-100k":
+		case "/markets/market-1", "/markets/slug/will-btc-hit-100k":
 			respondJSON(t, w, market)
 		case "/events":
 			respondJSON(t, w, []map[string]interface{}{event})

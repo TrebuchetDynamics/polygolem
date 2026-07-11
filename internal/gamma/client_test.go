@@ -42,6 +42,23 @@ func TestActiveMarketsUsesContextAndParsesMarkets(t *testing.T) {
 	}
 }
 
+func TestMarketBySlugUsesDedicatedGammaSlugRoute(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.EscapedPath() != "/markets/slug/btc-updown-5m" {
+			t.Fatalf("path = %q", r.URL.EscapedPath())
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"conditionId":"condition-1","slug":"btc-updown-5m"}`))
+	}))
+	defer server.Close()
+	tc := transport.New(server.Client(), transport.DefaultConfig(server.URL+"/"))
+	client := NewClient(server.URL+"/", tc)
+	market, err := client.MarketBySlug(context.Background(), "btc-updown-5m")
+	if err != nil || market == nil || market.ConditionID != "condition-1" {
+		t.Fatalf("unexpected market %#v, %v", market, err)
+	}
+}
+
 func TestMarketsUsesGammaArraySyntaxForConditionIDs(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if got := r.URL.Query()["condition_ids[]"]; len(got) != 2 || got[0] != "c1" || got[1] != "c2" {

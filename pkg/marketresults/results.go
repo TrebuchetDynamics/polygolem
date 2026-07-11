@@ -39,6 +39,7 @@ type outcomeClient interface {
 
 type gammaClient interface {
 	Markets(context.Context, *types.GetMarketsParams) ([]types.Market, error)
+	MarketBySlug(context.Context, string) (*types.Market, error)
 }
 
 // Resolver combines Polygolem's typed public CLOB and Gamma clients.
@@ -94,13 +95,21 @@ func (r *Resolver) ResolveMarket(ctx context.Context, ref MarketRef) (*Result, e
 	if ref.ConditionID == "" {
 		return nil, fmt.Errorf("marketresults: condition ID is required")
 	}
-	params := &types.GetMarketsParams{ConditionIDs: []string{ref.ConditionID}}
+	var markets []types.Market
 	if ref.Slug != "" {
-		params = &types.GetMarketsParams{Slug: []string{ref.Slug}}
-	}
-	markets, err := r.gamma.Markets(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("marketresults: Gamma market: %w", err)
+		market, err := r.gamma.MarketBySlug(ctx, ref.Slug)
+		if err != nil {
+			return nil, fmt.Errorf("marketresults: Gamma market by slug: %w", err)
+		}
+		if market != nil {
+			markets = append(markets, *market)
+		}
+	} else {
+		var err error
+		markets, err = r.gamma.Markets(ctx, &types.GetMarketsParams{ConditionIDs: []string{ref.ConditionID}})
+		if err != nil {
+			return nil, fmt.Errorf("marketresults: Gamma market: %w", err)
+		}
 	}
 	var gammaWinner string
 	var resolvedAt time.Time
