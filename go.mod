@@ -6,7 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.17.8
 	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	golang.org/x/crypto v0.57.0
 )
 
